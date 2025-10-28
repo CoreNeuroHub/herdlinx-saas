@@ -3,10 +3,10 @@
 {% block title %}{{ feedlot.name }} - Dashboard{% endblock %}
 
 {% block nav_items %}
-<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Dashboard</a>
-<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Pens</a>
-<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Batches</a>
-<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Cattle</a>
+<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
+<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Pens</a>
+<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Batches</a>
+<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Cattle</a>
 {% endblock %}
 
 {% block home_url %}{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}{% endblock %}
@@ -22,11 +22,11 @@
         <div class="flex items-center justify-between">
             <div>
                 <h3 class="text-sm font-medium text-gray-600 mb-2">Total Pens</h3>
-                <p class="text-3xl font-bold text-blue-600">{{ statistics.total_pens }}</p>
+                <p class="text-3xl font-bold text-teal">{{ statistics.total_pens }}</p>
             </div>
-            <div class="text-blue-600 text-4xl">📋</div>
+            <div class="text-teal text-4xl">📋</div>
         </div>
-        <a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="mt-4 inline-block text-blue-600 hover:text-blue-800 font-semibold">
+        <a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="mt-4 inline-block text-teal hover:text-teal hover:opacity-80 font-semibold">
             View Pens →
         </a>
     </div>
@@ -79,7 +79,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.source }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <a href="{{ url_for('feedlot.view_batch', feedlot_id=feedlot._id, batch_id=batch._id) }}" 
-                           class="text-blue-600 hover:text-blue-800">View</a>
+                           class="text-teal hover:text-teal hover:opacity-80">View</a>
                     </td>
                 </tr>
                 {% endfor %}

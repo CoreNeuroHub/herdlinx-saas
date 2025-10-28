@@ -72,8 +72,18 @@ A multi-tenant SaaS application for tracking cattle in feedlots, built with Flas
    python run.py
    ```
 
-7. **Access the application**
+7. **Add Your Logo (Optional)**
+   Place your logo image file (`logo.png`) in the `static/img/` directory. The application will automatically use it in the navigation bar.
+
+8. **Access the application**
    Open your browser and navigate to `http://localhost:5000`
+
+## Brand Colors
+
+The application uses a custom color palette defined in `brand-colors.md`:
+- **Primary (Navy)**: `#0A2540` - Used for navigation, headers, and primary elements
+- **Secondary (Teal)**: `#2D8B8B` - Used for buttons, links, and interactive elements  
+- **Accent (Gold)**: `#F5A623` - Available for emphasis and call-to-action elements
 
 ## First Time Setup
 

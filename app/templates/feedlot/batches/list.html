@@ -3,10 +3,10 @@
 {% block title %}Batches - {{ feedlot.name }}{% endblock %}
 
 {% block nav_items %}
-<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Dashboard</a>
-<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Pens</a>
-<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Batches</a>
-<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Cattle</a>
+<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
+<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Pens</a>
+<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Batches</a>
+<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Cattle</a>
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Batches</h1>
         <p class="text-gray-600">{{ feedlot.name }}</p>
     </div>
-    <a href="{{ url_for('feedlot.create_batch', feedlot_id=feedlot._id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+    <a href="{{ url_for('feedlot.create_batch', feedlot_id=feedlot._id) }}" class="bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
         + Create Batch
     </a>
 </div>
@@ -39,13 +39,13 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.induction_date.strftime('%Y-%m-%d') if batch.induction_date }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.source }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                    <span class="px-2 py-1 bg-teal bg-opacity-10 text-teal rounded-full text-xs font-semibold">
                         {{ batch.cattle_count }} cattle
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <a href="{{ url_for('feedlot.view_batch', feedlot_id=feedlot._id, batch_id=batch._id) }}" 
-                       class="text-blue-600 hover:text-blue-800 mr-3">View</a>
+                       class="text-teal hover:opacity-80 mr-3">View</a>
                 </td>
             </tr>
             {% endfor %}
@@ -55,7 +55,7 @@
 {% else %}
 <div class="bg-white rounded-lg shadow-md p-12 text-center">
     <p class="text-gray-600 text-lg mb-4">No batches found.</p>
-    <a href="{{ url_for('feedlot.create_batch', feedlot_id=feedlot._id) }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+    <a href="{{ url_for('feedlot.create_batch', feedlot_id=feedlot._id) }}" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
         Create Your First Batch
     </a>
 </div>

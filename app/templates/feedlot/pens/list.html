@@ -3,10 +3,10 @@
 {% block title %}Pens - {{ feedlot.name }}{% endblock %}
 
 {% block nav_items %}
-<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Dashboard</a>
-<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Pens</a>
-<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Batches</a>
-<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Cattle</a>
+<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
+<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Pens</a>
+<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Batches</a>
+<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Cattle</a>
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
         <h1 class="text-3xl font-bold text-gray-800 mb-2">Pens</h1>
         <p class="text-gray-600">{{ feedlot.name }}</p>
     </div>
-    <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+    <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" class="bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
         + Create Pen
     </a>
 </div>
@@ -26,7 +26,7 @@
     <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200 p-6">
         <div class="flex items-start justify-between mb-4">
             <h3 class="text-xl font-bold text-gray-800">Pen {{ pen.pen_number }}</h3>
-            <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
+            <span class="bg-teal bg-opacity-10 text-teal text-sm font-semibold px-3 py-1 rounded-full">
                 {{ pen.current_count }}/{{ pen.capacity }}
             </span>
         </div>
@@ -55,7 +55,7 @@
             </div>
         
         <div class="flex space-x-2">
-            <a href="{{ url_for('feedlot.view_pen', feedlot_id=feedlot._id, pen_id=pen._id) }}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
+            <a href="{{ url_for('feedlot.view_pen', feedlot_id=feedlot._id, pen_id=pen._id) }}" class="flex-1 bg-teal hover:opacity-90 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
                 View
             </a>
             <a href="{{ url_for('feedlot.edit_pen', feedlot_id=feedlot._id, pen_id=pen._id) }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
@@ -68,7 +68,7 @@
 {% else %}
 <div class="bg-white rounded-lg shadow-md p-12 text-center">
     <p class="text-gray-600 text-lg mb-4">No pens found.</p>
-    <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+    <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
         Create Your First Pen
     </a>
 </div>
