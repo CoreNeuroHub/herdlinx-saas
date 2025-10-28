@@ -87,3 +87,46 @@ def feedlot_users(feedlot_id):
     users = User.find_by_feedlot(feedlot_id)
     return render_template('top_level/feedlot_users.html', feedlot=feedlot, users=users)
 
+@top_level_bp.route('/user/<user_id>/activate', methods=['POST'])
+@login_required
+@top_level_required
+def activate_user(user_id):
+    """Activate a user"""
+    user = User.find_by_id(user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('top_level.dashboard'))
+    
+    User.update_user(user_id, {'is_active': True})
+    flash('User activated successfully.', 'success')
+    
+    # Redirect back to the page they came from
+    referer = request.headers.get('Referer')
+    if referer and '/feedlot/' in referer and '/users' in referer:
+        return redirect(referer)
+    return redirect(url_for('top_level.dashboard'))
+
+@top_level_bp.route('/user/<user_id>/deactivate', methods=['POST'])
+@login_required
+@top_level_required
+def deactivate_user(user_id):
+    """Deactivate a user"""
+    user = User.find_by_id(user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('top_level.dashboard'))
+    
+    # Prevent self-deactivation
+    if str(user['_id']) == session.get('user_id'):
+        flash('You cannot deactivate your own account.', 'error')
+        return redirect(request.headers.get('Referer', url_for('top_level.dashboard')))
+    
+    User.update_user(user_id, {'is_active': False})
+    flash('User deactivated successfully.', 'success')
+    
+    # Redirect back to the page they came from
+    referer = request.headers.get('Referer')
+    if referer and '/feedlot/' in referer and '/users' in referer:
+        return redirect(referer)
+    return redirect(url_for('top_level.dashboard'))
+

@@ -5,6 +5,7 @@
 {% block nav_items %}
 <a href="{{ url_for('top_level.dashboard') }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
 <a href="{{ url_for('top_level.create_feedlot') }}" class="px-4 py-2 hover:bg-teal rounded transition">Create Feedlot</a>
+<a href="{{ url_for('auth.register') }}" class="px-4 py-2 hover:bg-teal rounded transition">Create User</a>
 {% endblock %}
 
 {% block home_url %}{{ url_for('top_level.dashboard') }}{% endblock %}
@@ -15,9 +16,12 @@
     <p class="text-gray-600">Manage all feedlot instances</p>
 </div>
 
-<div class="mb-6">
+<div class="mb-6 flex space-x-4">
     <a href="{{ url_for('top_level.create_feedlot') }}" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
         + Create New Feedlot
+    </a>
+    <a href="{{ url_for('auth.register') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+        + Create User
     </a>
 </div>
 
@@ -32,8 +36,13 @@
             <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="flex-1 bg-teal hover:opacity-90 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
                 Open
             </a>
-            <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
                 View
+            </a>
+        </div>
+        <div class="mt-2 pt-2 border-t border-gray-200">
+            <a href="{{ url_for('top_level.feedlot_users', feedlot_id=feedlot._id) }}" class="block w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium">
+                Manage Users
             </a>
         </div>
     </div>

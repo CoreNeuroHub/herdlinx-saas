@@ -17,6 +17,9 @@
             <a href="{{ url_for('top_level.edit_feedlot', feedlot_id=feedlot._id) }}" class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
                 Edit
             </a>
+            <a href="{{ url_for('top_level.feedlot_users', feedlot_id=feedlot._id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                Manage Users
+            </a>
             <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
                 Open Feedlot Dashboard
             </a>

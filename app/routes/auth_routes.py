@@ -85,6 +85,8 @@ def logout():
 @login_required
 def register():
     """Registration page for creating new users (requires login)"""
+    from app.models.feedlot import Feedlot
+    
     # Only top-level users can register other users
     user_type = session.get('user_type')
     
@@ -100,15 +102,23 @@ def register():
         email = request.form.get('email')
         password = request.form.get('password')
         new_user_type = request.form.get('user_type', 'feedlot')
-        feedlot_id = request.form.get('feedlot_id')
+        feedlot_id = request.form.get('feedlot_id') or request.args.get('feedlot_id')
+        
+        # Validate feedlot_id for feedlot users
+        if new_user_type == 'feedlot' and not feedlot_id:
+            flash('Feedlot ID is required for feedlot users.', 'error')
+            feedlots = Feedlot.find_all()
+            return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
         
         if User.find_by_username(username):
             flash('Username already exists.', 'error')
-            return render_template('auth/register.html')
+            feedlots = Feedlot.find_all()
+            return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
         
         if User.find_by_email(email):
             flash('Email already exists.', 'error')
-            return render_template('auth/register.html')
+            feedlots = Feedlot.find_all()
+            return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
         
         user_id = User.create_user(username, email, password, new_user_type, feedlot_id)
         flash(f'User "{username}" created successfully as {new_user_type} user.', 'success')
@@ -118,5 +128,8 @@ def register():
         else:
             return redirect(url_for('top_level.feedlot_users', feedlot_id=feedlot_id))
     
-    return render_template('auth/register.html')
+    # GET request - show form
+    feedlots = Feedlot.find_all()
+    selected_feedlot_id = request.args.get('feedlot_id')
+    return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=selected_feedlot_id)
 
