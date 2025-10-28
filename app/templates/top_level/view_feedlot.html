@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}{{ feedlot.name }} - HerdLinx SaaS{% endblock %}
+
+{% block nav_items %}
+<a href="{{ url_for('top_level.dashboard') }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Back to Dashboard</a>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ feedlot.name }}</h1>
+            <p class="text-gray-600">{{ feedlot.location }}</p>
+        </div>
+        <div class="space-x-2">
+            <a href="{{ url_for('top_level.edit_feedlot', feedlot_id=feedlot._id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                Edit
+            </a>
+            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                Open Feedlot Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-sm font-medium text-gray-600 mb-2">Total Pens</h3>
+        <p class="text-3xl font-bold text-blue-600">{{ statistics.total_pens }}</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-sm font-medium text-gray-600 mb-2">Total Cattle</h3>
+        <p class="text-3xl font-bold text-green-600">{{ statistics.total_cattle }}</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-sm font-medium text-gray-600 mb-2">Total Batches</h3>
+        <p class="text-3xl font-bold text-purple-600">{{ statistics.total_batches }}</p>
+    </div>
+</div>
+
+{% if feedlot.contact_info %}
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">Contact Information</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% if feedlot.contact_info.get('contact_person') %}
+        <div>
+            <p class="text-sm text-gray-600">Contact Person</p>
+            <p class="font-semibold">{{ feedlot.contact_info.contact_person }}</p>
+        </div>
+        {% endif %}
+        
+        {% if feedlot.contact_info.get('phone') %}
+        <div>
+            <p class="text-sm text-gray-600">Phone</p>
+            <p class="font-semibold">{{ feedlot.contact_info.phone }}</p>
+        </div>
+        {% endif %}
+        
+        {% if feedlot.contact_info.get('email') %}
+        <div>
+            <p class="text-sm text-gray-600">Email</p>
+            <p class="font-semibold">{{ feedlot.contact_info.email }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+

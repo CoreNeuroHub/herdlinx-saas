@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}{{ feedlot.name }} - Dashboard{% endblock %}
+
+{% block nav_items %}
+<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Dashboard</a>
+<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Pens</a>
+<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Batches</a>
+<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-blue-500 rounded transition">Cattle</a>
+{% endblock %}
+
+{% block home_url %}{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ feedlot.name }}</h1>
+    <p class="text-gray-600">{{ feedlot.location }}</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Total Pens</h3>
+                <p class="text-3xl font-bold text-blue-600">{{ statistics.total_pens }}</p>
+            </div>
+            <div class="text-blue-600 text-4xl">📋</div>
+        </div>
+        <a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="mt-4 inline-block text-blue-600 hover:text-blue-800 font-semibold">
+            View Pens →
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Total Cattle</h3>
+                <p class="text-3xl font-bold text-green-600">{{ statistics.total_cattle }}</p>
+            </div>
+            <div class="text-green-600 text-4xl">🐄</div>
+        </div>
+        <a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="mt-4 inline-block text-green-600 hover:text-green-800 font-semibold">
+            View Cattle →
+        </a>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-sm font-medium text-gray-600 mb-2">Total Batches</h3>
+                <p class="text-3xl font-bold text-purple-600">{{ statistics.total_batches }}</p>
+            </div>
+            <div class="text-purple-600 text-4xl">📦</div>
+        </div>
+        <a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="mt-4 inline-block text-purple-600 hover:text-purple-800 font-semibold">
+            View Batches →
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">Recent Batches</h2>
+    {% if recent_batches %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Batch Number</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Induction Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for batch in recent_batches|reverse %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ batch.batch_number }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.induction_date.strftime('%Y-%m-%d') if batch.induction_date }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.source }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <a href="{{ url_for('feedlot.view_batch', feedlot_id=feedlot._id, batch_id=batch._id) }}" 
+                           class="text-blue-600 hover:text-blue-800">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-gray-600">No batches yet. Create your first batch to get started.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
