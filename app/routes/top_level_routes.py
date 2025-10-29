@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from app.models.feedlot import Feedlot
 from app.models.user import User
 from app.routes.auth_routes import login_required, top_level_required
@@ -20,19 +20,47 @@ def dashboard():
 def create_feedlot():
     """Create a new feedlot"""
     if request.method == 'POST':
-        name = request.form.get('name')
-        location = request.form.get('location')
-        contact_info = {
-            'phone': request.form.get('phone'),
-            'email': request.form.get('email'),
-            'contact_person': request.form.get('contact_person')
-        }
+        # Check if this is an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
-        feedlot_id = Feedlot.create_feedlot(name, location, contact_info)
-        flash('Feedlot created successfully.', 'success')
-        return redirect(url_for('top_level.dashboard'))
+        try:
+            name = request.form.get('name')
+            location = request.form.get('location')
+            contact_info = {
+                'phone': request.form.get('phone') or None,
+                'email': request.form.get('email') or None,
+                'contact_person': request.form.get('contact_person') or None
+            }
+            
+            # Validate required fields
+            if not name or not location:
+                error_msg = 'Feedlot name and location are required.'
+                if is_ajax:
+                    return jsonify({'success': False, 'message': error_msg}), 400
+                flash(error_msg, 'error')
+                if not is_ajax:
+                    return redirect(url_for('top_level.dashboard'))
+                return jsonify({'success': False, 'message': error_msg}), 400
+            
+            feedlot_id = Feedlot.create_feedlot(name, location, contact_info)
+            
+            success_msg = 'Feedlot created successfully.'
+            if is_ajax:
+                return jsonify({'success': True, 'message': success_msg}), 200
+            flash(success_msg, 'success')
+            return redirect(url_for('top_level.dashboard'))
+        
+        except Exception as e:
+            error_msg = f'Failed to create feedlot: {str(e)}'
+            if is_ajax:
+                return jsonify({'success': False, 'message': error_msg}), 500
+            flash(error_msg, 'error')
+            if not is_ajax:
+                return redirect(url_for('top_level.dashboard'))
+            return jsonify({'success': False, 'message': error_msg}), 500
     
-    return render_template('top_level/create_feedlot.html')
+    # GET request - redirect to dashboard since we're using a modal now
+    return redirect(url_for('top_level.dashboard'))
 
 @top_level_bp.route('/feedlot/<feedlot_id>/view')
 @login_required

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from app.models.user import User
 from functools import wraps
 
@@ -91,45 +91,84 @@ def register():
     user_type = session.get('user_type')
     
     if user_type != 'top_level':
-        flash('Access denied. Top-level user required.', 'error')
+        error_msg = 'Access denied. Top-level user required.'
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        if is_ajax:
+            return jsonify({'success': False, 'message': error_msg}), 403
+        flash(error_msg, 'error')
         if user_type == 'feedlot':
             return redirect(url_for('feedlot.dashboard', feedlot_id=session.get('feedlot_id')))
         else:
             return redirect(url_for('top_level.dashboard'))
     
     if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        new_user_type = request.form.get('user_type', 'feedlot')
-        feedlot_id = request.form.get('feedlot_id') or request.args.get('feedlot_id')
+        # Check if this is an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
-        # Validate feedlot_id for feedlot users
-        if new_user_type == 'feedlot' and not feedlot_id:
-            flash('Feedlot ID is required for feedlot users.', 'error')
+        try:
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            new_user_type = request.form.get('user_type', 'feedlot')
+            feedlot_id = request.form.get('feedlot_id') or request.args.get('feedlot_id')
+            
+            # Validate required fields
+            if not username or not email or not password:
+                error_msg = 'Username, email, and password are required.'
+                if is_ajax:
+                    return jsonify({'success': False, 'message': error_msg}), 400
+                flash(error_msg, 'error')
+                feedlots = Feedlot.find_all()
+                return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
+            
+            # Validate feedlot_id for feedlot users
+            if new_user_type == 'feedlot' and not feedlot_id:
+                error_msg = 'Feedlot ID is required for feedlot users.'
+                if is_ajax:
+                    return jsonify({'success': False, 'message': error_msg}), 400
+                flash(error_msg, 'error')
+                feedlots = Feedlot.find_all()
+                return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
+            
+            # Check for duplicate username
+            if User.find_by_username(username):
+                error_msg = 'Username already exists.'
+                if is_ajax:
+                    return jsonify({'success': False, 'message': error_msg}), 400
+                flash(error_msg, 'error')
+                feedlots = Feedlot.find_all()
+                return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
+            
+            # Check for duplicate email
+            if User.find_by_email(email):
+                error_msg = 'Email already exists.'
+                if is_ajax:
+                    return jsonify({'success': False, 'message': error_msg}), 400
+                flash(error_msg, 'error')
+                feedlots = Feedlot.find_all()
+                return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
+            
+            # Create the user
+            user_id = User.create_user(username, email, password, new_user_type, feedlot_id)
+            success_msg = f'User "{username}" created successfully as {new_user_type} user.'
+            
+            if is_ajax:
+                return jsonify({'success': True, 'message': success_msg}), 200
+            flash(success_msg, 'success')
+            
+            if new_user_type == 'top_level':
+                return redirect(url_for('top_level.dashboard'))
+            else:
+                return redirect(url_for('top_level.feedlot_users', feedlot_id=feedlot_id))
+        
+        except Exception as e:
+            error_msg = f'Failed to create user: {str(e)}'
+            if is_ajax:
+                return jsonify({'success': False, 'message': error_msg}), 500
+            flash(error_msg, 'error')
             feedlots = Feedlot.find_all()
             return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
-        
-        if User.find_by_username(username):
-            flash('Username already exists.', 'error')
-            feedlots = Feedlot.find_all()
-            return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
-        
-        if User.find_by_email(email):
-            flash('Email already exists.', 'error')
-            feedlots = Feedlot.find_all()
-            return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=feedlot_id)
-        
-        user_id = User.create_user(username, email, password, new_user_type, feedlot_id)
-        flash(f'User "{username}" created successfully as {new_user_type} user.', 'success')
-        
-        if new_user_type == 'top_level':
-            return redirect(url_for('top_level.dashboard'))
-        else:
-            return redirect(url_for('top_level.feedlot_users', feedlot_id=feedlot_id))
     
-    # GET request - show form
-    feedlots = Feedlot.find_all()
-    selected_feedlot_id = request.args.get('feedlot_id')
-    return render_template('auth/register.html', feedlots=feedlots, selected_feedlot_id=selected_feedlot_id)
+    # GET request - redirect to dashboard since we're using a modal now
+    return redirect(url_for('top_level.dashboard'))
 
