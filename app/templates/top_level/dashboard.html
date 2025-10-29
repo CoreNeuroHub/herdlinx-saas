@@ -4,8 +4,6 @@
 
 {% block nav_items %}
 <a href="{{ url_for('top_level.dashboard') }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
-<a href="{{ url_for('top_level.create_feedlot') }}" class="px-4 py-2 hover:bg-teal rounded transition">Create Feedlot</a>
-<a href="{{ url_for('auth.register') }}" class="px-4 py-2 hover:bg-teal rounded transition">Create User</a>
 {% endblock %}
 
 {% block home_url %}{{ url_for('top_level.dashboard') }}{% endblock %}
@@ -28,8 +26,8 @@
             <div id="actions-dropdown-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" role="menu" aria-orientation="vertical" aria-labelledby="actions-dropdown-btn">
                 <div class="py-1" role="none">
                     {% block actions_items %}
-                    <a href="{{ url_for('top_level.create_feedlot') }}" role="menuitem">Create New Feedlot</a>
-                    <a href="{{ url_for('auth.register') }}" role="menuitem">Create User</a>
+                    <a href="{{ url_for('top_level.create_feedlot') }}" class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Create Feedlot</a>
+                    <a href="{{ url_for('auth.register') }}" class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Create User</a>
                     {% endblock %}
                 </div>
             </div>

@@ -158,40 +158,42 @@
             e.stopPropagation();
         });
         
-        // Actions Dropdown functionality
-        const actionsDropdownBtn = document.getElementById('actions-dropdown-btn');
-        const actionsDropdownMenu = document.getElementById('actions-dropdown-menu');
-        
-        if (actionsDropdownBtn && actionsDropdownMenu) {
-            actionsDropdownBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const isHidden = actionsDropdownMenu.classList.contains('hidden');
+        // Actions Dropdown functionality - wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            const actionsDropdownBtn = document.getElementById('actions-dropdown-btn');
+            const actionsDropdownMenu = document.getElementById('actions-dropdown-menu');
+            
+            if (actionsDropdownBtn && actionsDropdownMenu) {
+                actionsDropdownBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isHidden = actionsDropdownMenu.classList.contains('hidden');
+                    
+                    if (isHidden) {
+                        actionsDropdownMenu.classList.remove('hidden');
+                        actionsDropdownBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        actionsDropdownMenu.classList.add('hidden');
+                        actionsDropdownBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
                 
-                if (isHidden) {
-                    actionsDropdownMenu.classList.remove('hidden');
-                    actionsDropdownBtn.setAttribute('aria-expanded', 'true');
-                } else {
-                    actionsDropdownMenu.classList.add('hidden');
-                    actionsDropdownBtn.setAttribute('aria-expanded', 'false');
-                }
-            });
-            
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!actionsDropdownBtn.contains(e.target) && !actionsDropdownMenu.contains(e.target)) {
-                    actionsDropdownMenu.classList.add('hidden');
-                    actionsDropdownBtn.setAttribute('aria-expanded', 'false');
-                }
-            });
-            
-            // Close dropdown on escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && !actionsDropdownMenu.classList.contains('hidden')) {
-                    actionsDropdownMenu.classList.add('hidden');
-                    actionsDropdownBtn.setAttribute('aria-expanded', 'false');
-                }
-            });
-        }
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!actionsDropdownBtn.contains(e.target) && !actionsDropdownMenu.contains(e.target)) {
+                        actionsDropdownMenu.classList.add('hidden');
+                        actionsDropdownBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                
+                // Close dropdown on escape key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && !actionsDropdownMenu.classList.contains('hidden')) {
+                        actionsDropdownMenu.classList.add('hidden');
+                        actionsDropdownBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        });
     </script>
 
     <!-- Toast Container -->
