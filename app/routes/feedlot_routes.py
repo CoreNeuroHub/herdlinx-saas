@@ -172,11 +172,52 @@ def view_batch(feedlot_id, batch_id):
 @login_required
 @feedlot_access_required()
 def list_cattle(feedlot_id):
-    """List all cattle for a feedlot"""
+    """List all cattle for a feedlot with search, filter, and sort"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    all_cattle = Cattle.find_by_feedlot(feedlot_id)
     
-    return render_template('feedlot/cattle/list.html', feedlot=feedlot, cattle=all_cattle)
+    # Get filter parameters
+    search = request.args.get('search', '').strip()
+    health_status_filter = request.args.get('health_status', '')
+    sex_filter = request.args.get('sex', '')
+    pen_filter = request.args.get('pen_id', '')
+    sort_by = request.args.get('sort_by', 'cattle_id')
+    sort_order = request.args.get('sort_order', 'asc')
+    
+    # Get filtered cattle
+    cattle = Cattle.find_by_feedlot_with_filters(
+        feedlot_id,
+        search=search if search else None,
+        health_status=health_status_filter if health_status_filter else None,
+        sex=sex_filter if sex_filter else None,
+        pen_id=pen_filter if pen_filter else None,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
+    
+    # Get all pens for filter dropdown
+    pens = Pen.find_by_feedlot(feedlot_id)
+    
+    # Create pen lookup dictionary for efficient template access
+    pen_map = {str(pen['_id']): pen for pen in pens}
+    
+    # Get unique values for filter dropdowns
+    all_cattle = Cattle.find_by_feedlot(feedlot_id)
+    unique_health_statuses = list(set(c.get('health_status', '') for c in all_cattle if c.get('health_status')))
+    unique_sexes = list(set(c.get('sex', '') for c in all_cattle if c.get('sex')))
+    
+    return render_template('feedlot/cattle/list.html', 
+                         feedlot=feedlot, 
+                         cattle=cattle,
+                         pens=pens,
+                         pen_map=pen_map,
+                         unique_health_statuses=sorted(unique_health_statuses),
+                         unique_sexes=sorted(unique_sexes),
+                         current_search=search,
+                         current_health_status=health_status_filter,
+                         current_sex=sex_filter,
+                         current_pen=pen_filter,
+                         current_sort_by=sort_by,
+                         current_sort_order=sort_order)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/cattle/create', methods=['GET', 'POST'])
 @login_required

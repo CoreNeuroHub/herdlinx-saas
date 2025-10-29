@@ -140,4 +140,42 @@ class Cattle:
         
         # This could be expanded with a movement log collection
         return cattle.get('movement_history', [])
+    
+    @staticmethod
+    def find_by_feedlot_with_filters(feedlot_id, search=None, health_status=None, sex=None, pen_id=None, sort_by='cattle_id', sort_order='asc'):
+        """Find cattle with filtering and sorting"""
+        query = {'feedlot_id': ObjectId(feedlot_id)}
+        
+        # Add search filter for cattle_id
+        if search:
+            query['cattle_id'] = {'$regex': search, '$options': 'i'}
+        
+        # Add health status filter
+        if health_status:
+            query['health_status'] = health_status
+        
+        # Add sex filter
+        if sex:
+            query['sex'] = sex
+        
+        # Add pen filter
+        if pen_id:
+            query['pen_id'] = ObjectId(pen_id)
+        
+        # Define sort order
+        sort_direction = 1 if sort_order == 'asc' else -1
+        
+        # Define sort field mapping
+        sort_field_map = {
+            'cattle_id': 'cattle_id',
+            'weight': 'weight',
+            'induction_date': 'induction_date',
+            'health_status': 'health_status',
+            'sex': 'sex'
+        }
+        
+        sort_field = sort_field_map.get(sort_by, 'cattle_id')
+        sort_criteria = [(sort_field, sort_direction)]
+        
+        return list(db.cattle.find(query).sort(sort_criteria))
 
