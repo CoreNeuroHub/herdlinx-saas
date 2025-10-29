@@ -32,16 +32,36 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="breed" class="block text-sm font-medium text-gray-700 mb-2">Breed *</label>
-                    <input type="text" id="breed" name="breed" required
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
-                           placeholder="e.g., Angus">
+                    <label for="sex" class="block text-sm font-medium text-gray-700 mb-2">Sex *</label>
+                    <select id="sex" name="sex" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                        <option value="">Select sex</option>
+                        <option value="Heifer">Heifer</option>
+                        <option value="Steer">Steer</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
                 </div>
                 
                 <div>
                     <label for="weight" class="block text-sm font-medium text-gray-700 mb-2">Weight (kg) *</label>
                     <input type="number" id="weight" name="weight" required step="0.1"
                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="lf_tag" class="block text-sm font-medium text-gray-700 mb-2">LF Tag</label>
+                    <input type="text" id="lf_tag" name="lf_tag"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                           placeholder="Low Frequency tag number">
+                </div>
+                
+                <div>
+                    <label for="uhf_tag" class="block text-sm font-medium text-gray-700 mb-2">UHF Tag</label>
+                    <input type="text" id="uhf_tag" name="uhf_tag"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                           placeholder="Ultra High Frequency tag number">
                 </div>
             </div>
             

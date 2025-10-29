@@ -14,8 +14,14 @@
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Current Cattle</h3>
         <div class="space-y-2">
             <p><span class="font-semibold">ID:</span> {{ cattle.cattle_id }}</p>
-            <p><span class="font-semibold">Breed:</span> {{ cattle.breed }}</p>
+            <p><span class="font-semibold">Sex:</span> {{ cattle.sex }}</p>
             <p><span class="font-semibold">Weight:</span> {{ cattle.weight }} kg</p>
+            {% if cattle.lf_tag %}
+            <p><span class="font-semibold">LF Tag:</span> {{ cattle.lf_tag }}</p>
+            {% endif %}
+            {% if cattle.uhf_tag %}
+            <p><span class="font-semibold">UHF Tag:</span> {{ cattle.uhf_tag }}</p>
+            {% endif %}
         </div>
     </div>
     

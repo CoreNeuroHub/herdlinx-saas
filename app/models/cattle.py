@@ -4,22 +4,29 @@ from app import db
 
 class Cattle:
     @staticmethod
-    def create_cattle(feedlot_id, batch_id, cattle_id, breed, weight, 
-                     health_status, pen_id=None, notes=None):
+    def create_cattle(feedlot_id, batch_id, cattle_id, sex, weight, 
+                     health_status, lf_tag=None, uhf_tag=None, pen_id=None, notes=None):
         """Create a new cattle record"""
         cattle_data = {
             'feedlot_id': ObjectId(feedlot_id),
             'batch_id': ObjectId(batch_id),
             'cattle_id': cattle_id,
-            'breed': breed,
+            'sex': sex,
             'weight': weight,
             'health_status': health_status,
+            'lf_tag': lf_tag or '',
+            'uhf_tag': uhf_tag or '',
             'pen_id': ObjectId(pen_id) if pen_id else None,
             'notes': notes or '',
             'status': 'active',
             'induction_date': datetime.utcnow(),
             'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
+            'updated_at': datetime.utcnow(),
+            'weight_history': [{
+                'weight': weight,
+                'recorded_at': datetime.utcnow(),
+                'recorded_by': 'system'  # This could be enhanced to track who recorded the weight
+            }]
         }
         
         result = db.cattle.insert_one(cattle_data)
@@ -84,6 +91,46 @@ class Cattle:
             }}
         )
     
+    @staticmethod
+    def add_weight_record(cattle_record_id, weight, recorded_by='system'):
+        """Add a new weight record to the cattle's weight history"""
+        weight_record = {
+            'weight': weight,
+            'recorded_at': datetime.utcnow(),
+            'recorded_by': recorded_by
+        }
+        
+        db.cattle.update_one(
+            {'_id': ObjectId(cattle_record_id)},
+            {
+                '$set': {
+                    'weight': weight,  # Update current weight
+                    'updated_at': datetime.utcnow()
+                },
+                '$push': {'weight_history': weight_record}
+            }
+        )
+    
+    @staticmethod
+    def get_weight_history(cattle_record_id):
+        """Get the complete weight history for a cattle record"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        if not cattle:
+            return []
+        
+        return cattle.get('weight_history', [])
+    
+    @staticmethod
+    def get_latest_weight(cattle_record_id):
+        """Get the most recent weight for a cattle record"""
+        weight_history = Cattle.get_weight_history(cattle_record_id)
+        if not weight_history:
+            return None
+        
+        # Sort by recorded_at descending and get the first (most recent)
+        latest_record = max(weight_history, key=lambda x: x['recorded_at'])
+        return latest_record['weight']
+
     @staticmethod
     def get_movement_history(cattle_record_id):
         """Get movement history for cattle"""

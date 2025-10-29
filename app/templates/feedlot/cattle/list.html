@@ -27,7 +27,9 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cattle ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Breed</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sex</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">LF Tag</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">UHF Tag</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Weight</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Health Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pen</th>
@@ -39,7 +41,9 @@
                 {% for c in cattle %}
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ c.cattle_id }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ c.breed }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ c.sex }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ c.lf_tag or '-' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ c.uhf_tag or '-' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ c.weight }} kg</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <span class="px-2 py-1 rounded-full text-xs font-semibold 

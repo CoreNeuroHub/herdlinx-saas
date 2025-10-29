@@ -188,9 +188,11 @@ def create_cattle(feedlot_id):
     if request.method == 'POST':
         batch_id = request.form.get('batch_id')
         cattle_id = request.form.get('cattle_id')
-        breed = request.form.get('breed')
+        sex = request.form.get('sex')
         weight = float(request.form.get('weight'))
         health_status = request.form.get('health_status')
+        lf_tag = request.form.get('lf_tag')
+        uhf_tag = request.form.get('uhf_tag')
         pen_id = request.form.get('pen_id') or None
         notes = request.form.get('notes')
         
@@ -204,8 +206,8 @@ def create_cattle(feedlot_id):
                                  batches=batches, 
                                  pens=pens)
         
-        cattle_record_id = Cattle.create_cattle(feedlot_id, batch_id, cattle_id, breed, 
-                                               weight, health_status, pen_id, notes)
+        cattle_record_id = Cattle.create_cattle(feedlot_id, batch_id, cattle_id, sex, 
+                                               weight, health_status, lf_tag, uhf_tag, pen_id, notes)
         flash('Cattle record created successfully.', 'success')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
@@ -264,4 +266,26 @@ def move_cattle(feedlot_id, cattle_id):
     
     pens = Pen.find_by_feedlot(feedlot_id)
     return render_template('feedlot/cattle/move.html', feedlot=feedlot, cattle=cattle, pens=pens)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/add_weight', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def add_weight_record(feedlot_id, cattle_id):
+    """Add a weight record for cattle"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    cattle = Cattle.find_by_id(cattle_id)
+    
+    if not cattle:
+        flash('Cattle record not found.', 'error')
+        return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
+    
+    if request.method == 'POST':
+        weight = float(request.form.get('weight'))
+        recorded_by = request.form.get('recorded_by', 'user')
+        
+        Cattle.add_weight_record(cattle_id, weight, recorded_by)
+        flash('Weight record added successfully.', 'success')
+        return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
+    
+    return render_template('feedlot/cattle/add_weight.html', feedlot=feedlot, cattle=cattle)
 
