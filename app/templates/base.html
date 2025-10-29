@@ -18,30 +18,74 @@
             }
         }
     </script>
+    <style>
+        #menu-panel a {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        #menu-panel a:hover {
+            background-color: rgba(45, 139, 139, 0.2);
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Navigation -->
-    <nav class="bg-navy text-white shadow-lg">
+    <nav class="bg-navy text-white shadow-lg relative">
         <div class="container mx-auto px-4 py-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
                         <img src="{{ url_for('static', filename='img/logo.png') }}" 
                              alt="HerdLinx SaaS" 
-                             class="h-10"
+                             class="h-16 w-16 rounded-full object-cover"
                              onerror="this.style.display='none'; document.getElementById('brand-name').style.display='block';">
+                        <span class="text-xl font-bold text-white">CATTLE TRACKING</span>
                         <span id="brand-name" class="text-2xl font-bold hover:text-teal" style="display:none;">HerdLinx SaaS</span>
                     </a>
-                    {% block nav_items %}{% endblock %}
                 </div>
-                <div class="flex items-center space-x-4">
+                <!-- Hamburger Menu Button -->
+                <button id="hamburger-btn" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Toggle menu">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path id="hamburger-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <!-- Hamburger Menu Overlay -->
+        <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300" onclick="toggleMenu()"></div>
+        <!-- Hamburger Menu Panel -->
+        <div id="menu-panel" class="fixed top-0 right-0 h-full w-80 bg-navy shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+            <div class="flex flex-col h-full">
+                <div class="p-6 border-b border-teal border-opacity-30">
                     {% if session.user_id %}
-                        <span class="text-gray-300">Logged in as: {{ session.username }}</span>
-                        <a href="{{ url_for('auth.logout') }}" class="bg-teal hover:bg-opacity-80 px-4 py-2 rounded transition duration-200">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-12 h-12 bg-teal rounded-full flex items-center justify-center">
+                                <span class="text-xl font-bold">{{ session.username[0].upper() }}</span>
+                            </div>
+                            <div>
+                                <p class="text-white font-semibold">{{ session.username }}</p>
+                                <p class="text-gray-400 text-sm">Logged in</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="flex-1 py-4">
+                    <div class="space-y-1">
+                        {% block nav_items %}{% endblock %}
+                    </div>
+                </div>
+                <div class="p-6 border-t border-teal border-opacity-30">
+                    {% if session.user_id %}
+                        <a href="{{ url_for('auth.logout') }}" class="block w-full bg-teal hover:bg-opacity-80 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 text-center">
                             Logout
                         </a>
                     {% else %}
-                        <a href="{{ url_for('auth.login') }}" class="bg-teal hover:bg-opacity-80 px-4 py-2 rounded transition duration-200">
+                        <a href="{{ url_for('auth.login') }}" class="block w-full bg-teal hover:bg-opacity-80 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 text-center">
                             Login
                         </a>
                     {% endif %}
@@ -49,6 +93,44 @@
             </div>
         </div>
     </nav>
+    
+    <script>
+        function toggleMenu() {
+            const menuPanel = document.getElementById('menu-panel');
+            const menuOverlay = document.getElementById('menu-overlay');
+            const hamburgerIcon = document.getElementById('hamburger-icon');
+            const closeIcon = document.getElementById('close-icon');
+            
+            const isOpen = !menuPanel.classList.contains('translate-x-full');
+            
+            if (isOpen) {
+                menuPanel.classList.add('translate-x-full');
+                menuOverlay.classList.add('hidden');
+                hamburgerIcon.classList.remove('hidden');
+                closeIcon.classList.add('hidden');
+            } else {
+                menuPanel.classList.remove('translate-x-full');
+                menuOverlay.classList.remove('hidden');
+                hamburgerIcon.classList.add('hidden');
+                closeIcon.classList.remove('hidden');
+            }
+        }
+        
+        document.getElementById('hamburger-btn').addEventListener('click', toggleMenu);
+        
+        // Close menu when clicking outside
+        document.getElementById('menu-overlay').addEventListener('click', toggleMenu);
+        
+        // Close menu on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const menuPanel = document.getElementById('menu-panel');
+                if (!menuPanel.classList.contains('translate-x-full')) {
+                    toggleMenu();
+                }
+            }
+        });
+    </script>
 
     <!-- Flash Messages -->
     <div class="container mx-auto px-4 py-4">
