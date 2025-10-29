@@ -36,7 +36,7 @@
             {% for batch in batches %}
             <tr class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ batch.batch_number }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.induction_date.strftime('%Y-%m-%d') if batch.induction_date }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.induction_date | strftime }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.source }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <span class="px-2 py-1 bg-teal bg-opacity-10 text-teal rounded-full text-xs font-semibold">

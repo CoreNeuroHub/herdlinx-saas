@@ -88,11 +88,11 @@
             </div>
             <div>
                 <p class="text-sm text-gray-600">Induction Date</p>
-                <p class="font-semibold">{{ cattle.induction_date.strftime('%Y-%m-%d') if cattle.induction_date }}</p>
+                <p class="font-semibold">{{ cattle.induction_date | strftime }}</p>
             </div>
             <div>
                 <p class="text-sm text-gray-600">Created</p>
-                <p class="font-semibold">{{ cattle.created_at.strftime('%Y-%m-%d %H:%M') if cattle.created_at }}</p>
+                <p class="font-semibold">{{ cattle.created_at | strftime('%Y-%m-%d %H:%M') }}</p>
             </div>
         </div>
     </div>

@@ -58,7 +58,7 @@
                         {% endif %}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {{ c.induction_date.strftime('%Y-%m-%d') if c.induction_date }}
+                        {{ c.induction_date | strftime }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=c._id) }}" 
