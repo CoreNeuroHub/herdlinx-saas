@@ -1,18 +1,33 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from bson import ObjectId
 from app.models.feedlot import Feedlot
 from app.models.user import User
-from app.routes.auth_routes import login_required, top_level_required
+from app.routes.auth_routes import login_required, top_level_required, top_level_or_feedlot_admin_required
 
 top_level_bp = Blueprint('top_level', __name__)
 
 @top_level_bp.route('/')
 @top_level_bp.route('/dashboard')
 @login_required
-@top_level_required
+@top_level_or_feedlot_admin_required
 def dashboard():
-    """Top-level dashboard showing all feedlots"""
-    feedlots = Feedlot.find_all()
-    return render_template('top_level/dashboard.html', feedlots=feedlots)
+    """Dashboard showing feedlots (all for top-level, filtered for feedlot_admin)"""
+    user_type = session.get('user_type')
+    
+    if user_type == 'feedlot_admin':
+        # Filter feedlots to only show assigned ones
+        user_feedlot_ids = session.get('feedlot_ids', [])
+        if user_feedlot_ids:
+            feedlot_object_ids = [ObjectId(fid) for fid in user_feedlot_ids]
+            feedlots = list(Feedlot.find_by_ids(feedlot_object_ids))
+        else:
+            feedlots = []
+    else:
+        # Top-level users see all feedlots
+        feedlots = Feedlot.find_all()
+    
+    user_type = session.get('user_type')
+    return render_template('top_level/dashboard.html', feedlots=feedlots, user_type=user_type)
 
 @top_level_bp.route('/feedlot/create', methods=['GET', 'POST'])
 @login_required
@@ -64,9 +79,17 @@ def create_feedlot():
 
 @top_level_bp.route('/feedlot/<feedlot_id>/view')
 @login_required
-@top_level_required
+@top_level_or_feedlot_admin_required
 def view_feedlot(feedlot_id):
     """View feedlot details"""
+    # Check if feedlot_admin has access to this feedlot
+    user_type = session.get('user_type')
+    if user_type == 'feedlot_admin':
+        user_feedlot_ids = [str(fid) for fid in session.get('feedlot_ids', [])]
+        if str(feedlot_id) not in user_feedlot_ids:
+            flash('Access denied. You do not have access to this feedlot.', 'error')
+            return redirect(url_for('top_level.dashboard'))
+    
     feedlot = Feedlot.find_by_id(feedlot_id)
     if not feedlot:
         flash('Feedlot not found.', 'error')
@@ -104,9 +127,17 @@ def edit_feedlot(feedlot_id):
 
 @top_level_bp.route('/feedlot/<feedlot_id>/users')
 @login_required
-@top_level_required
+@top_level_or_feedlot_admin_required
 def feedlot_users(feedlot_id):
     """Manage users for a feedlot"""
+    # Check if feedlot_admin has access to this feedlot
+    user_type = session.get('user_type')
+    if user_type == 'feedlot_admin':
+        user_feedlot_ids = [str(fid) for fid in session.get('feedlot_ids', [])]
+        if str(feedlot_id) not in user_feedlot_ids:
+            flash('Access denied. You do not have access to this feedlot.', 'error')
+            return redirect(url_for('top_level.dashboard'))
+    
     feedlot = Feedlot.find_by_id(feedlot_id)
     if not feedlot:
         flash('Feedlot not found.', 'error')

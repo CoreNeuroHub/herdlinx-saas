@@ -28,6 +28,13 @@ class Feedlot:
         return list(db.feedlots.find())
     
     @staticmethod
+    def find_by_ids(feedlot_ids):
+        """Find feedlots by a list of IDs"""
+        if not feedlot_ids:
+            return []
+        return db.feedlots.find({'_id': {'$in': feedlot_ids}})
+    
+    @staticmethod
     def update_feedlot(feedlot_id, update_data):
         """Update feedlot information"""
         update_data['updated_at'] = datetime.utcnow()
