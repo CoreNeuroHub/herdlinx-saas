@@ -30,14 +30,33 @@
         #menu-panel a:hover {
             background-color: rgba(45, 139, 139, 0.2);
         }
+        #actions-dropdown-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            color: #374151;
+            transition: all 0.2s;
+        }
+        #actions-dropdown-menu a:hover {
+            background-color: #f3f4f6;
+            color: #111827;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- Navigation -->
     <nav class="bg-navy text-white shadow-lg relative">
         <div class="container mx-auto px-4 py-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-4">
+            <div class="flex items-center justify-between relative">
+                <!-- Hamburger Menu Button - Left Side -->
+                <button id="hamburger-btn" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Toggle menu">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path id="hamburger-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+                <!-- Logo and Label - Center -->
+                <div class="absolute left-1/2 transform -translate-x-1/2">
                     <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
                         <img src="{{ url_for('static', filename='img/logo.png') }}" 
                              alt="HerdLinx SaaS" 
@@ -47,19 +66,14 @@
                         <span id="brand-name" class="text-2xl font-bold hover:text-teal" style="display:none;">HerdLinx SaaS</span>
                     </a>
                 </div>
-                <!-- Hamburger Menu Button -->
-                <button id="hamburger-btn" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Toggle menu">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path id="hamburger-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+                <!-- Right side spacer for balance -->
+                <div class="w-10"></div>
             </div>
         </div>
         <!-- Hamburger Menu Overlay -->
         <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300" onclick="toggleMenu()"></div>
         <!-- Hamburger Menu Panel -->
-        <div id="menu-panel" class="fixed top-0 right-0 h-full w-80 bg-navy shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
+        <div id="menu-panel" class="fixed top-0 left-0 h-full w-80 bg-navy shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
             <div class="flex flex-col h-full">
                 <div class="p-6 border-b border-teal border-opacity-30">
                     <div class="flex items-center justify-between mb-4">
@@ -109,15 +123,15 @@
             const hamburgerIcon = document.getElementById('hamburger-icon');
             const closeIcon = document.getElementById('close-icon');
             
-            const isOpen = !menuPanel.classList.contains('translate-x-full');
+            const isOpen = !menuPanel.classList.contains('-translate-x-full');
             
             if (isOpen) {
-                menuPanel.classList.add('translate-x-full');
+                menuPanel.classList.add('-translate-x-full');
                 menuOverlay.classList.add('hidden');
                 hamburgerIcon.classList.remove('hidden');
                 closeIcon.classList.add('hidden');
             } else {
-                menuPanel.classList.remove('translate-x-full');
+                menuPanel.classList.remove('-translate-x-full');
                 menuOverlay.classList.remove('hidden');
                 hamburgerIcon.classList.add('hidden');
                 closeIcon.classList.remove('hidden');
@@ -133,7 +147,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 const menuPanel = document.getElementById('menu-panel');
-                if (!menuPanel.classList.contains('translate-x-full')) {
+                if (!menuPanel.classList.contains('-translate-x-full')) {
                     toggleMenu();
                 }
             }
@@ -143,6 +157,41 @@
         document.getElementById('menu-panel').addEventListener('click', function(e) {
             e.stopPropagation();
         });
+        
+        // Actions Dropdown functionality
+        const actionsDropdownBtn = document.getElementById('actions-dropdown-btn');
+        const actionsDropdownMenu = document.getElementById('actions-dropdown-menu');
+        
+        if (actionsDropdownBtn && actionsDropdownMenu) {
+            actionsDropdownBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isHidden = actionsDropdownMenu.classList.contains('hidden');
+                
+                if (isHidden) {
+                    actionsDropdownMenu.classList.remove('hidden');
+                    actionsDropdownBtn.setAttribute('aria-expanded', 'true');
+                } else {
+                    actionsDropdownMenu.classList.add('hidden');
+                    actionsDropdownBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!actionsDropdownBtn.contains(e.target) && !actionsDropdownMenu.contains(e.target)) {
+                    actionsDropdownMenu.classList.add('hidden');
+                    actionsDropdownBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Close dropdown on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !actionsDropdownMenu.classList.contains('hidden')) {
+                    actionsDropdownMenu.classList.add('hidden');
+                    actionsDropdownBtn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
     </script>
 
     <!-- Toast Container -->
@@ -248,7 +297,7 @@
     </script>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-6">
+    <main class="container mx-auto px-4 py-6 relative">
         {% block content %}{% endblock %}
     </main>
 
