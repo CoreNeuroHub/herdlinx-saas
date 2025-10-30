@@ -157,7 +157,7 @@
                 <select name="pen_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent outline-none transition">
                     <option value="">All Pens</option>
                     {% for pen in pens %}
-                    <option value="{{ pen._id }}" {% if current_pen == pen._id|string %}selected{% endif %}>Pen {{ pen.pen_number }}</option>
+                    <option value="{{ pen._id }}" {% if current_pen == pen._id|string %}selected{% endif %}>{{ pen.pen_number }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -246,7 +246,7 @@
                         {% set pen = pen_map[c.pen_id|string] %}
                         <a href="{{ url_for('feedlot.view_pen', feedlot_id=feedlot._id, pen_id=pen._id) }}" 
                            style="color: #2D8B8B;" class="text-sm lg:text-base font-medium hover:opacity-80 transition">
-                            Pen {{ pen.pen_number }}
+                            {{ pen.pen_number }}
                         </a>
                         {% else %}
                         <span class="text-sm lg:text-base text-gray-400">Not assigned</span>
