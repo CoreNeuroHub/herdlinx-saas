@@ -6,14 +6,25 @@ from config import Config
 # Initialize MongoDB connection
 # PyMongo connects lazily, so this won't fail even if MongoDB is temporarily unavailable
 try:
-    mongodb_client = MongoClient(
-        Config.MONGODB_URI,
-        serverSelectionTimeoutMS=10000,
-        connectTimeoutMS=10000,
-        socketTimeoutMS=10000,
-        retryWrites=True,
-        retryReads=True
-    )
+    # Configure MongoDB client with appropriate settings
+    # For mongodb+srv:// connections, TLS is automatically enabled
+    # Ensure connection string includes proper query parameters (tls=true, retryWrites=true, etc.)
+    client_options = {
+        'serverSelectionTimeoutMS': 10000,
+        'connectTimeoutMS': 10000,
+        'socketTimeoutMS': 10000,
+        'retryWrites': True,
+        'retryReads': True,
+    }
+    
+    # For non-SRV connections, explicitly enable TLS if needed
+    # For mongodb+srv://, TLS is automatic and should not be set explicitly
+    if not Config.MONGODB_URI.startswith('mongodb+srv://'):
+        # For regular mongodb:// connections, check if TLS is needed
+        # (This is typically for local connections without TLS)
+        pass
+    
+    mongodb_client = MongoClient(Config.MONGODB_URI, **client_options)
     db = mongodb_client[Config.MONGODB_DB]
 except Exception as e:
     # If connection string is invalid, this will fail

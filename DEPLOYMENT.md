@@ -250,13 +250,50 @@ On first deployment, the application automatically creates a default admin user 
 
 #### 2. MongoDB Connection Errors
 
-**Problem**: Cannot connect to MongoDB.
+**Problem**: Cannot connect to MongoDB or SSL/TLS handshake failures.
+
+**Common SSL/TLS Errors**:
+- `SSL handshake failed: [SSL: TLSV1_ALERT_INTERNAL_ERROR]`
+- `tlsv1 alert internal error`
 
 **Solution**:
-- Verify `MONGODB_URI` is correctly set in environment variables
-- Check MongoDB Atlas IP whitelist includes Vercel IPs (`0.0.0.0/0`)
-- Ensure database username/password are correct
-- Test connection string locally first
+- **Connection String Format**: Ensure your `MONGODB_URI` uses `mongodb+srv://` format for Atlas
+  - Format: `mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority`
+  - TLS is automatically enabled for `mongodb+srv://` connections
+  - Do not add `tls=true` to the connection string explicitly (it's automatic)
+  
+- **URL Encoding**: If your password contains special characters, URL-encode them:
+  - `@` becomes `%40`
+  - `:` becomes `%3A`
+  - `/` becomes `%2F`
+  - `?` becomes `%3F`
+  - `#` becomes `%23`
+  - `[` becomes `%5B`
+  - `]` becomes `%5D`
+  
+- **IP Whitelisting**: Verify MongoDB Atlas IP whitelist:
+  - For Vercel: Add `0.0.0.0/0` to allow all IPs (or specific Vercel IPs if available)
+  - Go to MongoDB Atlas → Network Access → Add IP Address
+  
+- **Verify Credentials**: Ensure database username and password are correct
+  - Check for typos in username/password
+  - Verify the user has read/write permissions
+  
+- **Connection String Parameters**: Ensure your connection string includes:
+  - `retryWrites=true`
+  - `w=majority` (or appropriate write concern)
+  - Database name in the path if needed
+  
+- **Test Locally**: Test the connection string locally first to verify it works:
+  ```python
+  from pymongo import MongoClient
+  client = MongoClient("your-connection-string")
+  client.server_info()  # Will raise exception if connection fails
+  ```
+  
+- **Environment Variable**: Verify `MONGODB_URI` is correctly set in Vercel:
+  - Check for extra spaces or quotes
+  - Ensure it's set for the correct environment (Production, Preview, Development)
 
 #### 3. Session Not Persisting
 

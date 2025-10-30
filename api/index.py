@@ -12,10 +12,6 @@ try:
     # Create Flask app instance
     app = create_app()
     
-    # Export the app for Vercel
-    # Vercel expects the handler to be available
-    handler = app
-    
 except Exception as e:
     # If app creation fails, create a minimal error handler
     print(f"ERROR: Failed to create Flask app: {e}")
@@ -23,16 +19,18 @@ except Exception as e:
     
     from flask import Flask, jsonify
     
-    error_app = Flask(__name__)
+    app = Flask(__name__)
     
-    @error_app.route('/', defaults={'path': ''})
-    @error_app.route('/<path:path>')
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
     def error_handler(path):
         return jsonify({
             'error': 'Internal Server Error',
             'message': str(e),
             'type': type(e).__name__
         }), 500
-    
-    handler = error_app
+
+# Export the app for Vercel
+# Vercel expects the Flask app instance directly
+handler = app
 
