@@ -53,3 +53,4 @@ Thumbs.db
 # Application specific
 *.log
 *.db
+/office_app/office_venv
