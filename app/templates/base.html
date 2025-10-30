@@ -158,29 +158,35 @@
             e.stopPropagation();
         });
         
-        // Actions Dropdown functionality - wait for DOM to be ready
-        document.addEventListener('DOMContentLoaded', function() {
+        // Actions Dropdown functionality
+        function initActionsDropdown() {
             const actionsDropdownBtn = document.getElementById('actions-dropdown-btn');
             const actionsDropdownMenu = document.getElementById('actions-dropdown-menu');
             
             if (actionsDropdownBtn && actionsDropdownMenu) {
                 actionsDropdownBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
                     e.stopPropagation();
                     const isHidden = actionsDropdownMenu.classList.contains('hidden');
                     
                     if (isHidden) {
                         actionsDropdownMenu.classList.remove('hidden');
+                        actionsDropdownMenu.style.display = 'block';
                         actionsDropdownBtn.setAttribute('aria-expanded', 'true');
                     } else {
                         actionsDropdownMenu.classList.add('hidden');
+                        actionsDropdownMenu.style.display = 'none';
                         actionsDropdownBtn.setAttribute('aria-expanded', 'false');
                     }
                 });
                 
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(e) {
-                    if (!actionsDropdownBtn.contains(e.target) && !actionsDropdownMenu.contains(e.target)) {
+                    const target = e.target;
+                    const isClickInside = actionsDropdownBtn.contains(target) || actionsDropdownMenu.contains(target);
+                    if (!isClickInside && !actionsDropdownMenu.classList.contains('hidden')) {
                         actionsDropdownMenu.classList.add('hidden');
+                        actionsDropdownMenu.style.display = 'none';
                         actionsDropdownBtn.setAttribute('aria-expanded', 'false');
                     }
                 });
@@ -189,11 +195,19 @@
                 document.addEventListener('keydown', function(e) {
                     if (e.key === 'Escape' && !actionsDropdownMenu.classList.contains('hidden')) {
                         actionsDropdownMenu.classList.add('hidden');
+                        actionsDropdownMenu.style.display = 'none';
                         actionsDropdownBtn.setAttribute('aria-expanded', 'false');
                     }
                 });
             }
-        });
+        }
+        
+        // Initialize on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initActionsDropdown);
+        } else {
+            initActionsDropdown();
+        }
     </script>
 
     <!-- Toast Container -->

@@ -3,6 +3,7 @@ from bson import ObjectId
 from app.models.feedlot import Feedlot
 from app.models.user import User
 from app.routes.auth_routes import login_required, top_level_required, top_level_or_feedlot_admin_required
+from app import db
 
 top_level_bp = Blueprint('top_level', __name__)
 
@@ -26,8 +27,11 @@ def dashboard():
         # Top-level users see all feedlots
         feedlots = Feedlot.find_all()
     
+    # Get unique locations for filter dropdown
+    unique_locations = sorted(list(set([f.get('location', '') for f in feedlots if f.get('location')])))
+    
     user_type = session.get('user_type')
-    return render_template('top_level/dashboard.html', feedlots=feedlots, user_type=user_type)
+    return render_template('top_level/dashboard.html', feedlots=feedlots, user_type=user_type, unique_locations=unique_locations)
 
 @top_level_bp.route('/feedlot/create', methods=['GET', 'POST'])
 @login_required
@@ -188,4 +192,39 @@ def deactivate_user(user_id):
     if referer and '/feedlot/' in referer and '/users' in referer:
         return redirect(referer)
     return redirect(url_for('top_level.dashboard'))
+
+@top_level_bp.route('/users')
+@login_required
+@top_level_or_feedlot_admin_required
+def manage_users():
+    """Manage all users (top-level and feedlot users)"""
+    user_type = session.get('user_type')
+    
+    # Get all users based on user type
+    if user_type == 'feedlot_admin':
+        # Feedlot admins can see users for their assigned feedlots
+        user_feedlot_ids = session.get('feedlot_ids', [])
+        if user_feedlot_ids:
+            feedlot_object_ids = [ObjectId(fid) for fid in user_feedlot_ids]
+            # Find users associated with these feedlots
+            users = []
+            for feedlot_id in feedlot_object_ids:
+                feedlot_users = User.find_by_feedlot(str(feedlot_id))
+                users.extend(feedlot_users)
+            # Remove duplicates
+            seen_ids = set()
+            unique_users = []
+            for user in users:
+                user_id = str(user['_id'])
+                if user_id not in seen_ids:
+                    seen_ids.add(user_id)
+                    unique_users.append(user)
+            users = unique_users
+        else:
+            users = []
+    else:
+        # Top-level users see all users
+        users = list(db.users.find())
+    
+    return render_template('top_level/manage_users.html', users=users, user_type=user_type)
 
