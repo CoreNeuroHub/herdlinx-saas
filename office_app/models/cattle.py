@@ -11,6 +11,17 @@ class WeightRecord(db.Model):
     recorded_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     recorded_by = db.Column(db.String(100), default='system')
 
+class PairHistory(db.Model):
+    __tablename__ = 'pair_history'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    cattle_id = db.Column(db.Integer, db.ForeignKey('cattle.id'), nullable=False)
+    lf_tag = db.Column(db.String(100))
+    uhf_tag = db.Column(db.String(100))
+    paired_at = db.Column(db.DateTime, nullable=False)
+    unpaired_at = db.Column(db.DateTime, nullable=False)
+    updated_by = db.Column(db.String(100), default='system')
+
 class Cattle(db.Model):
     __tablename__ = 'cattle'
     
@@ -31,6 +42,9 @@ class Cattle(db.Model):
     
     # Relationship for weight records
     weight_records = db.relationship('WeightRecord', backref='cattle', lazy=True, cascade='all, delete-orphan', order_by='WeightRecord.recorded_at.desc()')
+    
+    # Relationship for tag pair history
+    pair_history = db.relationship('PairHistory', backref='cattle', lazy=True, cascade='all, delete-orphan', order_by='PairHistory.unpaired_at.desc()')
     
     @staticmethod
     def create_cattle(batch_id, cattle_id, sex, weight, 
@@ -196,6 +210,67 @@ class Cattle(db.Model):
             query = query.order_by(sort_field.asc())
         
         return query.all()
+    
+    @staticmethod
+    def update_tag_pair(cattle_record_id, new_lf_tag, new_uhf_tag, updated_by='system'):
+        """Update LF and UHF tag pair, saving previous pair to history"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        if not cattle:
+            return False
+        
+        current_lf_tag = cattle.lf_tag or ''
+        current_uhf_tag = cattle.uhf_tag or ''
+        new_lf_tag = new_lf_tag or ''
+        new_uhf_tag = new_uhf_tag or ''
+        
+        # Check if tags are actually changing
+        tags_changed = (current_lf_tag != new_lf_tag) or (current_uhf_tag != new_uhf_tag)
+        
+        if tags_changed:
+            # If there was a previous tag pair, save it to history
+            if current_lf_tag or current_uhf_tag:
+                # Determine when the current tags were paired
+                pair_history = cattle.pair_history
+                if pair_history:
+                    # If there's history, the current tags were paired at last update
+                    paired_at = cattle.updated_at
+                else:
+                    # First pair was at creation time
+                    paired_at = cattle.created_at
+                
+                # Create history record
+                pair_record = PairHistory(
+                    cattle_id=cattle.id,
+                    lf_tag=current_lf_tag,
+                    uhf_tag=current_uhf_tag,
+                    paired_at=paired_at,
+                    unpaired_at=datetime.utcnow(),
+                    updated_by=updated_by
+                )
+                db.session.add(pair_record)
+            
+            # Update current tags
+            cattle.lf_tag = new_lf_tag
+            cattle.uhf_tag = new_uhf_tag
+            cattle.updated_at = datetime.utcnow()
+            db.session.commit()
+        
+        return True
+    
+    @staticmethod
+    def get_tag_pair_history(cattle_record_id):
+        """Get the complete tag pair history for a cattle record"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        if not cattle:
+            return []
+        
+        return [{
+            'lf_tag': ph.lf_tag,
+            'uhf_tag': ph.uhf_tag,
+            'paired_at': ph.paired_at,
+            'unpaired_at': ph.unpaired_at,
+            'updated_by': ph.updated_by
+        } for ph in cattle.pair_history]
     
     def to_dict(self):
         """Convert cattle to dictionary"""

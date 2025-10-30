@@ -26,7 +26,8 @@ class Cattle:
                 'weight': weight,
                 'recorded_at': datetime.utcnow(),
                 'recorded_by': 'system'  # This could be enhanced to track who recorded the weight
-            }]
+            }],
+            'tag_pair_history': []  # Track previous LF/UHF tag pairs
         }
         
         result = db.cattle.insert_one(cattle_data)
@@ -178,4 +179,76 @@ class Cattle:
         sort_criteria = [(sort_field, sort_direction)]
         
         return list(db.cattle.find(query).sort(sort_criteria))
+    
+    @staticmethod
+    def update_tag_pair(cattle_record_id, new_lf_tag, new_uhf_tag, updated_by='system'):
+        """Update LF and UHF tag pair, saving previous pair to history"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        if not cattle:
+            return False
+        
+        current_lf_tag = cattle.get('lf_tag', '') or ''
+        current_uhf_tag = cattle.get('uhf_tag', '') or ''
+        new_lf_tag = new_lf_tag or ''
+        new_uhf_tag = new_uhf_tag or ''
+        
+        # Check if tags are actually changing
+        tags_changed = (current_lf_tag != new_lf_tag) or (current_uhf_tag != new_uhf_tag)
+        
+        if tags_changed:
+            # If there was a previous tag pair (both tags exist), save it to history
+            if current_lf_tag or current_uhf_tag:
+                tag_pair_record = {
+                    'lf_tag': current_lf_tag,
+                    'uhf_tag': current_uhf_tag,
+                    'paired_at': cattle.get('created_at', datetime.utcnow()),  # Use creation date if no history
+                    'unpaired_at': datetime.utcnow(),
+                    'updated_by': updated_by
+                }
+                
+                # Get the last tag pair record if exists to get the actual pairing date
+                tag_history = cattle.get('tag_pair_history', [])
+                if tag_history:
+                    # If there's history, the current tags were paired when last updated
+                    last_update = cattle.get('updated_at', datetime.utcnow())
+                    tag_pair_record['paired_at'] = last_update
+                elif cattle.get('created_at'):
+                    # First pair was at creation time
+                    tag_pair_record['paired_at'] = cattle.get('created_at')
+                
+                # Update cattle with new tags and add old pair to history
+                db.cattle.update_one(
+                    {'_id': ObjectId(cattle_record_id)},
+                    {
+                        '$set': {
+                            'lf_tag': new_lf_tag,
+                            'uhf_tag': new_uhf_tag,
+                            'updated_at': datetime.utcnow()
+                        },
+                        '$push': {'tag_pair_history': tag_pair_record}
+                    }
+                )
+            else:
+                # No previous tags, just update (this is initial pairing)
+                db.cattle.update_one(
+                    {'_id': ObjectId(cattle_record_id)},
+                    {
+                        '$set': {
+                            'lf_tag': new_lf_tag,
+                            'uhf_tag': new_uhf_tag,
+                            'updated_at': datetime.utcnow()
+                        }
+                    }
+                )
+        
+        return True
+    
+    @staticmethod
+    def get_tag_pair_history(cattle_record_id):
+        """Get the complete tag pair history for a cattle record"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        if not cattle:
+            return []
+        
+        return cattle.get('tag_pair_history', [])
 

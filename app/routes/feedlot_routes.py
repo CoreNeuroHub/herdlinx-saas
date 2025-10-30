@@ -330,3 +330,26 @@ def add_weight_record(feedlot_id, cattle_id):
     
     return render_template('feedlot/cattle/add_weight.html', feedlot=feedlot, cattle=cattle)
 
+@feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/update_tags', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def update_tags(feedlot_id, cattle_id):
+    """Update/re-pair LF and UHF tags for cattle"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    cattle = Cattle.find_by_id(cattle_id)
+    
+    if not cattle:
+        flash('Cattle record not found.', 'error')
+        return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
+    
+    if request.method == 'POST':
+        new_lf_tag = request.form.get('lf_tag', '').strip()
+        new_uhf_tag = request.form.get('uhf_tag', '').strip()
+        updated_by = session.get('username', 'user')
+        
+        Cattle.update_tag_pair(cattle_id, new_lf_tag, new_uhf_tag, updated_by)
+        flash('Tag pair updated successfully. Previous pair has been saved to history.', 'success')
+        return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
+    
+    return render_template('feedlot/cattle/update_tags.html', feedlot=feedlot, cattle=cattle)
+

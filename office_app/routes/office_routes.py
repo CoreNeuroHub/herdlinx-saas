@@ -258,10 +258,14 @@ def view_cattle(cattle_id):
     pen = Pen.find_by_id(cattle.pen_id) if cattle.pen_id else None
     batch = Batch.find_by_id(cattle.batch_id)
     
+    # Get tag pair history
+    tag_pair_history = Cattle.get_tag_pair_history(cattle_id)
+    
     return render_template('office/cattle/view.html', 
                          cattle=cattle, 
                          pen=pen, 
-                         batch=batch)
+                         batch=batch,
+                         tag_pair_history=tag_pair_history)
 
 @office_bp.route('/cattle/<int:cattle_id>/move', methods=['GET', 'POST'])
 @login_required
@@ -311,4 +315,26 @@ def add_weight_record(cattle_id):
         return redirect(url_for('office.view_cattle', cattle_id=cattle_id))
     
     return render_template('office/cattle/add_weight.html', cattle=cattle)
+
+@office_bp.route('/cattle/<int:cattle_id>/update_tags', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def update_tags(cattle_id):
+    """Update/re-pair LF and UHF tags for cattle"""
+    cattle = Cattle.find_by_id(cattle_id)
+    
+    if not cattle:
+        flash('Cattle record not found.', 'error')
+        return redirect(url_for('office.list_cattle'))
+    
+    if request.method == 'POST':
+        new_lf_tag = request.form.get('lf_tag', '').strip()
+        new_uhf_tag = request.form.get('uhf_tag', '').strip()
+        updated_by = session.get('username', 'user')
+        
+        Cattle.update_tag_pair(cattle_id, new_lf_tag, new_uhf_tag, updated_by)
+        flash('Tag pair updated successfully. Previous pair has been saved to history.', 'success')
+        return redirect(url_for('office.view_cattle', cattle_id=cattle_id))
+    
+    return render_template('office/cattle/update_tags.html', cattle=cattle)
 
