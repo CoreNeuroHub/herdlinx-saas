@@ -4,8 +4,26 @@ from datetime import datetime
 from config import Config
 
 # Initialize MongoDB connection
-mongodb_client = MongoClient(Config.MONGODB_URI)
-db = mongodb_client[Config.MONGODB_DB]
+# PyMongo connects lazily, so this won't fail even if MongoDB is temporarily unavailable
+try:
+    mongodb_client = MongoClient(
+        Config.MONGODB_URI,
+        serverSelectionTimeoutMS=10000,
+        connectTimeoutMS=10000,
+        socketTimeoutMS=10000,
+        retryWrites=True,
+        retryReads=True
+    )
+    db = mongodb_client[Config.MONGODB_DB]
+except Exception as e:
+    # If connection string is invalid, this will fail
+    # Log error but allow app to initialize (will fail on first DB operation)
+    print(f"Warning: MongoDB client creation error: {e}")
+    import sys
+    import traceback
+    traceback.print_exc()
+    # Re-raise to fail fast during deployment
+    raise
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -33,19 +51,27 @@ def create_app(config_class=Config):
             return value.strftime(fmt)
         return value
     
-    # Initialize database
-    from .models import init_db, create_default_admin
-    init_db()
-    create_default_admin()
+    # Initialize database with error handling
+    try:
+        from .models import init_db, create_default_admin
+        init_db()
+        create_default_admin()
+    except Exception as e:
+        print(f"Warning: Database initialization error: {e}")
+        # App will still work, but database operations may fail
     
     # Register blueprints
-    from .routes.auth_routes import auth_bp
-    from .routes.top_level_routes import top_level_bp
-    from .routes.feedlot_routes import feedlot_bp
-    
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(top_level_bp)
-    app.register_blueprint(feedlot_bp)
+    try:
+        from .routes.auth_routes import auth_bp
+        from .routes.top_level_routes import top_level_bp
+        from .routes.feedlot_routes import feedlot_bp
+        
+        app.register_blueprint(auth_bp)
+        app.register_blueprint(top_level_bp)
+        app.register_blueprint(feedlot_bp)
+    except Exception as e:
+        print(f"Error registering blueprints: {e}")
+        raise
     
     return app
 

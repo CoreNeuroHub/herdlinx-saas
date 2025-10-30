@@ -3,24 +3,27 @@ from .user import User
 
 def init_db():
     """Initialize database collections"""
-    
-    # Create indexes
-    db.users.create_index('username', unique=True)
-    db.users.create_index('email', unique=True)
-    db.users.create_index('feedlot_id')
-    
-    db.pens.create_index('feedlot_id')
-    db.pens.create_index([('feedlot_id', 1), ('pen_number', 1)], unique=True)
-    
-    db.batches.create_index('feedlot_id')
-    db.batches.create_index([('feedlot_id', 1), ('batch_number', 1)], unique=True)
-    
-    db.cattle.create_index('feedlot_id')
-    db.cattle.create_index('batch_id')
-    db.cattle.create_index('pen_id')
-    db.cattle.create_index([('feedlot_id', 1), ('cattle_id', 1)], unique=True)
-    
-    print("Database initialized successfully")
+    try:
+        # Create indexes
+        db.users.create_index('username', unique=True)
+        db.users.create_index('email', unique=True)
+        db.users.create_index('feedlot_id')
+        
+        db.pens.create_index('feedlot_id')
+        db.pens.create_index([('feedlot_id', 1), ('pen_number', 1)], unique=True)
+        
+        db.batches.create_index('feedlot_id')
+        db.batches.create_index([('feedlot_id', 1), ('batch_number', 1)], unique=True)
+        
+        db.cattle.create_index('feedlot_id')
+        db.cattle.create_index('batch_id')
+        db.cattle.create_index('pen_id')
+        db.cattle.create_index([('feedlot_id', 1), ('cattle_id', 1)], unique=True)
+        
+        print("Database initialized successfully")
+    except Exception as e:
+        print(f"Error initializing database indexes: {e}")
+        # Don't raise - allow app to continue
 
 def create_default_admin():
     """Create default admin user if it doesn't exist"""
