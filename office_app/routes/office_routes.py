@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from datetime import datetime
 from office_app.models.pen import Pen
 from office_app.models.batch import Batch
@@ -322,19 +322,172 @@ def add_weight_record(cattle_id):
 def update_tags(cattle_id):
     """Update/re-pair LF and UHF tags for cattle"""
     cattle = Cattle.find_by_id(cattle_id)
-    
+
     if not cattle:
         flash('Cattle record not found.', 'error')
         return redirect(url_for('office.list_cattle'))
-    
+
     if request.method == 'POST':
         new_lf_tag = request.form.get('lf_tag', '').strip()
         new_uhf_tag = request.form.get('uhf_tag', '').strip()
         updated_by = session.get('username', 'user')
-        
+
         Cattle.update_tag_pair(cattle_id, new_lf_tag, new_uhf_tag, updated_by)
         flash('Tag pair updated successfully. Previous pair has been saved to history.', 'success')
         return redirect(url_for('office.view_cattle', cattle_id=cattle_id))
-    
+
     return render_template('office/cattle/update_tags.html', cattle=cattle)
+
+# Batch Payload API Routes
+@office_bp.route('/api/batch/payload', methods=['POST'])
+@login_required
+@admin_required
+def process_batch_payload():
+    """
+    Process batch payload in format: hxb:batchnumber:LF:UHF or hxe:batchnumber:LF:UHF
+
+    Expected JSON payload:
+    {
+        "payload": "hxb:BATCH001:LF123:UHF456"
+    }
+
+    Returns:
+    {
+        "success": bool,
+        "message": str,
+        "batch_id": int (if successful),
+        "batch_number": str (if successful),
+        "source_type": str (if successful)
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'payload' not in data:
+            return jsonify({
+                'success': False,
+                'message': 'Missing payload field in request'
+            }), 400
+
+        payload = data.get('payload', '').strip()
+
+        if not payload:
+            return jsonify({
+                'success': False,
+                'message': 'Payload cannot be empty'
+            }), 400
+
+        # Parse the payload
+        parsed = Batch.parse_payload(payload)
+
+        if not parsed:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid payload format. Expected: source_type:batch_number:lf_tag:uhf_tag (e.g., hxb:BATCH001:LF123:UHF456)'
+            }), 400
+
+        source_type = parsed['source_type']
+        batch_number = parsed['batch_number']
+        lf_tag = parsed['lf_tag']
+        uhf_tag = parsed['uhf_tag']
+
+        # Determine source based on source_type
+        source_label = 'Barn (HXB)' if source_type == 'hxb' else 'Export (HXE)'
+
+        # Check if batch already exists
+        existing_batch = Batch.query.filter_by(batch_number=batch_number).first()
+
+        if existing_batch:
+            # Update existing batch with source_type if not already set
+            if not existing_batch.source_type:
+                existing_batch.source_type = source_type
+                existing_batch.updated_at = datetime.utcnow()
+                db.session.commit()
+
+            batch_id = existing_batch.id
+            message = f'Batch {batch_number} already exists. Updated source information.'
+        else:
+            # Create new batch
+            batch_id = Batch.create_batch(
+                batch_number=batch_number,
+                induction_date=datetime.utcnow().date(),
+                source=source_label,
+                source_type=source_type,
+                notes=f'Created from payload with tags - LF: {lf_tag}, UHF: {uhf_tag}'
+            )
+            message = f'Batch {batch_number} created successfully from {source_label}'
+
+        return jsonify({
+            'success': True,
+            'message': message,
+            'batch_id': batch_id,
+            'batch_number': batch_number,
+            'source_type': source_type,
+            'source_label': source_label,
+            'lf_tag': lf_tag,
+            'uhf_tag': uhf_tag
+        }), 201
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error processing payload: {str(e)}'
+        }), 500
+
+@office_bp.route('/api/batch/validate-payload', methods=['POST'])
+@login_required
+@admin_required
+def validate_batch_payload():
+    """
+    Validate batch payload format without creating/updating batch
+
+    Expected JSON payload:
+    {
+        "payload": "hxb:BATCH001:LF123:UHF456"
+    }
+
+    Returns:
+    {
+        "valid": bool,
+        "message": str,
+        "parsed_data": dict (if valid)
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'payload' not in data:
+            return jsonify({
+                'valid': False,
+                'message': 'Missing payload field in request'
+            }), 400
+
+        payload = data.get('payload', '').strip()
+
+        if not payload:
+            return jsonify({
+                'valid': False,
+                'message': 'Payload cannot be empty'
+            }), 400
+
+        # Parse the payload
+        parsed = Batch.parse_payload(payload)
+
+        if not parsed:
+            return jsonify({
+                'valid': False,
+                'message': 'Invalid payload format. Expected: source_type:batch_number:lf_tag:uhf_tag (e.g., hxb:BATCH001:LF123:UHF456)'
+            }), 400
+
+        return jsonify({
+            'valid': True,
+            'message': 'Payload format is valid',
+            'parsed_data': parsed
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'valid': False,
+            'message': f'Error validating payload: {str(e)}'
+        }), 500
 
