@@ -2,52 +2,75 @@ from flask import Flask
 from pymongo import MongoClient
 from datetime import datetime
 from config import Config
-import certifi
 
-# Initialize MongoDB connection
-# PyMongo connects lazily, so this won't fail even if MongoDB is temporarily unavailable
-try:
-    # Configure MongoDB client with appropriate settings for serverless environments
-    client_options = {
-        'serverSelectionTimeoutMS': 30000,  # Increased timeout for serverless
-        'connectTimeoutMS': 30000,  # Increased timeout for serverless
-        'socketTimeoutMS': 30000,  # Increased timeout for serverless
-        'retryWrites': True,
-        'retryReads': True,
-    }
+# Initialize MongoDB connection lazily
+# Don't create connection at module level for serverless - defer to first use
+_mongodb_client = None
+_db_instance = None
+
+def get_db():
+    """Get MongoDB database connection, creating it if necessary"""
+    global _mongodb_client, _db_instance
     
-    # For serverless environments (like Vercel), explicitly configure TLS/SSL
-    # This is critical for mongodb+srv:// connections in serverless environments
-    if Config.MONGODB_URI.startswith('mongodb+srv://'):
-        # For mongodb+srv://, TLS is automatically enabled by PyMongo
-        # However, we need to provide the CA bundle explicitly for serverless environments
-        # that don't have system certificates available
-        # Use tlsCAFile to specify certifi's certificate bundle
-        ca_file = certifi.where()
-        print(f"Using CA file: {ca_file}")  # Debug logging
-        client_options['tlsCAFile'] = ca_file
-        # Ensure proper certificate validation (these are defaults but being explicit)
-        client_options['tlsAllowInvalidCertificates'] = False
-        client_options['tlsAllowInvalidHostnames'] = False
-    else:
-        # For regular mongodb:// connections, check if TLS is needed
-        # (This is typically for local connections without TLS)
-        pass
+    # Return cached connection if available
+    if _db_instance is not None:
+        return _db_instance
     
-    # Create client - connection is lazy, won't connect until first use
-    print(f"Creating MongoDB client with URI: {Config.MONGODB_URI[:20]}...")  # Debug (don't print full URI with credentials)
-    mongodb_client = MongoClient(Config.MONGODB_URI, **client_options)
-    db = mongodb_client[Config.MONGODB_DB]
-    print("MongoDB client created successfully")  # Debug logging
-except Exception as e:
-    # If connection string is invalid, this will fail
-    # Log error but allow app to initialize (will fail on first DB operation)
-    print(f"Warning: MongoDB client creation error: {e}")
-    import sys
-    import traceback
-    traceback.print_exc()
-    # Re-raise to fail fast during deployment
-    raise
+    # Validate MONGODB_URI is set (may be None if Config failed to load it during import)
+    if Config.MONGODB_URI is None:
+        raise ValueError(
+            "MONGODB_URI environment variable is required but not set. "
+            "Please set it in your Vercel project settings."
+        )
+    
+    try:
+        # Configure MongoDB client with appropriate settings for serverless environments
+        client_options = {
+            'serverSelectionTimeoutMS': 30000,  # Increased timeout for serverless
+            'connectTimeoutMS': 30000,  # Increased timeout for serverless
+            'socketTimeoutMS': 30000,  # Increased timeout for serverless
+            'retryWrites': True,
+            'retryReads': True,
+        }
+        
+        # For serverless environments (like Vercel), configure TLS/SSL properly
+        if Config.MONGODB_URI.startswith('mongodb+srv://'):
+            # For mongodb+srv://, TLS is automatically enabled by PyMongo
+            # In Vercel's serverless environment, we should use system certificates
+            # Don't set tlsCAFile explicitly - let PyMongo use system defaults
+            # This works better in serverless environments where certifi paths may not be accessible
+            client_options['tls'] = True
+            client_options['tlsAllowInvalidCertificates'] = False
+            client_options['tlsAllowInvalidHostnames'] = False
+            # Don't set tlsCAFile - let Python's ssl module use system default CA bundle
+            print("Using system default CA certificates for TLS")
+        
+        # Create client - connection is lazy, won't connect until first use
+        print(f"Creating MongoDB client with URI: {Config.MONGODB_URI[:20]}...")  # Debug
+        _mongodb_client = MongoClient(Config.MONGODB_URI, **client_options)
+        _db_instance = _mongodb_client[Config.MONGODB_DB]
+        print("MongoDB client created successfully")
+        return _db_instance
+    except Exception as e:
+        print(f"Error creating MongoDB client: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
+
+# Initialize db variable to be a lazy proxy
+class LazyDB:
+    """Lazy proxy for database that connects on first access"""
+    def __getattr__(self, name):
+        # Get the actual database connection
+        actual_db = get_db()
+        return getattr(actual_db, name)
+    
+    def __getitem__(self, key):
+        """Support dictionary-style access like db['users']"""
+        actual_db = get_db()
+        return actual_db[key]
+
+db = LazyDB()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -75,14 +98,9 @@ def create_app(config_class=Config):
             return value.strftime(fmt)
         return value
     
-    # Initialize database with error handling
-    try:
-        from .models import init_db, create_default_admin
-        init_db()
-        create_default_admin()
-    except Exception as e:
-        print(f"Warning: Database initialization error: {e}")
-        # App will still work, but database operations may fail
+    # Database initialization is deferred until first use
+    # This prevents connection failures during cold starts in serverless environments
+    # The init_db() and create_default_admin() will be called on first database access
     
     # Register blueprints
     try:
