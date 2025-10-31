@@ -3,28 +3,27 @@ Vercel serverless function entry point for Flask application.
 This file is required for Vercel to properly deploy the Flask app as a serverless function.
 """
 
-import sys
-import traceback
+# Import Flask first to ensure it's available
 from flask import Flask, jsonify
 
-# Initialize app as None first to avoid reference errors
+# Create Flask app instance - Vercel expects 'app' to be a WSGI application
+# Initialize as None first, then create
 app = None
-handler = None
 
 try:
+    # Import create_app after Flask is imported
     from app import create_app
     
     # Create Flask app instance
     app = create_app()
     
-    # Ensure app is a Flask instance for Vercel's handler detection
+    # Verify app is a Flask instance
     if not isinstance(app, Flask):
-        raise TypeError(f"Expected Flask instance, got {type(app)}")
+        raise TypeError(f"create_app() returned {type(app)}, expected Flask instance")
     
     # Initialize database on first request instead of at import time
     # This prevents connection failures during cold starts
     # Flask 3.0+ removed before_first_request, so we use before_request with a flag
-    @app.before_request
     def initialize_database_once():
         if not hasattr(app, '_db_initialized'):
             try:
@@ -36,18 +35,20 @@ try:
                 create_default_admin()
                 app._db_initialized = True
             except Exception as e:
+                import traceback
                 print(f"Warning: Database initialization error: {e}")
                 traceback.print_exc()
     
-    # Set handler to app for Vercel
-    handler = app
+    # Register the before_request handler
+    app.before_request(initialize_database_once)
     
 except Exception as e:
     # If app creation fails, create a minimal error handler
+    import traceback
     print(f"ERROR: Failed to create Flask app: {e}")
     traceback.print_exc()
     
-    # Create fallback Flask app
+    # Create fallback Flask app - this must be a clean Flask instance
     app = Flask(__name__)
     
     @app.route('/', defaults={'path': ''})
@@ -58,15 +59,13 @@ except Exception as e:
             'message': str(e),
             'type': type(e).__name__
         }), 500
-    
-    handler = app
 
-# Ensure handler is exported and is a Flask instance
-# Vercel Python runtime expects either 'app' or 'handler' to be a WSGI application
-if handler is None:
-    raise RuntimeError("Handler was not initialized")
+# Final verification - ensure app is a Flask instance
+if app is None or not isinstance(app, Flask):
+    raise RuntimeError(f"Failed to initialize Flask app. Got: {type(app)}")
 
-# Export both app and handler for maximum compatibility
-# Some Vercel configurations look for 'app', others for 'handler'
-__all__ = ['app', 'handler']
+# Explicitly define what should be exported from this module
+# This ensures Vercel only sees the 'app' variable and doesn't get confused
+# by other imports or module-level objects
+__all__ = ['app']
 
