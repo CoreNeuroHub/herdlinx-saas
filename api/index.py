@@ -5,12 +5,21 @@ This file is required for Vercel to properly deploy the Flask app as a serverles
 
 import sys
 import traceback
+from flask import Flask, jsonify
+
+# Initialize app as None first to avoid reference errors
+app = None
+handler = None
 
 try:
     from app import create_app
     
     # Create Flask app instance
     app = create_app()
+    
+    # Ensure app is a Flask instance for Vercel's handler detection
+    if not isinstance(app, Flask):
+        raise TypeError(f"Expected Flask instance, got {type(app)}")
     
     # Initialize database on first request instead of at import time
     # This prevents connection failures during cold starts
@@ -30,13 +39,15 @@ try:
                 print(f"Warning: Database initialization error: {e}")
                 traceback.print_exc()
     
+    # Set handler to app for Vercel
+    handler = app
+    
 except Exception as e:
     # If app creation fails, create a minimal error handler
     print(f"ERROR: Failed to create Flask app: {e}")
     traceback.print_exc()
     
-    from flask import Flask, jsonify
-    
+    # Create fallback Flask app
     app = Flask(__name__)
     
     @app.route('/', defaults={'path': ''})
@@ -47,9 +58,15 @@ except Exception as e:
             'message': str(e),
             'type': type(e).__name__
         }), 500
+    
+    handler = app
 
-# Export the app for Vercel
-# Vercel Python runtime expects the Flask app instance
-# The handler name is what Vercel looks for
-handler = app
+# Ensure handler is exported and is a Flask instance
+# Vercel Python runtime expects either 'app' or 'handler' to be a WSGI application
+if handler is None:
+    raise RuntimeError("Handler was not initialized")
+
+# Export both app and handler for maximum compatibility
+# Some Vercel configurations look for 'app', others for 'handler'
+__all__ = ['app', 'handler']
 

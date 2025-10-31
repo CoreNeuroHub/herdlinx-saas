@@ -3,12 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class Config:
-    # Flask settings
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    
-    # MongoDB settings
-    # In production (Vercel), MONGODB_URI must be set as environment variable
+# Get MongoDB URI at module level to avoid issues during class definition
+def _get_mongodb_uri():
+    """Get MongoDB URI with proper error handling"""
     _mongodb_uri = os.environ.get('MONGODB_URI')
     if not _mongodb_uri:
         # Check if we're in a production environment (Vercel sets VERCEL env var)
@@ -19,7 +16,22 @@ class Config:
             )
         # Fallback for local development
         _mongodb_uri = 'mongodb://localhost:27017/'
-    MONGODB_URI = _mongodb_uri
+    return _mongodb_uri
+
+class Config:
+    # Flask settings
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    
+    # MongoDB settings
+    # In production (Vercel), MONGODB_URI must be set as environment variable
+    # Get URI at class definition time, but handle errors gracefully
+    try:
+        MONGODB_URI = _get_mongodb_uri()
+    except ValueError:
+        # If MONGODB_URI is missing in production, we'll raise later when actually needed
+        # For now, set to None to allow class definition to complete
+        # This prevents import errors that could confuse Vercel's handler detection
+        MONGODB_URI = None
     
     MONGODB_DB = os.environ.get('MONGODB_DB') or 'herdlinx_saas'
     

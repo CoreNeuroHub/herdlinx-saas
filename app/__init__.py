@@ -16,6 +16,13 @@ def get_db():
     if _db_instance is not None:
         return _db_instance
     
+    # Validate MONGODB_URI is set (may be None if Config failed to load it during import)
+    if Config.MONGODB_URI is None:
+        raise ValueError(
+            "MONGODB_URI environment variable is required but not set. "
+            "Please set it in your Vercel project settings."
+        )
+    
     try:
         # Configure MongoDB client with appropriate settings for serverless environments
         client_options = {
