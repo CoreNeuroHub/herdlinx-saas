@@ -54,5 +54,9 @@ def create_app():
         from .models.user import User
         if not User.query.filter_by(username='admin').first():
             User.create_admin('admin', 'admin@office.local', 'admin')
-    
+
+    # Initialize background payload processing worker
+    from .utils.background_worker import init_background_worker
+    init_background_worker(app, interval=5)  # Process payloads every 5 seconds
+
     return app

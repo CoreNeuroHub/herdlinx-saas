@@ -3,7 +3,9 @@ from datetime import datetime
 from office_app.models.pen import Pen
 from office_app.models.batch import Batch
 from office_app.models.cattle import Cattle
+from office_app.models.lora_payload_buffer import LoRaPayloadBuffer, PayloadStatus
 from office_app.routes.auth_routes import login_required, admin_required
+from office_app.utils.payload_processor import PayloadProcessor
 from office_app import db
 from sqlalchemy import func
 
@@ -490,4 +492,189 @@ def validate_batch_payload():
             'valid': False,
             'message': f'Error validating payload: {str(e)}'
         }), 500
+
+# LoRa Payload Receiving and Display Routes
+@office_bp.route('/api/lora/receive', methods=['POST'])
+def receive_lora_payload():
+    """
+    Receive incoming LoRa payload from device.
+
+    This endpoint accepts payloads in format: hxb:batchnumber:LF:UHF or hxe:batchnumber:LF:UHF
+    Payloads are buffered and processed asynchronously.
+
+    Expected JSON payload:
+    {
+        "payload": "hxb:BATCH001:LF123:UHF456"
+    }
+
+    Returns:
+    {
+        "success": bool,
+        "message": str,
+        "status": str (buffered, duplicate, error),
+        "payload_id": int (if successful)
+    }
+    """
+    try:
+        data = request.get_json()
+
+        if not data or 'payload' not in data:
+            return jsonify({
+                'success': False,
+                'message': 'Missing payload field in request'
+            }), 400
+
+        raw_payload = data.get('payload', '').strip()
+
+        if not raw_payload:
+            return jsonify({
+                'success': False,
+                'message': 'Payload cannot be empty'
+            }), 400
+
+        # Receive and buffer payload
+        result = PayloadProcessor.receive_payload(raw_payload)
+
+        http_status = 201 if result['success'] else (409 if result.get('status') == 'duplicate' else 400)
+        return jsonify(result), http_status
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error receiving payload: {str(e)}'
+        }), 500
+
+@office_bp.route('/api/lora/buffer-status', methods=['GET'])
+@login_required
+@admin_required
+def get_lora_buffer_status():
+    """
+    Get current LoRa payload buffer status.
+
+    Returns statistics about buffered, processed, and errored payloads.
+    """
+    try:
+        status = PayloadProcessor.get_buffer_status()
+        return jsonify({
+            'success': True,
+            'data': status
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error getting buffer status: {str(e)}'
+        }), 500
+
+@office_bp.route('/api/lora/payloads', methods=['GET'])
+@login_required
+@admin_required
+def list_lora_payloads():
+    """
+    List LoRa payloads with optional filtering.
+
+    Query parameters:
+    - status: Filter by status (received, processing, processed, duplicate, error)
+    - limit: Limit results (default: 50, max: 500)
+    - offset: Pagination offset (default: 0)
+
+    Returns:
+    {
+        "success": bool,
+        "data": [
+            {
+                "id": int,
+                "raw_payload": str,
+                "status": str,
+                "batch_number": str,
+                "received_at": str (ISO format),
+                "processed_at": str (ISO format),
+                ...
+            }
+        ],
+        "total": int,
+        "count": int
+    }
+    """
+    try:
+        status_filter = request.args.get('status', '').strip()
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+
+        # Validate limit
+        if limit < 1 or limit > 500:
+            limit = 50
+
+        # Build query
+        query = LoRaPayloadBuffer.query
+
+        if status_filter:
+            query = query.filter_by(status=status_filter)
+
+        # Get total count
+        total = query.count()
+
+        # Get paginated results
+        payloads = query.order_by(LoRaPayloadBuffer.received_at.desc()).offset(offset).limit(limit).all()
+
+        return jsonify({
+            'success': True,
+            'data': [p.to_dict() for p in payloads],
+            'total': total,
+            'count': len(payloads)
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error listing payloads: {str(e)}'
+        }), 500
+
+@office_bp.route('/api/lora/process', methods=['POST'])
+@login_required
+@admin_required
+def manually_process_payloads():
+    """
+    Manually trigger payload processing.
+
+    Useful for testing or forcing immediate processing of buffered payloads.
+
+    Returns:
+    {
+        "success": bool,
+        "stats": {
+            "total": int,
+            "processed": int,
+            "duplicates": int,
+            "errors": int,
+            "failed_payloads": [...]
+        }
+    }
+    """
+    try:
+        stats = PayloadProcessor.process_pending_payloads()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error processing payloads: {str(e)}'
+        }), 500
+
+@office_bp.route('/lora-dashboard')
+@login_required
+@admin_required
+def lora_dashboard():
+    """Display LoRa payload monitoring dashboard"""
+    # Get buffer statistics
+    buffer_status = PayloadProcessor.get_buffer_status()
+
+    # Get recent payloads (last 50)
+    recent_payloads = LoRaPayloadBuffer.get_recent_payloads(hours=24, limit=50)
+
+    return render_template('office/lora_dashboard.html',
+                         buffer_status=buffer_status,
+                         recent_payloads=recent_payloads)
 
