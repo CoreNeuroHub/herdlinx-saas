@@ -2,6 +2,7 @@ from flask import Flask
 from pymongo import MongoClient
 from datetime import datetime
 from config import Config
+import certifi
 
 # Initialize MongoDB connection
 # PyMongo connects lazily, so this won't fail even if MongoDB is temporarily unavailable
@@ -10,16 +11,20 @@ try:
     # For mongodb+srv:// connections, TLS is automatically enabled
     # Ensure connection string includes proper query parameters (tls=true, retryWrites=true, etc.)
     client_options = {
-        'serverSelectionTimeoutMS': 10000,
-        'connectTimeoutMS': 10000,
-        'socketTimeoutMS': 10000,
+        'serverSelectionTimeoutMS': 30000,  # Increased timeout for serverless
+        'connectTimeoutMS': 30000,  # Increased timeout for serverless
+        'socketTimeoutMS': 30000,  # Increased timeout for serverless
         'retryWrites': True,
         'retryReads': True,
     }
     
-    # For non-SRV connections, explicitly enable TLS if needed
-    # For mongodb+srv://, TLS is automatic and should not be set explicitly
-    if not Config.MONGODB_URI.startswith('mongodb+srv://'):
+    # For serverless environments (like Vercel), explicitly use certifi's CA bundle
+    # This ensures SSL certificates are properly validated
+    if Config.MONGODB_URI.startswith('mongodb+srv://'):
+        # For mongodb+srv:// connections, use certifi's CA bundle for SSL
+        # This is critical for serverless environments that may not have system certificates
+        client_options['tlsCAFile'] = certifi.where()
+    else:
         # For regular mongodb:// connections, check if TLS is needed
         # (This is typically for local connections without TLS)
         pass
