@@ -29,8 +29,6 @@ try:
         # Ensure proper certificate validation (these are defaults but being explicit)
         client_options['tlsAllowInvalidCertificates'] = False
         client_options['tlsAllowInvalidHostnames'] = False
-        # Additional TLS options for better compatibility
-        client_options['tlsInsecure'] = False
     else:
         # For regular mongodb:// connections, check if TLS is needed
         # (This is typically for local connections without TLS)
