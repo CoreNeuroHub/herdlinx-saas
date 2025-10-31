@@ -12,6 +12,24 @@ try:
     # Create Flask app instance
     app = create_app()
     
+    # Initialize database on first request instead of at import time
+    # This prevents connection failures during cold starts
+    # Flask 3.0+ removed before_first_request, so we use before_request with a flag
+    @app.before_request
+    def initialize_database_once():
+        if not hasattr(app, '_db_initialized'):
+            try:
+                from app.models import init_db, create_default_admin
+                # Ensure DB connection is established
+                from app import get_db
+                get_db()
+                init_db()
+                create_default_admin()
+                app._db_initialized = True
+            except Exception as e:
+                print(f"Warning: Database initialization error: {e}")
+                traceback.print_exc()
+    
 except Exception as e:
     # If app creation fails, create a minimal error handler
     print(f"ERROR: Failed to create Flask app: {e}")
@@ -31,6 +49,7 @@ except Exception as e:
         }), 500
 
 # Export the app for Vercel
-# Vercel expects the Flask app instance directly
+# Vercel Python runtime expects the Flask app instance
+# The handler name is what Vercel looks for
 handler = app
 

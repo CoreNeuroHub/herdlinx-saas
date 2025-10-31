@@ -14,9 +14,9 @@
             <p class="text-gray-600">Manage all users across the system</p>
         </div>
         <div class="space-x-2">
-            <a href="{{ url_for('auth.register') }}" class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            <button onclick="openAddUserModal()" class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
                 + Create New User
-            </a>
+            </button>
             <a href="{{ url_for('top_level.dashboard') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
                 Back to Dashboard
             </a>
@@ -80,10 +80,259 @@
 {% else %}
 <div class="bg-white rounded-lg shadow-md p-8 text-center">
     <p class="text-gray-600 text-lg mb-4">No users found.</p>
-    <a href="{{ url_for('auth.register') }}" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-2 px-6 rounded-lg transition duration-200">
+    <button onclick="openAddUserModal()" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-2 px-6 rounded-lg transition duration-200">
         Create First User
-    </a>
+    </button>
 </div>
 {% endif %}
+
+<!-- Add New User Modal -->
+<div id="add-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Add New User</h2>
+                <button onclick="closeAddUserModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <form id="add-user-form" method="POST" action="{{ url_for('auth.register') }}" class="p-6 space-y-4">
+            {% if user_type == 'feedlot_admin' %}
+            <p class="text-sm text-gray-600 mb-4">You can create feedlot admin and feedlot users for your assigned feedlots.</p>
+            {% else %}
+            <p class="text-sm text-gray-600 mb-4">Create new user accounts for the system.</p>
+            {% endif %}
+            
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                <input type="text" id="username" name="username" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                <input type="email" id="email" name="email" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                <input type="password" id="password" name="password" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="user_type" class="block text-sm font-medium text-gray-700 mb-2">User Type *</label>
+                <select id="user_type" name="user_type" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    {% if user_type == 'top_level' %}
+                    <option value="top_level">Top Level User</option>
+                    {% endif %}
+                    <option value="feedlot_admin">Feedlot Admin</option>
+                    <option value="feedlot" selected>Feedlot User</option>
+                </select>
+            </div>
+            
+            <div id="user-feedlot-single-field">
+                <label for="feedlot_id" class="block text-sm font-medium text-gray-700 mb-2">Feedlot *</label>
+                <select id="feedlot_id" name="feedlot_id"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    <option value="">Select a feedlot</option>
+                    {% if feedlots %}
+                        {% for feedlot in feedlots %}
+                        <option value="{{ feedlot._id }}">
+                            {{ feedlot.name }} - {{ feedlot.location }}
+                        </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            
+            <div id="user-feedlot-multiple-field" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Feedlots *</label>
+                <div class="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                    {% if feedlots %}
+                        {% for feedlot in feedlots %}
+                        <label class="flex items-center space-x-2 py-1 px-2 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="feedlot_ids" value="{{ feedlot._id }}" 
+                                   class="rounded border-gray-300 text-teal focus:ring-teal">
+                            <span class="text-sm text-gray-700">{{ feedlot.name }} - {{ feedlot.location }}</span>
+                        </label>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex space-x-4 pt-4">
+                <button type="submit" id="submit-user-btn" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Create User
+                </button>
+                <button type="button" onclick="closeAddUserModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Add New User Modal Functions
+    function openAddUserModal() {
+        const modal = document.getElementById('add-user-modal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        // Initialize user type dropdown behavior
+        updateFeedlotField();
+    }
+    
+    function closeAddUserModal() {
+        const modal = document.getElementById('add-user-modal');
+        const form = document.getElementById('add-user-form');
+        
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        form.reset();
+        
+        // Reset user type to default
+        const userTypeSelect = document.getElementById('user_type');
+        if (userTypeSelect) {
+            userTypeSelect.value = 'feedlot';
+            updateFeedlotField();
+        }
+        
+        // Clear all checkboxes
+        const checkboxes = document.querySelectorAll('input[name="feedlot_ids"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+        
+        // Remove any error states
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.classList.remove('border-red-500');
+        });
+    }
+    
+    function updateFeedlotField() {
+        const userTypeSelect = document.getElementById('user_type');
+        const feedlotSingleField = document.getElementById('user-feedlot-single-field');
+        const feedlotMultipleField = document.getElementById('user-feedlot-multiple-field');
+        const feedlotSelect = document.getElementById('feedlot_id');
+        
+        if (userTypeSelect && feedlotSingleField && feedlotMultipleField) {
+            if (userTypeSelect.value === 'feedlot_admin') {
+                // Show multiple feedlot selection for feedlot_admin
+                feedlotSingleField.style.display = 'none';
+                feedlotMultipleField.style.display = 'block';
+                if (feedlotSelect) {
+                    feedlotSelect.removeAttribute('required');
+                }
+            } else if (userTypeSelect.value === 'feedlot') {
+                // Show single feedlot selection for feedlot users
+                feedlotSingleField.style.display = 'block';
+                feedlotMultipleField.style.display = 'none';
+                if (feedlotSelect) {
+                    feedlotSelect.setAttribute('required', 'required');
+                }
+            } else {
+                // Top level user - no feedlot required
+                feedlotSingleField.style.display = 'none';
+                feedlotMultipleField.style.display = 'none';
+                if (feedlotSelect) {
+                    feedlotSelect.removeAttribute('required');
+                }
+            }
+        }
+    }
+    
+    // User type change handler
+    document.addEventListener('DOMContentLoaded', function() {
+        const userTypeSelect = document.getElementById('user_type');
+        if (userTypeSelect) {
+            userTypeSelect.addEventListener('change', updateFeedlotField);
+        }
+        
+        // Close user modal when clicking outside
+        const userModal = document.getElementById('add-user-modal');
+        if (userModal) {
+            userModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeAddUserModal();
+                }
+            });
+        }
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const userModal = document.getElementById('add-user-modal');
+                if (userModal && !userModal.classList.contains('hidden')) {
+                    closeAddUserModal();
+                }
+            }
+        });
+        
+        // Handle user form submission via AJAX
+        const userForm = document.getElementById('add-user-form');
+        if (userForm) {
+            userForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const submitBtn = document.getElementById('submit-user-btn');
+                const formData = new FormData(form);
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating...';
+                
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showToast(data.message || 'User created successfully.', 'success');
+                        closeAddUserModal();
+                        // Reload the page to reflect changes
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } else {
+                        showToast(data.message || 'Failed to create user. Please try again.', 'error');
+                        
+                        // Re-enable submit button
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Create User';
+                        
+                        // Highlight error fields if provided
+                        if (data.errors) {
+                            Object.keys(data.errors).forEach(field => {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    input.classList.add('border-red-500');
+                                }
+                            });
+                        }
+                    }
+                } catch (error) {
+                    showToast('An error occurred while creating the user. Please try again.', 'error');
+                    
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create User';
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
 

@@ -200,6 +200,19 @@ def manage_users():
     """Manage all users (top-level and feedlot users)"""
     user_type = session.get('user_type')
     
+    # Get feedlots for the modal form
+    if user_type == 'feedlot_admin':
+        # Filter feedlots to only show assigned ones
+        user_feedlot_ids = session.get('feedlot_ids', [])
+        if user_feedlot_ids:
+            feedlot_object_ids = [ObjectId(fid) for fid in user_feedlot_ids]
+            feedlots = list(Feedlot.find_by_ids(feedlot_object_ids))
+        else:
+            feedlots = []
+    else:
+        # Top-level users see all feedlots
+        feedlots = Feedlot.find_all()
+    
     # Get all users based on user type
     if user_type == 'feedlot_admin':
         # Feedlot admins can see users for their assigned feedlots
@@ -226,5 +239,5 @@ def manage_users():
         # Top-level users see all users
         users = list(db.users.find())
     
-    return render_template('top_level/manage_users.html', users=users, user_type=user_type)
+    return render_template('top_level/manage_users.html', users=users, user_type=user_type, feedlots=feedlots)
 
