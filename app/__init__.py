@@ -7,9 +7,7 @@ import certifi
 # Initialize MongoDB connection
 # PyMongo connects lazily, so this won't fail even if MongoDB is temporarily unavailable
 try:
-    # Configure MongoDB client with appropriate settings
-    # For mongodb+srv:// connections, TLS is automatically enabled
-    # Ensure connection string includes proper query parameters (tls=true, retryWrites=true, etc.)
+    # Configure MongoDB client with appropriate settings for serverless environments
     client_options = {
         'serverSelectionTimeoutMS': 30000,  # Increased timeout for serverless
         'connectTimeoutMS': 30000,  # Increased timeout for serverless
@@ -18,19 +16,31 @@ try:
         'retryReads': True,
     }
     
-    # For serverless environments (like Vercel), explicitly use certifi's CA bundle
-    # This ensures SSL certificates are properly validated
+    # For serverless environments (like Vercel), explicitly configure TLS/SSL
+    # This is critical for mongodb+srv:// connections in serverless environments
     if Config.MONGODB_URI.startswith('mongodb+srv://'):
-        # For mongodb+srv:// connections, use certifi's CA bundle for SSL
-        # This is critical for serverless environments that may not have system certificates
-        client_options['tlsCAFile'] = certifi.where()
+        # For mongodb+srv://, TLS is automatically enabled by PyMongo
+        # However, we need to provide the CA bundle explicitly for serverless environments
+        # that don't have system certificates available
+        # Use tlsCAFile to specify certifi's certificate bundle
+        ca_file = certifi.where()
+        print(f"Using CA file: {ca_file}")  # Debug logging
+        client_options['tlsCAFile'] = ca_file
+        # Ensure proper certificate validation (these are defaults but being explicit)
+        client_options['tlsAllowInvalidCertificates'] = False
+        client_options['tlsAllowInvalidHostnames'] = False
+        # Additional TLS options for better compatibility
+        client_options['tlsInsecure'] = False
     else:
         # For regular mongodb:// connections, check if TLS is needed
         # (This is typically for local connections without TLS)
         pass
     
+    # Create client - connection is lazy, won't connect until first use
+    print(f"Creating MongoDB client with URI: {Config.MONGODB_URI[:20]}...")  # Debug (don't print full URI with credentials)
     mongodb_client = MongoClient(Config.MONGODB_URI, **client_options)
     db = mongodb_client[Config.MONGODB_DB]
+    print("MongoDB client created successfully")  # Debug logging
 except Exception as e:
     # If connection string is invalid, this will fail
     # Log error but allow app to initialize (will fail on first DB operation)
