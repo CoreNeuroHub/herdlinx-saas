@@ -1,251 +1,279 @@
-ven # HerdLinx SaaS - Cattle Tracking Application
+# HerdLinx Office App
 
-A multi-tenant SaaS application for tracking cattle in feedlots, built with Flask, MongoDB, and Tailwind CSS.
+A standalone Flask-based cattle herd management system with LoRa device integration for real-time batch tracking from barns and export facilities.
 
 ## Features
 
-- **Multi-tenant Architecture**: Separate top-level management with individual feedlot instances
-- **Multi-level Authentication**: Separate user management for top-level and feedlot users
-- **Feedlot Management**: Create and manage multiple feedlot instances
-- **Pen Management**: Track pens with capacity monitoring
-- **Batch Tracking**: Record cattle induction by batches
-- **Individual Cattle Details**: Detailed tracking of each cattle's information
-- **Responsive Design**: Mobile-first UI using Tailwind CSS
-- **Security**: Password encryption, session management, and role-based access control
+- **Admin Dashboard** - Real-time cattle herd management
+- **Batch Management** - Create and manage cattle batches with source tracking (barn/export)
+- **Pen Management** - Track cattle pen assignments and capacity
+- **Cattle Tracking** - Individual animal records with weight tracking, health status, and tag management
+- **LoRa Integration** - Automatic batch creation from LoRa device payloads with deduplication
+- **Payload Buffering** - Async processing of incoming LoRa payloads with background worker
+- **Admin Controls** - User authentication and authorization
 
-## Tech Stack
-
-- **Backend**: Python 3.8+ with Flask
-- **Frontend**: HTML5 with Tailwind CSS
-- **Database**: MongoDB
-- **Authentication**: bcrypt for password hashing
-
-## Installation
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- MongoDB (local or cloud instance)
+- Python 3.8+
 - pip (Python package manager)
 
-### Setup Instructions
+### Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd herdlinx-saas
-   ```
+```bash
+git clone <repository-url>
+cd herdlinx-saas
+```
 
 2. **Create a virtual environment**
-   ```bash
-   python -m venv venv
-   
-   # On Windows
-   venv\Scripts\activate
-   
-   # On macOS/Linux
-   source venv/bin/activate
-   ```
+```bash
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+```
 
 3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-4. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` file with your configuration:
-   ```env
-   SECRET_KEY=your-secret-key-here
-   MONGODB_URI=mongodb://localhost:27017/
-   MONGODB_DB=herdlinx_saas
-   ```
+4. **Run the application**
+```bash
+python -m office_app.run
+```
 
-5. **Start MongoDB**
-   Make sure MongoDB is running on your system or update the `MONGODB_URI` in `.env` to point to your MongoDB instance.
+The application will start at `http://localhost:5001`
 
-6. **Run the application**
-   ```bash
-   python run.py
-   ```
-
-7. **Add Your Logo (Optional)**
-   Place your logo image file (`logo.png`) in the `static/img/` directory. The application will automatically use it in the navigation bar.
-
-8. **Access the application**
-   Open your browser and navigate to `http://localhost:5000`
-
-## Brand Colors
-
-The application uses a custom color palette defined in `brand-colors.md`:
-- **Primary (Navy)**: `#0A2540` - Used for navigation, headers, and primary elements
-- **Secondary (Teal)**: `#2D8B8B` - Used for buttons, links, and interactive elements  
-- **Accent (Gold)**: `#F5A623` - Available for emphasis and call-to-action elements
-
-## First Time Setup
-
-### Default Admin Account
-
-The application comes with a pre-configured admin user that is automatically created on first startup:
-
-- **Username**: `sft`
-- **Password**: `sftcattle`
-- **Type**: Top-Level User
-
-This user has full access to:
-- View and manage all feedlot instances
-- Create new feedlots
-- Create additional top-level users
-- Create feedlot users for any feedlot
-
-### User Types
-
-The application supports two user types:
-
-1. **Top-Level Users**: Access the main hub and all feedlots, can manage all aspects of the system
-2. **Feedlot Users**: Access only their assigned feedlot, limited to feedlot-specific operations
-
-### Creating Your First Feedlot
-
-1. Login with the default admin credentials (sft / sftcattle)
-2. Navigate to the dashboard
-3. Click "Create New Feedlot"
-4. Fill in feedlot details
-5. Start managing pens, batches, and cattle
+**Default credentials:**
+- Username: `admin`
+- Password: `admin`
 
 ## Project Structure
 
 ```
 herdlinx-saas/
-├── app/
-│   ├── __init__.py          # Flask app initialization
-│   ├── models/              # Database models
-│   │   ├── user.py          # User model
-│   │   ├── feedlot.py       # Feedlot model
-│   │   ├── pen.py           # Pen model
-│   │   ├── batch.py         # Batch model
-│   │   └── cattle.py        # Cattle model
-│   ├── routes/              # Application routes
-│   │   ├── auth_routes.py   # Authentication routes
-│   │   ├── top_level_routes.py  # Top-level routes
-│   │   └── feedlot_routes.py    # Feedlot routes
-│   └── templates/           # HTML templates
-│       ├── base.html        # Base template
-│       ├── auth/            # Authentication templates
-│       ├── top_level/       # Top-level templates
-│       └── feedlot/         # Feedlot templates
-├── config.py                # Configuration settings
-├── run.py                   # Application entry point
-├── requirements.txt         # Python dependencies
-└── README.md                # This file
+├── office_app/                    # Main Flask application
+│   ├── __init__.py               # App factory and initialization
+│   ├── config.py                 # Configuration settings
+│   ├── run.py                    # Entry point
+│   ├── office_app.db             # SQLite database (auto-created)
+│   ├── models/                   # SQLAlchemy ORM models
+│   │   ├── user.py              # Admin user model
+│   │   ├── batch.py             # Batch model with payload parsing
+│   │   ├── pen.py               # Pen model
+│   │   ├── cattle.py            # Cattle model with tag history
+│   │   └── lora_payload_buffer.py # LoRa payload buffer model
+│   ├── routes/                   # Flask blueprints
+│   │   ├── auth_routes.py       # Authentication and login
+│   │   └── office_routes.py     # Office app and API routes
+│   ├── utils/                    # Utility modules
+│   │   ├── payload_processor.py # LoRa payload processing
+│   │   └── background_worker.py # Background worker thread
+│   ├── templates/                # Jinja2 HTML templates
+│   ├── static/                   # CSS, JavaScript, images
+│   ├── requirements.txt          # Dependencies
+│   ├── README.md                 # Office app README
+│   └── LORA_PAYLOAD_SYSTEM.md   # LoRa system documentation
+├── requirements.txt              # Root dependencies
+└── README.md                     # This file
 ```
 
-## Database Schema
+## Usage
 
-### Collections
+### Web Interface
 
-1. **users**: User accounts (top-level and feedlot)
-2. **feedlots**: Feedlot instances/tenants
-3. **pens**: Physical pen locations within feedlots
-4. **batches**: Groups of cattle inducted together
-5. **cattle**: Individual cattle records
+1. **Login** - Visit `http://localhost:5001` and login with default credentials
+2. **Dashboard** - View herd statistics and recent batches
+3. **Batch Management** - Create and manage batches at `/office/batches`
+4. **Pen Management** - Manage pens and capacity at `/office/pens`
+5. **Cattle Management** - Track individual animals at `/office/cattle`
+6. **LoRa Dashboard** - Monitor payload processing at `/lora-dashboard`
 
-### Relationships
+### API Endpoints
 
-- Feedlots contain multiple pens and batches
-- Batches contain multiple cattle
-- Cattle are assigned to pens
-- Users are associated with feedlots (for feedlot-level users)
-
-## Usage Guide
-
-### Top-Level Hub
-
-- View all feedlot instances
-- Create, edit, and manage feedlots
-- Navigate to individual feedlot dashboards
-
-### Feedlot Instance
-
-- **Dashboard**: Overview of feedlot statistics
-- **Pens**: Manage pens with capacity tracking
-- **Batches**: Record cattle induction in groups
-- **Cattle**: Individual cattle records and tracking
-
-### Adding Cattle
-
-1. Create a batch first
-2. Add pens for cattle housing
-3. Add cattle to the batch
-4. Assign cattle to pens (optional)
-5. Monitor capacity and health status
-
-## Security Features
-
-- Password hashing using bcrypt
-- Session-based authentication
-- Role-based access control
-- Multi-level user isolation
-- Input validation
-- Secure password handling
-
-## Responsive Design
-
-The application is fully responsive and supports:
-- **Mobile**: < 640px
-- **Tablet**: 640px - 1024px
-- **Desktop**: > 1024px
-
-All features are accessible across all device sizes with optimized layouts.
-
-## Development
-
-### Running in Development Mode
-
+#### LoRa Payload Reception
 ```bash
-python run.py
+POST /api/lora/receive
+Content-Type: application/json
+
+{
+    "payload": "hxb:BATCH001:LF123:UHF456"
+}
 ```
 
-The application will run with debug mode enabled.
+**Payload Format:**
+- `hxb` - Barn source
+- `hxe` - Export source
+- `BATCH001` - Batch identifier
+- `LF123` - Low-Frequency tag
+- `UHF456` - Ultra-High-Frequency tag
 
-### Code Structure
+#### Buffer Status
+```bash
+GET /api/lora/buffer-status
+Authorization: Bearer <token>
+```
 
-- **Models**: Database operations using PyMongo
-- **Routes**: Flask blueprints for different sections
-- **Templates**: Jinja2 templates with Tailwind CSS
-- **Authentication**: Decorators for access control
+#### List Payloads
+```bash
+GET /api/lora/payloads?status=processed&limit=50&offset=0
+Authorization: Bearer <token>
+```
+
+#### Manual Processing
+```bash
+POST /api/lora/process
+Authorization: Bearer <token>
+```
+
+See [LORA_PAYLOAD_SYSTEM.md](office_app/LORA_PAYLOAD_SYSTEM.md) for complete API documentation.
 
 ## Configuration
 
-Edit `config.py` or environment variables in `.env` to configure:
-- MongoDB connection
-- Secret keys
-- Session settings
-- Application preferences
+### Processing Interval
+
+Edit `office_app/__init__.py` to change LoRa payload processing interval:
+
+```python
+init_background_worker(app, interval=5)  # 5 seconds (default)
+```
+
+Recommended values:
+- **1-2 seconds**: High-frequency devices, low latency
+- **5-10 seconds**: Standard operation
+- **30+ seconds**: Low-frequency devices
+
+### Database
+
+SQLite database is automatically created at `office_app/office_app.db` on first run.
+
+To reset database:
+```bash
+rm office_app/office_app.db
+python -m office_app.run
+```
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+```
+OFFICE_DATABASE_URL=sqlite:///office_app/office_app.db
+FLASK_ENV=development
+```
+
+## LoRa Payload Processing
+
+The system automatically processes incoming LoRa payloads:
+
+1. **Reception** - Payload buffered to database
+2. **Deduplication** - SHA256 hash prevents duplicates
+3. **Parsing** - Format validated and extracted
+4. **Batch Creation** - Auto-creates batch if needed
+5. **Status Tracking** - Records success/failure
+
+Background worker runs every 5 seconds and processes pending payloads asynchronously.
+
+## Database Schema
+
+### Main Tables
+
+**users** - Admin users
+```sql
+id, username, email, password_hash, is_admin, is_active, created_at
+```
+
+**batches** - Cattle batches
+```sql
+id, batch_number, induction_date, source, source_type, notes, created_at, updated_at
+```
+
+**pens** - Physical pen locations
+```sql
+id, pen_number, capacity, description, created_at, updated_at
+```
+
+**cattle** - Individual animals
+```sql
+id, batch_id, cattle_id, pen_id, sex, weight, health_status, lf_tag, uhf_tag, created_at, updated_at
+```
+
+**lora_payload_buffer** - Payload tracking
+```sql
+id, raw_payload, payload_hash, source_type, batch_number, lf_tag, uhf_tag, status, batch_id, error_message, received_at, processed_at, created_at, updated_at
+```
+
+## Performance
+
+- **Payload Throughput**: 1-2 payloads/second per device
+- **Processing Latency**: <5 seconds (default 5s interval)
+- **Storage**: ~500 bytes per payload
+- **Memory**: ~20 MB overhead
 
 ## Troubleshooting
 
-### MongoDB Connection Issues
-
-- Ensure MongoDB is running
-- Check `MONGODB_URI` in `.env`
-- Verify network connectivity
-
-### Port Already in Use
-
-Change the port in `run.py`:
-```python
-app.run(debug=True, host='0.0.0.0', port=5001)
+### Database errors
+```bash
+# Recreate database
+rm office_app/office_app.db
+python -m office_app.run
 ```
+
+### Port already in use
+```bash
+# Change port in office_app/run.py or use environment variable
+# Or kill the process using port 5001
+```
+
+### Payload processing errors
+Check `/api/lora/payloads?status=error` for failed payloads and error messages.
+
+## Development
+
+### Running in Debug Mode
+```bash
+python -m office_app.run
+```
+
+The app runs with `debug=True` by default, enabling hot reloading and detailed error pages.
+
+### Testing
+
+```bash
+# Send test payload
+curl -X POST http://localhost:5001/api/lora/receive \
+  -H "Content-Type: application/json" \
+  -d '{"payload": "hxb:TEST001:LF999:UHF888"}'
+
+# Check buffer status
+curl http://localhost:5001/api/lora/buffer-status
+```
+
+## Documentation
+
+- [LoRa Payload System](office_app/LORA_PAYLOAD_SYSTEM.md) - Complete API and architecture documentation
+- [Office App README](office_app/README.md) - Additional office app documentation
 
 ## License
 
-This project is for demonstration purposes.
+Proprietary - All rights reserved
 
 ## Support
 
-For issues or questions, please contact the development team.
+For issues or questions, contact the development team.
 
+## Version History
+
+### Current
+- LoRa payload processing with background worker
+- Batch creation from device payloads
+- Admin dashboard and cattle management
+
+### Future
+- WebSocket for real-time updates
+- Advanced filtering and reporting
+- Export to CSV/Excel
+- Multi-user support with role-based access
