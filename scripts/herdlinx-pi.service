@@ -1,0 +1,32 @@
+[Unit]
+Description=HerdLinx Raspberry Pi Backend Service
+Documentation=https://github.com/CoreNeuroHub/herdlinx-saas
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/herdlinx-saas
+Environment="PATH=/home/pi/herdlinx-saas/venv/bin"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/home/pi/herdlinx-saas/venv/bin/python -m office_app.run
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=herdlinx-pi
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/home/pi/herdlinx-saas
+
+# Resource limits
+MemoryLimit=512M
+CPUQuota=80%
+
+[Install]
+WantedBy=multi-user.target
