@@ -52,6 +52,11 @@ class LoRaPayloadBuffer(db.Model):
         return buffer_entry.id
 
     @staticmethod
+    def find_by_id(payload_id):
+        """Find payload by ID"""
+        return LoRaPayloadBuffer.query.get(payload_id)
+
+    @staticmethod
     def find_by_hash(payload_hash):
         """Find payload by hash (for deduplication)"""
         return LoRaPayloadBuffer.query.filter_by(payload_hash=payload_hash).first()

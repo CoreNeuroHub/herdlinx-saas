@@ -43,9 +43,15 @@ def create_app():
     # Register blueprints
     from .routes.auth_routes import auth_bp
     from .routes.office_routes import office_bp
-    
+    from .remote_api import remote_api_bp, init_socketio, register_socketio_handlers
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(office_bp)
+    app.register_blueprint(remote_api_bp)
+
+    # Initialize WebSocket for real-time updates
+    socketio = init_socketio(app)
+    register_socketio_handlers(socketio)
     
     # Initialize database tables
     with app.app_context():

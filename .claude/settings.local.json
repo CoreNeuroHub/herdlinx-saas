@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"C:\\SFT\\saas\\herdlinx-saas\\office_app\")",
+      "Bash(git rm:*)",
+      "Bash(copy:*)",
+      "Bash(dir \"C:\\SFT\\saas\\herdlinx-saas\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
