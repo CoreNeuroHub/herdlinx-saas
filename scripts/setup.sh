@@ -29,6 +29,24 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# Parse command line arguments
+SKIP_UPDATE=false
+for arg in "$@"; do
+    case $arg in
+        --skip-update)
+            SKIP_UPDATE=true
+            shift
+            ;;
+        --help)
+            echo "Usage: $0 [options]"
+            echo "Options:"
+            echo "  --skip-update    Skip system package update (faster setup)"
+            echo "  --help           Show this help message"
+            exit 0
+            ;;
+    esac
+done
+
 print_header() {
     echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
     echo -e "${BLUE}  HerdLinx Raspberry Pi Backend - Setup${NC}"
@@ -74,6 +92,11 @@ check_sudo() {
 }
 
 update_system() {
+    if [ "$SKIP_UPDATE" = true ]; then
+        print_step "Skipping system package update (--skip-update flag set)"
+        return
+    fi
+
     print_step "Updating system packages..."
 
     sudo apt-get update > /dev/null 2>&1
