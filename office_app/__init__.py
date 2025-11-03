@@ -55,8 +55,21 @@ def create_app():
         if not User.query.filter_by(username='admin').first():
             User.create_admin('admin', 'admin@office.local', 'admin')
 
-    # Initialize background payload processing worker
-    from .utils.background_worker import init_background_worker
-    init_background_worker(app, interval=5)  # Process payloads every 5 seconds
+    # Initialize background payload processing worker (only on Pi backend)
+    if app.config.get('IS_PI_BACKEND', False):
+        from .utils.background_worker import init_background_worker
+        init_background_worker(app, interval=5)  # Process payloads every 5 seconds
+
+    # Initialize remote database client (only on server UI)
+    if app.config.get('IS_SERVER_UI', False):
+        from .remote_db_client import create_remote_client_from_config
+        from .websocket_client import create_websocket_client_from_config
+
+        try:
+            create_remote_client_from_config(app)
+            create_websocket_client_from_config(app)
+            app.logger.info("Remote client initialized successfully")
+        except Exception as e:
+            app.logger.warning(f"Failed to initialize remote client: {str(e)}")
 
     return app
