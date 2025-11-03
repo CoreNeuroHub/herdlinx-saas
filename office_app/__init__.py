@@ -45,6 +45,11 @@ def create_app():
     from .routes.office_routes import office_bp
     from .remote_api import remote_api_bp, init_socketio, register_socketio_handlers
 
+    # Register sync API (only on Pi backend)
+    if app.config.get('IS_PI_BACKEND', False):
+        from .sync_api import sync_api_bp
+        app.register_blueprint(sync_api_bp)
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(office_bp)
     app.register_blueprint(remote_api_bp)
