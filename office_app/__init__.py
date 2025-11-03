@@ -60,16 +60,20 @@ def create_app():
         from .utils.background_worker import init_background_worker
         init_background_worker(app, interval=5)  # Process payloads every 5 seconds
 
-    # Initialize remote database client (only on server UI)
+    # Initialize database sync service and WebSocket (only on server UI)
     if app.config.get('IS_SERVER_UI', False):
-        from .remote_db_client import create_remote_client_from_config
+        from .sync_service import create_sync_service_from_config
         from .websocket_client import create_websocket_client_from_config
 
         try:
-            create_remote_client_from_config(app)
+            # Start database sync service (syncs from Pi every 10 seconds)
+            create_sync_service_from_config(app)
+            app.logger.info("Database sync service initialized")
+
+            # Keep WebSocket for real-time updates
             create_websocket_client_from_config(app)
-            app.logger.info("Remote client initialized successfully")
+            app.logger.info("WebSocket client initialized successfully")
         except Exception as e:
-            app.logger.warning(f"Failed to initialize remote client: {str(e)}")
+            app.logger.warning(f"Failed to initialize remote services: {str(e)}")
 
     return app

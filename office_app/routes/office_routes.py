@@ -678,3 +678,34 @@ def lora_dashboard():
                          buffer_status=buffer_status,
                          recent_payloads=recent_payloads)
 
+# Database Sync Status Routes (Server UI only)
+
+@office_bp.route('/api/sync-status', methods=['GET'])
+@login_required
+@admin_required
+def get_sync_status():
+    """Get database sync service status (Server UI only)"""
+    try:
+        from office_app.sync_service import get_sync_service
+
+        sync_service = get_sync_service()
+
+        if not sync_service:
+            return jsonify({
+                'success': False,
+                'message': 'Sync service not initialized (Pi backend only)'
+            }), 400
+
+        stats = sync_service.get_stats()
+
+        return jsonify({
+            'success': True,
+            'data': stats
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error getting sync status: {str(e)}'
+        }), 500
+
