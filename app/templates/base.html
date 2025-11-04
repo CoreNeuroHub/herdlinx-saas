@@ -85,15 +85,30 @@
                         </button>
                     </div>
                     {% if session.user_id %}
-                        <div class="flex items-center space-x-3">
+                        {% set user_profile = session.get('user_profile') %}
+                        <div class="flex items-center space-x-3 mb-4">
+                            {% if user_profile and user_profile.get('profile_picture') %}
+                            <img src="{{ user_profile.profile_picture }}" alt="Profile" 
+                                 class="w-12 h-12 rounded-full object-cover border-2 border-teal">
+                            {% else %}
                             <div class="w-12 h-12 bg-teal rounded-full flex items-center justify-center">
-                                <span class="text-xl font-bold">{{ session.username[0].upper() }}</span>
+                                <span class="text-xl font-bold text-white">{{ session.username[0].upper() }}</span>
                             </div>
-                            <div>
-                                <p class="text-white font-semibold">{{ session.username }}</p>
+                            {% endif %}
+                            <div class="flex-1">
+                                <p class="text-white font-semibold">
+                                    {% if user_profile and user_profile.get('first_name') %}
+                                        {{ user_profile.first_name }}{% if user_profile.get('last_name') %} {{ user_profile.last_name }}{% endif %}
+                                    {% else %}
+                                        {{ session.username }}
+                                    {% endif %}
+                                </p>
                                 <p class="text-gray-400 text-sm">Logged in</p>
                             </div>
                         </div>
+                        <a href="{{ url_for('auth.profile') }}" class="block w-full bg-teal bg-opacity-20 hover:bg-opacity-30 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 text-center mb-2">
+                            Edit Profile
+                        </a>
                     {% endif %}
                 </div>
                 <div class="flex-1 py-4">

@@ -1,6 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
 from app.models.user import User
 from functools import wraps
+import bcrypt
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -102,6 +106,12 @@ def login():
             session['user_id'] = str(user['_id'])
             session['username'] = user['username']
             session['user_type'] = user_type
+            # Store user profile data for quick access
+            session['user_profile'] = {
+                'first_name': user.get('first_name'),
+                'last_name': user.get('last_name'),
+                'profile_picture': user.get('profile_picture')
+            }
             
             if user_type in ['super_owner', 'super_admin']:
                 return redirect(url_for('top_level.dashboard'))
@@ -259,4 +269,164 @@ def register():
     
     # GET request - redirect to dashboard since we're using a modal now
     return redirect(url_for('top_level.dashboard'))
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@auth_bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    """View and edit user profile"""
+    user_id = session.get('user_id')
+    if not user_id:
+        flash('Please log in to view your profile.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    user = User.find_by_id(user_id)
+    if not user:
+        flash('User not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        contact_number = request.form.get('contact_number', '').strip()
+        current_password = request.form.get('current_password', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        
+        # Validate required fields
+        if not username or not email:
+            flash('Username and email are required.', 'error')
+            return render_template('auth/profile.html', user=user)
+        
+        # Check if username is being changed and if it's already taken
+        if username != user.get('username'):
+            existing_user = User.find_by_username(username)
+            if existing_user and str(existing_user['_id']) != user_id:
+                flash('Username already exists.', 'error')
+                return render_template('auth/profile.html', user=user)
+        
+        # Check if email is being changed and if it's already taken
+        if email != user.get('email'):
+            existing_user = User.find_by_email(email)
+            if existing_user and str(existing_user['_id']) != user_id:
+                flash('Email already exists.', 'error')
+                return render_template('auth/profile.html', user=user)
+        
+        # Prepare update data
+        update_data = {
+            'username': username,
+            'email': email,
+            'first_name': first_name if first_name else None,
+            'last_name': last_name if last_name else None,
+            'contact_number': contact_number if contact_number else None
+        }
+        
+        # Handle profile picture upload
+        if 'profile_picture' in request.files:
+            file = request.files['profile_picture']
+            if file and file.filename:
+                # Validate file type
+                if not allowed_file(file.filename):
+                    flash('Invalid file type. Please upload a PNG, JPG, JPEG, GIF, or WEBP image.', 'error')
+                    return render_template('auth/profile.html', user=user)
+                
+                # Validate file size (max 5MB for images)
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                file.seek(0)
+                if file_size > 5 * 1024 * 1024:  # 5MB
+                    flash('File size too large. Please upload an image smaller than 5MB.', 'error')
+                    return render_template('auth/profile.html', user=user)
+                
+                # Generate unique filename
+                file_ext = file.filename.rsplit('.', 1)[1].lower()
+                filename = f"{user_id}_{uuid.uuid4().hex[:8]}.{file_ext}"
+                filename = secure_filename(filename)
+                
+                # Create profile_pictures directory if it doesn't exist
+                profile_pics_dir = os.path.join(current_app.static_folder, 'profile_pictures')
+                os.makedirs(profile_pics_dir, exist_ok=True)
+                
+                # Delete old profile picture if it exists
+                old_picture = user.get('profile_picture')
+                if old_picture:
+                    # Handle both /static/... and static/... paths
+                    # Extract filename from path like /static/profile_pictures/filename.jpg
+                    old_path_clean = old_picture.lstrip('/').replace('static/', '').replace('profile_pictures/', '')
+                    if old_path_clean:
+                        old_path = os.path.join(profile_pics_dir, old_path_clean)
+                        if os.path.exists(old_path) and os.path.isfile(old_path):
+                            try:
+                                os.remove(old_path)
+                            except Exception:
+                                pass  # Ignore errors when deleting old file
+                
+                # Save new profile picture
+                file_path = os.path.join(profile_pics_dir, filename)
+                file.save(file_path)
+                
+                # Store relative path in database
+                update_data['profile_picture'] = f'/static/profile_pictures/{filename}'
+        
+        # Handle password change if provided
+        if new_password:
+            if not current_password:
+                flash('Current password is required to change password.', 'error')
+                return render_template('auth/profile.html', user=user)
+            
+            # Verify current password
+            if not User.verify_password(user['password_hash'], current_password):
+                flash('Current password is incorrect.', 'error')
+                return render_template('auth/profile.html', user=user)
+            
+            # Validate new password confirmation
+            if new_password != confirm_password:
+                flash('New password and confirmation do not match.', 'error')
+                return render_template('auth/profile.html', user=user)
+            
+            # Validate password length
+            if len(new_password) < 6:
+                flash('New password must be at least 6 characters long.', 'error')
+                return render_template('auth/profile.html', user=user)
+            
+            # Hash new password
+            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            update_data['password_hash'] = hashed_password
+        
+        # Update user
+        try:
+            User.update_user(user_id, update_data)
+            
+            # Update session data if changed
+            if username != session.get('username'):
+                session['username'] = username
+            
+            # Refresh user profile in session
+            updated_user = User.find_by_id(user_id)
+            session['user_profile'] = {
+                'first_name': updated_user.get('first_name'),
+                'last_name': updated_user.get('last_name'),
+                'profile_picture': updated_user.get('profile_picture')
+            }
+            
+            flash('Profile updated successfully.', 'success')
+            
+            # Redirect based on user type
+            user_type = session.get('user_type')
+            if user_type == 'user':
+                return redirect(url_for('feedlot.dashboard', feedlot_id=session.get('feedlot_id')))
+            else:
+                return redirect(url_for('top_level.dashboard'))
+        except Exception as e:
+            flash(f'Failed to update profile: {str(e)}', 'error')
+            return render_template('auth/profile.html', user=user)
+    
+    # GET request - show profile form
+    return render_template('auth/profile.html', user=user)
 
