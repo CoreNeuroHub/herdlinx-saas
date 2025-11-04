@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from bson import ObjectId
 from app.models.feedlot import Feedlot
 from app.models.user import User
-from app.routes.auth_routes import login_required, top_level_required, top_level_or_feedlot_admin_required
+from app.routes.auth_routes import login_required, super_admin_required, admin_access_required
 from app import db
 
 top_level_bp = Blueprint('top_level', __name__)
@@ -10,12 +10,12 @@ top_level_bp = Blueprint('top_level', __name__)
 @top_level_bp.route('/')
 @top_level_bp.route('/dashboard')
 @login_required
-@top_level_or_feedlot_admin_required
+@admin_access_required
 def dashboard():
-    """Dashboard showing feedlots (all for top-level, filtered for feedlot_admin)"""
+    """Dashboard showing feedlots (all for super owner/super admin, filtered for business owner/business admin)"""
     user_type = session.get('user_type')
     
-    if user_type == 'feedlot_admin':
+    if user_type in ['business_owner', 'business_admin']:
         # Filter feedlots to only show assigned ones
         user_feedlot_ids = session.get('feedlot_ids', [])
         if user_feedlot_ids:
@@ -24,7 +24,7 @@ def dashboard():
         else:
             feedlots = []
     else:
-        # Top-level users see all feedlots
+        # Super owner and super admin see all feedlots
         feedlots = Feedlot.find_all()
     
     # Get unique locations for filter dropdown
@@ -35,7 +35,7 @@ def dashboard():
 
 @top_level_bp.route('/feedlot/create', methods=['GET', 'POST'])
 @login_required
-@top_level_required
+@super_admin_required
 def create_feedlot():
     """Create a new feedlot"""
     if request.method == 'POST':
@@ -83,12 +83,12 @@ def create_feedlot():
 
 @top_level_bp.route('/feedlot/<feedlot_id>/view')
 @login_required
-@top_level_or_feedlot_admin_required
+@admin_access_required
 def view_feedlot(feedlot_id):
     """View feedlot details"""
-    # Check if feedlot_admin has access to this feedlot
+    # Check if business owner or business admin has access to this feedlot
     user_type = session.get('user_type')
-    if user_type == 'feedlot_admin':
+    if user_type in ['business_owner', 'business_admin']:
         user_feedlot_ids = [str(fid) for fid in session.get('feedlot_ids', [])]
         if str(feedlot_id) not in user_feedlot_ids:
             flash('Access denied. You do not have access to this feedlot.', 'error')
@@ -104,7 +104,7 @@ def view_feedlot(feedlot_id):
 
 @top_level_bp.route('/feedlot/<feedlot_id>/edit', methods=['GET', 'POST'])
 @login_required
-@top_level_required
+@super_admin_required
 def edit_feedlot(feedlot_id):
     """Edit feedlot details"""
     feedlot = Feedlot.find_by_id(feedlot_id)
@@ -131,12 +131,12 @@ def edit_feedlot(feedlot_id):
 
 @top_level_bp.route('/feedlot/<feedlot_id>/users')
 @login_required
-@top_level_or_feedlot_admin_required
+@admin_access_required
 def feedlot_users(feedlot_id):
     """Manage users for a feedlot"""
-    # Check if feedlot_admin has access to this feedlot
+    # Check if business owner or business admin has access to this feedlot
     user_type = session.get('user_type')
-    if user_type == 'feedlot_admin':
+    if user_type in ['business_owner', 'business_admin']:
         user_feedlot_ids = [str(fid) for fid in session.get('feedlot_ids', [])]
         if str(feedlot_id) not in user_feedlot_ids:
             flash('Access denied. You do not have access to this feedlot.', 'error')
@@ -152,7 +152,7 @@ def feedlot_users(feedlot_id):
 
 @top_level_bp.route('/user/<user_id>/activate', methods=['POST'])
 @login_required
-@top_level_required
+@super_admin_required
 def activate_user(user_id):
     """Activate a user"""
     user = User.find_by_id(user_id)
@@ -171,7 +171,7 @@ def activate_user(user_id):
 
 @top_level_bp.route('/user/<user_id>/deactivate', methods=['POST'])
 @login_required
-@top_level_required
+@super_admin_required
 def deactivate_user(user_id):
     """Deactivate a user"""
     user = User.find_by_id(user_id)
@@ -195,13 +195,13 @@ def deactivate_user(user_id):
 
 @top_level_bp.route('/users')
 @login_required
-@top_level_or_feedlot_admin_required
+@admin_access_required
 def manage_users():
-    """Manage all users (top-level and feedlot users)"""
+    """Manage all users (super owner/super admin and business users)"""
     user_type = session.get('user_type')
     
     # Get feedlots for the modal form
-    if user_type == 'feedlot_admin':
+    if user_type in ['business_owner', 'business_admin']:
         # Filter feedlots to only show assigned ones
         user_feedlot_ids = session.get('feedlot_ids', [])
         if user_feedlot_ids:
@@ -210,12 +210,12 @@ def manage_users():
         else:
             feedlots = []
     else:
-        # Top-level users see all feedlots
+        # Super owner and super admin see all feedlots
         feedlots = Feedlot.find_all()
     
     # Get all users based on user type
-    if user_type == 'feedlot_admin':
-        # Feedlot admins can see users for their assigned feedlots
+    if user_type in ['business_owner', 'business_admin']:
+        # Business owner and business admin can see users for their assigned feedlots
         user_feedlot_ids = session.get('feedlot_ids', [])
         if user_feedlot_ids:
             feedlot_object_ids = [ObjectId(fid) for fid in user_feedlot_ids]
@@ -236,7 +236,7 @@ def manage_users():
         else:
             users = []
     else:
-        # Top-level users see all users
+        # Super owner and super admin see all users
         users = list(db.users.find())
     
     return render_template('top_level/manage_users.html', users=users, user_type=user_type, feedlots=feedlots)

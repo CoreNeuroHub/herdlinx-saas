@@ -34,7 +34,7 @@
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Type</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                {% if user_type == 'top_level' %}
+                {% if user_type in ['super_owner', 'super_admin'] %}
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 {% endif %}
             </tr>
@@ -45,7 +45,7 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.username }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if user.user_type == 'top_level' %}bg-purple-100 text-purple-800{% elif user.user_type == 'feedlot_admin' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if user.user_type in ['super_owner', 'super_admin'] %}bg-purple-100 text-purple-800{% elif user.user_type in ['business_owner', 'business_admin'] %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
                         {{ user.user_type|replace('_', ' ')|title }}
                     </span>
                 </td>
@@ -59,7 +59,7 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ user.created_at | strftime if user.created_at else 'N/A' }}
                 </td>
-                {% if user_type == 'top_level' %}
+                {% if user_type in ['super_owner', 'super_admin'] %}
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     {% if not user.is_active %}
                     <form method="POST" action="{{ url_for('top_level.activate_user', user_id=user._id) }}" class="inline">
@@ -101,8 +101,8 @@
         </div>
         
         <form id="add-user-form" method="POST" action="{{ url_for('auth.register') }}" class="p-6 space-y-4">
-            {% if user_type == 'feedlot_admin' %}
-            <p class="text-sm text-gray-600 mb-4">You can create feedlot admin and feedlot users for your assigned feedlots.</p>
+            {% if user_type in ['business_owner', 'business_admin'] %}
+            <p class="text-sm text-gray-600 mb-4">You can create business owner, business admin, and user accounts for your assigned feedlots.</p>
             {% else %}
             <p class="text-sm text-gray-600 mb-4">Create new user accounts for the system.</p>
             {% endif %}
@@ -129,11 +129,13 @@
                 <label for="user_type" class="block text-sm font-medium text-gray-700 mb-2">User Type *</label>
                 <select id="user_type" name="user_type" required
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
-                    {% if user_type == 'top_level' %}
-                    <option value="top_level">Top Level User</option>
+                    {% if user_type in ['super_owner', 'super_admin'] %}
+                    <option value="super_owner">Super Owner</option>
+                    <option value="super_admin">Super Admin</option>
                     {% endif %}
-                    <option value="feedlot_admin">Feedlot Admin</option>
-                    <option value="feedlot" selected>Feedlot User</option>
+                    <option value="business_owner">Business Owner</option>
+                    <option value="business_admin">Business Admin</option>
+                    <option value="user" selected>User</option>
                 </select>
             </div>
             
@@ -200,7 +202,7 @@
         // Reset user type to default
         const userTypeSelect = document.getElementById('user_type');
         if (userTypeSelect) {
-            userTypeSelect.value = 'feedlot';
+            userTypeSelect.value = 'user';
             updateFeedlotField();
         }
         
@@ -222,22 +224,22 @@
         const feedlotSelect = document.getElementById('feedlot_id');
         
         if (userTypeSelect && feedlotSingleField && feedlotMultipleField) {
-            if (userTypeSelect.value === 'feedlot_admin') {
-                // Show multiple feedlot selection for feedlot_admin
+            if (userTypeSelect.value === 'business_admin' || userTypeSelect.value === 'business_owner') {
+                // Show multiple feedlot selection for business_admin and business_owner
                 feedlotSingleField.style.display = 'none';
                 feedlotMultipleField.style.display = 'block';
                 if (feedlotSelect) {
                     feedlotSelect.removeAttribute('required');
                 }
-            } else if (userTypeSelect.value === 'feedlot') {
-                // Show single feedlot selection for feedlot users
+            } else if (userTypeSelect.value === 'user') {
+                // Show single feedlot selection for regular users
                 feedlotSingleField.style.display = 'block';
                 feedlotMultipleField.style.display = 'none';
                 if (feedlotSelect) {
                     feedlotSelect.setAttribute('required', 'required');
                 }
             } else {
-                // Top level user - no feedlot required
+                // Super owner or super admin - no feedlot required
                 feedlotSingleField.style.display = 'none';
                 feedlotMultipleField.style.display = 'none';
                 if (feedlotSelect) {

@@ -37,7 +37,7 @@ def create_default_admin():
                 username='sft',
                 email='sft@herdlinx.com',
                 password='sftcattle',
-                user_type='top_level',
+                user_type='super_owner',
                 feedlot_id=None
             )
             print("Default admin user 'sft' created successfully")
