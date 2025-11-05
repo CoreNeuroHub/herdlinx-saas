@@ -97,4 +97,17 @@ class User:
             {'_id': ObjectId(user_id)},
             {'$set': {'is_active': False}}
         )
+    
+    @staticmethod
+    def get_dashboard_preferences(user_id):
+        """Get user's dashboard widget preferences"""
+        user = User.find_by_id(user_id)
+        if not user:
+            return None
+        return user.get('dashboard_preferences', {})
+    
+    @staticmethod
+    def save_dashboard_preferences(user_id, preferences):
+        """Save user's dashboard widget preferences"""
+        User.update_user(user_id, {'dashboard_preferences': preferences})
 

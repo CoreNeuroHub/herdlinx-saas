@@ -4,6 +4,7 @@
 
 {% block nav_items %}
 <a href="{{ url_for('top_level.dashboard') }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
+<a href="{{ url_for('top_level.feedlot_hub') }}" class="px-4 py-2 hover:bg-teal rounded transition">Feedlot Hub</a>
 {% endblock %}
 
 {% block home_url %}{{ url_for('top_level.dashboard') }}{% endblock %}
@@ -12,8 +13,8 @@
 <div class="mb-8">
     <div class="flex items-start justify-between mb-4">
         <div>
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Feedlot Hub</h1>
-            <p class="text-gray-600">Manage all feedlot instances</p>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Dashboard</h1>
+            <p class="text-gray-600">Overview of all feedlots and system statistics</p>
         </div>
         {% block actions_dropdown %}
         <div class="relative inline-block text-left">
@@ -26,6 +27,8 @@
             <div id="actions-dropdown-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-[100]" role="menu" aria-orientation="vertical" aria-labelledby="actions-dropdown-btn">
                 <div class="py-1" role="none">
                     {% block actions_items %}
+                    <a href="{{ url_for('top_level.feedlot_hub') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" role="menuitem">View Feedlot Hub</a>
+                    <button onclick="openWidgetSettingsModal()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Show/Hide Widgets</button>
                     {% if user_type in ['super_owner', 'super_admin'] %}
                     <button onclick="openAddFeedlotModal()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Add New Feedlot</button>
                     {% endif %}
@@ -38,75 +41,198 @@
         {% endblock %}
     </div>
 
-    <!-- Search, Filter, and Sort Controls -->
-    <div class="mb-6 bg-white rounded-lg shadow-md p-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Search Bar -->
-            <div>
-                <label for="search-feedlots" class="block text-sm font-medium text-gray-700 mb-2">Search Feedlots</label>
-                <div class="relative">
-                    <input type="text" id="search-feedlots" placeholder="Search by name or location..."
-                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
-                    <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+    <!-- Statistics Widgets -->
+    <div id="widgets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
+        <!-- Total Feedlots Widget -->
+        <div id="widget-feedlots" data-widget-id="feedlots" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Feedlots</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_feedlots }}</p>
+                </div>
+                <div class="bg-teal bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
                 </div>
             </div>
-            
-            <!-- Filter Dropdown -->
-            <div>
-                <label for="filter-location" class="block text-sm font-medium text-gray-700 mb-2">Filter by Location</label>
-                <select id="filter-location" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
-                    <option value="">All Locations</option>
-                    {% if unique_locations %}
-                    {% for location in unique_locations %}
-                    <option value="{{ location }}">{{ location }}</option>
-                    {% endfor %}
-                    {% endif %}
-                </select>
+            <div class="mt-4">
+                <a href="{{ url_for('top_level.feedlot_hub') }}" class="text-sm text-teal hover:underline font-medium">View all feedlots →</a>
             </div>
-            
-            <!-- Sort Dropdown -->
-            <div>
-                <label for="sort-feedlots" class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                <select id="sort-feedlots" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
-                    <option value="name-asc">Name (A-Z)</option>
-                    <option value="name-desc">Name (Z-A)</option>
-                    <option value="location-asc">Location (A-Z)</option>
-                    <option value="location-desc">Location (Z-A)</option>
-                    <option value="date-desc">Newest First</option>
-                    <option value="date-asc">Oldest First</option>
-                </select>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Total Pens Widget -->
+        <div id="widget-pens" data-widget-id="pens" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Pens</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_pens }}</p>
+                </div>
+                <div class="bg-navy bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                    </svg>
+                </div>
             </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Total Cattle Widget -->
+        <div id="widget-cattle" data-widget-id="cattle" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Cattle</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_cattle }}</p>
+                </div>
+                <div class="bg-gold bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Total Batches Widget -->
+        <div id="widget-batches" data-widget-id="batches" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Batches</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_batches }}</p>
+                </div>
+                <div class="bg-teal bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
         </div>
     </div>
 
-{% if feedlots %}
-<div id="feedlots-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for feedlot in feedlots %}
-    <div class="feedlot-card bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200 p-6" 
-         data-name="{{ (feedlot.name or '')|lower }}" 
-         data-location="{{ (feedlot.location or '')|lower }}"
-         data-created="{% if feedlot.created_at %}{% if feedlot.created_at is string %}{{ feedlot.created_at }}{% else %}{{ feedlot.created_at.strftime('%Y-%m-%dT%H:%M:%S') }}{% endif %}{% else %}1970-01-01T00:00:00{% endif %}">
-        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ feedlot.name }}</h3>
-        <p class="text-gray-600 mb-4">{{ feedlot.location }}</p>
-        
-        <div class="flex space-x-2">
-            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="flex-1 bg-teal hover:opacity-90 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
-                Open
-            </a>
-            <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
-                View
-            </a>
+    <!-- Additional Statistics Row -->
+    <div id="widgets-container-2" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
+        <!-- Total Users Widget -->
+        <div id="widget-users" data-widget-id="users" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Users</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_users }}</p>
+                </div>
+                <div class="bg-navy bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{{ url_for('top_level.manage_users') }}" class="text-sm text-teal hover:underline font-medium">Manage users →</a>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Quick Actions Widget -->
+        <div id="widget-quick-actions" data-widget-id="quick-actions" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+            <div class="space-y-3">
+                <a href="{{ url_for('top_level.feedlot_hub') }}" class="block w-full bg-teal hover:opacity-90 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    View Feedlot Hub
+                </a>
+                {% if user_type in ['super_owner', 'super_admin'] %}
+                <button onclick="openAddFeedlotModal()" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Add New Feedlot
+                </button>
+                {% endif %}
+                <button onclick="openAddUserModal()" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Add New User
+                </button>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
         </div>
     </div>
-    {% endfor %}
+
+    <!-- Recent Feedlots Section -->
+    {% if dashboard_stats.recent_feedlots %}
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Recent Feedlots</h2>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" class="text-teal hover:underline font-medium">View all →</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for feedlot in dashboard_stats.recent_feedlots %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ feedlot.name }}</h3>
+                <p class="text-sm text-gray-600 mb-3">{{ feedlot.location }}</p>
+                <div class="flex space-x-2">
+                    <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="flex-1 bg-teal hover:opacity-90 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
+                        Open
+                    </a>
+                    <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
+                        View
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
-{% else %}
-<div class="bg-white rounded-lg shadow-md p-8 text-center">
-    <p class="text-gray-600 text-lg">No feedlots found. Create your first feedlot to get started.</p>
+
+<!-- Widget Settings Modal -->
+<div id="widget-settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Show/Hide Widgets</h2>
+                <button onclick="closeWidgetSettingsModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <p class="text-sm text-gray-600 mb-4">Select which widgets to display on your dashboard:</p>
+            <div class="space-y-3">
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-feedlots" data-widget-id="feedlots" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Feedlots</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-pens" data-widget-id="pens" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Pens</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-cattle" data-widget-id="cattle" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Cattle</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-batches" data-widget-id="batches" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Batches</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-users" data-widget-id="users" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Users</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-quick-actions" data-widget-id="quick-actions" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Quick Actions</span>
+                </label>
+            </div>
+            
+            <div class="flex space-x-4 pt-6 mt-6 border-t border-gray-200">
+                <button onclick="saveWidgetSettings()" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Save Settings
+                </button>
+                <button onclick="closeWidgetSettingsModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
-{% endif %}
 
 <!-- Add New Feedlot Modal -->
 <div id="add-feedlot-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -525,103 +651,290 @@
             });
         }
     });
+
+    // Dashboard Widget Customization
+    const dashboardPreferences = {{ dashboard_preferences|tojson|safe }};
+    let draggedElement = null;
+    let resizeElement = null;
+    let resizeStartX = 0;
+    let resizeStartY = 0;
+    let resizeStartWidth = 0;
+    let resizeStartHeight = 0;
+
+    // Widget Settings Modal Functions
+    function openWidgetSettingsModal() {
+        const modal = document.getElementById('widget-settings-modal');
+        const dropdown = document.getElementById('actions-dropdown-menu');
+        const dropdownBtn = document.getElementById('actions-dropdown-btn');
+        
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+            dropdownBtn.setAttribute('aria-expanded', 'false');
+        }
+        
+        // Load current visibility state
+        const visibility = dashboardPreferences.widget_visibility || {};
+        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions'];
+        allWidgets.forEach(widgetId => {
+            const checkbox = document.getElementById(`widget-check-${widgetId}`);
+            if (checkbox) {
+                checkbox.checked = visibility[widgetId] !== false; // Default to true if not set
+            }
+        });
+        
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
     
-    // Search, Filter, and Sort Functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('search-feedlots');
-        const filterLocation = document.getElementById('filter-location');
-        const sortSelect = document.getElementById('sort-feedlots');
-        const feedlotsGrid = document.getElementById('feedlots-grid');
+    function closeWidgetSettingsModal() {
+        const modal = document.getElementById('widget-settings-modal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+    
+    function saveWidgetSettings() {
+        const visibility = {};
+        const checkboxes = document.querySelectorAll('#widget-settings-modal input[type="checkbox"]');
         
-        if (!feedlotsGrid) return;
+        checkboxes.forEach(checkbox => {
+            const widgetId = checkbox.getAttribute('data-widget-id');
+            visibility[widgetId] = checkbox.checked;
+        });
         
-        function filterAndSortFeedlots() {
-            const searchTerm = (searchInput.value || '').toLowerCase().trim();
-            const selectedLocation = (filterLocation.value || '').toLowerCase();
-            const sortOption = sortSelect.value;
-            
-            const feedlotCards = Array.from(document.querySelectorAll('.feedlot-card'));
-            let visibleCards = feedlotCards.filter(card => {
-                const name = (card.getAttribute('data-name') || '').toLowerCase();
-                const location = (card.getAttribute('data-location') || '').toLowerCase();
-                
-                // Search filter
-                const matchesSearch = !searchTerm || 
-                    name.includes(searchTerm) || 
-                    location.includes(searchTerm);
-                
-                // Location filter
-                const matchesLocation = !selectedLocation || location === selectedLocation;
-                
-                return matchesSearch && matchesLocation;
-            });
-            
-            // Sort the visible cards
-            visibleCards.sort((a, b) => {
-                const aName = a.getAttribute('data-name') || '';
-                const bName = b.getAttribute('data-name') || '';
-                const aLocation = a.getAttribute('data-location') || '';
-                const bLocation = b.getAttribute('data-location') || '';
-                const aCreated = a.getAttribute('data-created') || '';
-                const bCreated = b.getAttribute('data-created') || '';
-                
-                switch(sortOption) {
-                    case 'name-asc':
-                        return aName.localeCompare(bName);
-                    case 'name-desc':
-                        return bName.localeCompare(aName);
-                    case 'location-asc':
-                        return aLocation.localeCompare(bLocation);
-                    case 'location-desc':
-                        return bLocation.localeCompare(aLocation);
-                    case 'date-desc':
-                        return bCreated.localeCompare(aCreated);
-                    case 'date-asc':
-                        return aCreated.localeCompare(bCreated);
-                    default:
-                        return 0;
-                }
-            });
-            
-            // Hide all cards first
-            feedlotCards.forEach(card => {
-                card.style.display = 'none';
-            });
-            
-            // Show visible cards in sorted order
-            visibleCards.forEach((card, index) => {
-                card.style.display = 'block';
-                feedlotsGrid.appendChild(card);
-            });
-            
-            // Show message if no feedlots match
-            const noResultsMsg = document.getElementById('no-results-message');
-            if (visibleCards.length === 0) {
-                if (!noResultsMsg) {
-                    const msg = document.createElement('div');
-                    msg.id = 'no-results-message';
-                    msg.className = 'bg-white rounded-lg shadow-md p-8 text-center col-span-full';
-                    msg.innerHTML = '<p class="text-gray-600 text-lg">No feedlots match your search criteria.</p>';
-                    feedlotsGrid.appendChild(msg);
-                }
-            } else {
-                if (noResultsMsg) {
-                    noResultsMsg.remove();
+        // Update widget visibility immediately
+        updateWidgetVisibility(visibility);
+        
+        // Save preferences
+        saveDashboardPreferences({
+            widget_visibility: visibility,
+            widget_order: getWidgetOrder(),
+            widget_sizes: getWidgetSizes()
+        });
+        
+        closeWidgetSettingsModal();
+        showToast('Widget settings saved successfully.', 'success');
+    }
+    
+    function updateWidgetVisibility(visibility) {
+        Object.keys(visibility).forEach(widgetId => {
+            const widget = document.getElementById(`widget-${widgetId}`);
+            if (widget) {
+                if (visibility[widgetId]) {
+                    widget.style.display = '';
+                } else {
+                    widget.style.display = 'none';
                 }
             }
+        });
+    }
+    
+    function getWidgetOrder() {
+        const widgets = Array.from(document.querySelectorAll('.widget-item'));
+        return widgets.map(widget => widget.getAttribute('data-widget-id'));
+    }
+    
+    function getWidgetSizes() {
+        const sizes = {};
+        document.querySelectorAll('.widget-item').forEach(widget => {
+            const widgetId = widget.getAttribute('data-widget-id');
+            sizes[widgetId] = {
+                width: widget.offsetWidth,
+                height: widget.offsetHeight
+            };
+        });
+        return sizes;
+    }
+    
+    async function saveDashboardPreferences(preferences) {
+        try {
+            const response = await fetch('{{ url_for("top_level.save_dashboard_preferences") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(preferences)
+            });
+            
+            const data = await response.json();
+            if (!data.success) {
+                console.error('Failed to save preferences:', data.message);
+            }
+        } catch (error) {
+            console.error('Error saving preferences:', error);
+        }
+    }
+    
+    // Load preferences on page load
+    function loadDashboardPreferences() {
+        if (!dashboardPreferences) return;
+        
+        // Load widget visibility
+        if (dashboardPreferences.widget_visibility) {
+            updateWidgetVisibility(dashboardPreferences.widget_visibility);
         }
         
-        // Add event listeners
-        if (searchInput) {
-            searchInput.addEventListener('input', filterAndSortFeedlots);
+        // Load widget order
+        if (dashboardPreferences.widget_order && dashboardPreferences.widget_order.length > 0) {
+            const container1 = document.getElementById('widgets-container');
+            const container2 = document.getElementById('widgets-container-2');
+            const allContainers = [container1, container2].filter(c => c);
+            
+            dashboardPreferences.widget_order.forEach(widgetId => {
+                const widget = document.getElementById(`widget-${widgetId}`);
+                if (widget) {
+                    // Find which container it should be in
+                    const currentContainer = widget.parentElement;
+                    if (allContainers.includes(currentContainer)) {
+                        currentContainer.appendChild(widget);
+                    }
+                }
+            });
         }
-        if (filterLocation) {
-            filterLocation.addEventListener('change', filterAndSortFeedlots);
+        
+        // Load widget sizes
+        if (dashboardPreferences.widget_sizes) {
+            Object.keys(dashboardPreferences.widget_sizes).forEach(widgetId => {
+                const widget = document.getElementById(`widget-${widgetId}`);
+                if (widget && dashboardPreferences.widget_sizes[widgetId]) {
+                    const size = dashboardPreferences.widget_sizes[widgetId];
+                    if (size.width && size.width >= 200 && size.width <= 600) {
+                        widget.style.width = size.width + 'px';
+                    }
+                    if (size.height && size.height >= 150) {
+                        widget.style.height = size.height + 'px';
+                    }
+                }
+            });
         }
-        if (sortSelect) {
-            sortSelect.addEventListener('change', filterAndSortFeedlots);
+    }
+    
+    // Drag and Drop Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardPreferences();
+        
+        const widgets = document.querySelectorAll('.widget-item');
+        const containers = [
+            document.getElementById('widgets-container'),
+            document.getElementById('widgets-container-2')
+        ].filter(c => c);
+        
+        widgets.forEach(widget => {
+            widget.addEventListener('dragstart', function(e) {
+                draggedElement = this;
+                this.style.opacity = '0.5';
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            
+            widget.addEventListener('dragend', function() {
+                this.style.opacity = '';
+                draggedElement = null;
+            });
+            
+            widget.addEventListener('dragover', function(e) {
+                if (e.preventDefault) {
+                    e.preventDefault();
+                }
+                e.dataTransfer.dropEffect = 'move';
+                return false;
+            });
+            
+            widget.addEventListener('drop', function(e) {
+                if (e.stopPropagation) {
+                    e.stopPropagation();
+                }
+                
+                if (draggedElement !== this) {
+                    const container = this.parentElement;
+                    const allWidgets = Array.from(container.querySelectorAll('.widget-item'));
+                    const draggedIndex = allWidgets.indexOf(draggedElement);
+                    const targetIndex = allWidgets.indexOf(this);
+                    
+                    if (draggedIndex < targetIndex) {
+                        container.insertBefore(draggedElement, this.nextSibling);
+                    } else {
+                        container.insertBefore(draggedElement, this);
+                    }
+                    
+                    // Save new order
+                    saveDashboardPreferences({
+                        widget_order: getWidgetOrder(),
+                        widget_visibility: dashboardPreferences.widget_visibility || {},
+                        widget_sizes: getWidgetSizes()
+                    });
+                }
+                
+                return false;
+            });
+        });
+        
+        // Resize functionality
+        const resizeHandles = document.querySelectorAll('.resize-handle');
+        resizeHandles.forEach(handle => {
+            handle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                resizeElement = this.parentElement;
+                resizeStartX = e.clientX;
+                resizeStartY = e.clientY;
+                resizeStartWidth = resizeElement.offsetWidth;
+                resizeStartHeight = resizeElement.offsetHeight;
+                
+                document.addEventListener('mousemove', handleResize);
+                document.addEventListener('mouseup', stopResize);
+            });
+        });
+        
+        function handleResize(e) {
+            if (!resizeElement) return;
+            
+            const deltaX = e.clientX - resizeStartX;
+            const deltaY = e.clientY - resizeStartY;
+            
+            let newWidth = resizeStartWidth + deltaX;
+            let newHeight = resizeStartHeight + deltaY;
+            
+            // Apply min/max constraints
+            newWidth = Math.max(200, Math.min(600, newWidth));
+            newHeight = Math.max(150, newHeight);
+            
+            resizeElement.style.width = newWidth + 'px';
+            resizeElement.style.height = newHeight + 'px';
         }
+        
+        function stopResize() {
+            if (resizeElement) {
+                // Save new sizes
+                saveDashboardPreferences({
+                    widget_order: getWidgetOrder(),
+                    widget_visibility: dashboardPreferences.widget_visibility || {},
+                    widget_sizes: getWidgetSizes()
+                });
+            }
+            resizeElement = null;
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+        
+        // Close widget settings modal when clicking outside
+        const widgetModal = document.getElementById('widget-settings-modal');
+        if (widgetModal) {
+            widgetModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeWidgetSettingsModal();
+                }
+            });
+        }
+        
+        // Close widget settings modal on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const widgetModal = document.getElementById('widget-settings-modal');
+                if (widgetModal && !widgetModal.classList.contains('hidden')) {
+                    closeWidgetSettingsModal();
+                }
+            }
+        });
     });
 </script>
 {% endblock %}
-

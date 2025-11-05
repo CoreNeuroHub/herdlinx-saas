@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from bson import ObjectId
+from datetime import datetime
 from app.models.feedlot import Feedlot
 from app.models.user import User
 from app.routes.auth_routes import login_required, super_admin_required, admin_access_required
@@ -13,7 +14,73 @@ top_level_bp = Blueprint('top_level', __name__)
 @login_required
 @admin_access_required
 def dashboard():
-    """Dashboard showing feedlots (all for super owner/super admin, filtered for business owner/business admin)"""
+    """Dashboard showing widgets with feedlot statistics (for super owner/super admin)"""
+    from app.models.pen import Pen
+    from app.models.batch import Batch
+    from app.models.cattle import Cattle
+    
+    user_type = session.get('user_type')
+    
+    # Get feedlots for statistics
+    if user_type in ['business_owner', 'business_admin']:
+        # Filter feedlots to only show assigned ones
+        user_feedlot_ids = session.get('feedlot_ids', [])
+        if user_feedlot_ids:
+            feedlot_object_ids = [ObjectId(fid) for fid in user_feedlot_ids]
+            feedlots = list(Feedlot.find_by_ids(feedlot_object_ids))
+        else:
+            feedlots = []
+    else:
+        # Super owner and super admin see all feedlots
+        feedlots = Feedlot.find_all()
+    
+    # Calculate aggregate statistics across all feedlots
+    total_feedlots = len(feedlots)
+    total_pens = 0
+    total_cattle = 0
+    total_batches = 0
+    total_users = 0
+    
+    if feedlots:
+        feedlot_ids = [ObjectId(str(f['_id'])) for f in feedlots]
+        total_pens = db.pens.count_documents({'feedlot_id': {'$in': feedlot_ids}})
+        total_cattle = db.cattle.count_documents({'feedlot_id': {'$in': feedlot_ids}})
+        total_batches = db.batches.count_documents({'feedlot_id': {'$in': feedlot_ids}})
+        
+        # Count users associated with these feedlots
+        user_query = {'$or': [
+            {'feedlot_id': {'$in': feedlot_ids}},
+            {'feedlot_ids': {'$in': feedlot_ids}}
+        ]}
+        total_users = db.users.count_documents(user_query)
+    
+    # Get recent feedlots (last 5)
+    recent_feedlots = sorted(feedlots, key=lambda x: x.get('created_at', datetime(1970, 1, 1)), reverse=True)[:5]
+    
+    dashboard_stats = {
+        'total_feedlots': total_feedlots,
+        'total_pens': total_pens,
+        'total_cattle': total_cattle,
+        'total_batches': total_batches,
+        'total_users': total_users,
+        'recent_feedlots': recent_feedlots
+    }
+    
+    # Get user's dashboard preferences
+    user_id = session.get('user_id')
+    dashboard_preferences = User.get_dashboard_preferences(user_id) if user_id else {}
+    
+    return render_template('top_level/dashboard.html', 
+                         feedlots=feedlots, 
+                         user_type=user_type, 
+                         dashboard_stats=dashboard_stats,
+                         dashboard_preferences=dashboard_preferences)
+
+@top_level_bp.route('/feedlot-hub')
+@login_required
+@admin_access_required
+def feedlot_hub():
+    """Feedlot Hub page showing all feedlots with search/filter"""
     user_type = session.get('user_type')
     
     if user_type in ['business_owner', 'business_admin']:
@@ -32,7 +99,7 @@ def dashboard():
     unique_locations = sorted(list(set([f.get('location', '') for f in feedlots if f.get('location')])))
     
     user_type = session.get('user_type')
-    return render_template('top_level/dashboard.html', feedlots=feedlots, user_type=user_type, unique_locations=unique_locations)
+    return render_template('top_level/feedlot_hub.html', feedlots=feedlots, user_type=user_type, unique_locations=unique_locations)
 
 @top_level_bp.route('/feedlot/create', methods=['GET', 'POST'])
 @login_required
@@ -390,4 +457,27 @@ def edit_user(user_id):
             return jsonify({'success': False, 'message': error_msg}), 500
         flash(error_msg, 'error')
         return redirect(url_for('top_level.manage_users'))
+
+@top_level_bp.route('/dashboard/preferences', methods=['POST'])
+@login_required
+@admin_access_required
+def save_dashboard_preferences():
+    """Save user's dashboard widget preferences"""
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'message': 'User not authenticated.'}), 401
+        
+        data = request.get_json()
+        preferences = {
+            'widget_order': data.get('widget_order', []),
+            'widget_visibility': data.get('widget_visibility', {}),
+            'widget_sizes': data.get('widget_sizes', {})
+        }
+        
+        User.save_dashboard_preferences(user_id, preferences)
+        return jsonify({'success': True, 'message': 'Dashboard preferences saved successfully.'}), 200
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Failed to save preferences: {str(e)}'}), 500
 
