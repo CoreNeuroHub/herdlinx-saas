@@ -68,4 +68,27 @@ class Feedlot:
             'total_batches': total_batches,
             'cattle_by_pen': len(cattle_by_pen)
         }
+    
+    @staticmethod
+    def save_pen_map(feedlot_id, grid_width, grid_height, pen_placements):
+        """Save pen map configuration for a feedlot"""
+        pen_map_data = {
+            'grid_width': grid_width,
+            'grid_height': grid_height,
+            'pen_placements': pen_placements,  # List of {row, col, pen_id}
+            'updated_at': datetime.utcnow()
+        }
+        
+        db.feedlots.update_one(
+            {'_id': ObjectId(feedlot_id)},
+            {'$set': {'pen_map': pen_map_data, 'updated_at': datetime.utcnow()}}
+        )
+    
+    @staticmethod
+    def get_pen_map(feedlot_id):
+        """Get pen map configuration for a feedlot"""
+        feedlot = Feedlot.find_by_id(feedlot_id)
+        if feedlot and feedlot.get('pen_map'):
+            return feedlot['pen_map']
+        return None
 

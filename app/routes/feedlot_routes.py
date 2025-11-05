@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from bson import ObjectId
 from datetime import datetime
 from app.models.feedlot import Feedlot
@@ -8,6 +8,17 @@ from app.models.cattle import Cattle
 from app.routes.auth_routes import login_required, feedlot_access_required
 
 feedlot_bp = Blueprint('feedlot', __name__)
+
+def convert_objectids_to_strings(data):
+    """Recursively convert ObjectId objects to strings for JSON serialization"""
+    if isinstance(data, dict):
+        return {key: convert_objectids_to_strings(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_objectids_to_strings(item) for item in data]
+    elif isinstance(data, ObjectId):
+        return str(data)
+    else:
+        return data
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/dashboard')
 @login_required
@@ -42,7 +53,23 @@ def list_pens(feedlot_id):
     for pen in pens:
         pen['current_count'] = Pen.get_current_cattle_count(str(pen['_id']))
     
-    return render_template('feedlot/pens/list.html', feedlot=feedlot, pens=pens)
+    # Get pen map configuration
+    pen_map = Feedlot.get_pen_map(feedlot_id)
+    
+    # Create pen lookup dictionary for map display (convert ObjectId to string)
+    pen_lookup = {}
+    if pen_map:
+        for pen in pens:
+            pen_id_str = str(pen['_id'])
+            # Convert all ObjectIds to strings for JSON serialization
+            pen_copy = convert_objectids_to_strings(pen)
+            pen_lookup[pen_id_str] = pen_copy
+    
+    return render_template('feedlot/pens/list.html', 
+                         feedlot=feedlot, 
+                         pens=pens,
+                         pen_map=pen_map,
+                         pen_lookup=pen_lookup)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/pens/create', methods=['GET', 'POST'])
 @login_required
@@ -112,6 +139,54 @@ def delete_pen(feedlot_id, pen_id):
     Pen.delete_pen(pen_id)
     flash('Pen deleted successfully.', 'success')
     return redirect(url_for('feedlot.list_pens', feedlot_id=feedlot_id))
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/pens/map', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def map_pens(feedlot_id):
+    """Map pens on a grid layout"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_id)
+    
+    if request.method == 'POST':
+        data = request.get_json()
+        grid_width = int(data.get('grid_width', 10))
+        grid_height = int(data.get('grid_height', 10))
+        pen_placements = data.get('pen_placements', [])
+        
+        Feedlot.save_pen_map(feedlot_id, grid_width, grid_height, pen_placements)
+        return jsonify({'success': True, 'message': 'Pen map saved successfully.'}), 200
+    
+    # Get existing pen map if available
+    pen_map = Feedlot.get_pen_map(feedlot_id)
+    
+    return render_template('feedlot/pens/map.html', 
+                         feedlot=feedlot, 
+                         pens=pens,
+                         pen_map=pen_map)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/pens/map/view')
+@login_required
+@feedlot_access_required()
+def view_pen_map(feedlot_id):
+    """View pen map (read-only display)"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_id)
+    pen_map = Feedlot.get_pen_map(feedlot_id)
+    
+    # Create pen lookup dictionary (convert ObjectId to string for JSON serialization)
+    pen_lookup = {}
+    for pen in pens:
+        pen_id_str = str(pen['_id'])
+        # Convert all ObjectIds to strings for JSON serialization
+        pen_copy = convert_objectids_to_strings(pen)
+        pen_lookup[pen_id_str] = pen_copy
+    
+    return render_template('feedlot/pens/map_view.html',
+                         feedlot=feedlot,
+                         pens=pens,
+                         pen_map=pen_map,
+                         pen_lookup=pen_lookup)
 
 # Batch Management Routes
 @feedlot_bp.route('/feedlot/<feedlot_id>/batches')

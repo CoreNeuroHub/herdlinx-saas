@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}View Pen Map - {{ feedlot.name }}{% endblock %}
+
+{% block nav_items %}
+<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
+<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Pens</a>
+<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Batches</a>
+<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Cattle</a>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Pen Map</h1>
+            <p class="text-gray-600">{{ feedlot.name }}</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{{ url_for('feedlot.map_pens', feedlot_id=feedlot._id) }}" class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                Edit Map
+            </a>
+            <a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                Back to Pens
+            </a>
+        </div>
+    </div>
+
+    {% if pen_map %}
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="mb-4">
+            <p class="text-gray-600">Grid Size: {{ pen_map.grid_width }} x {{ pen_map.grid_height }}</p>
+        </div>
+        <div id="grid-container" class="overflow-auto border-2 border-gray-300 rounded-lg p-4 bg-gray-50">
+            <!-- Grid will be generated here -->
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <p class="text-gray-600 text-lg mb-4">No pen map configured.</p>
+        <a href="{{ url_for('feedlot.map_pens', feedlot_id=feedlot._id) }}" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Create Map
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% if pen_map %}
+<script>
+const feedlotId = '{{ feedlot._id|string }}';
+const gridWidth = {{ pen_map.grid_width }};
+const gridHeight = {{ pen_map.grid_height }};
+const penPlacements = {{ pen_map.pen_placements|tojson }};
+const penLookup = {{ pen_lookup|tojson }};
+
+function initializeGrid() {
+    const container = document.getElementById('grid-container');
+    container.innerHTML = '';
+    
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = `repeat(${gridWidth}, minmax(60px, 1fr))`;
+    container.style.gap = '8px';
+    
+    for (let row = 0; row < gridHeight; row++) {
+        for (let col = 0; col < gridWidth; col++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell bg-white border-2 border-gray-300 rounded-lg min-h-[60px] flex items-center justify-center';
+            
+            // Check if there's a pen placement for this cell
+            const placement = penPlacements.find(p => p.row === row && p.col === col);
+            if (placement) {
+                const pen = penLookup[placement.pen_id];
+                if (pen) {
+                    const penUrl = `/feedlot/${feedlotId}/pens/${placement.pen_id}/view`;
+                    cell.innerHTML = `
+                        <a href="${penUrl}" 
+                           class="text-center p-2 w-full h-full flex flex-col items-center justify-center hover:bg-teal hover:bg-opacity-20 rounded transition">
+                            <div class="font-bold text-teal">Pen ${pen.pen_number}</div>
+                        </a>
+                    `;
+                    cell.classList.add('bg-teal', 'bg-opacity-10');
+                    cell.classList.remove('bg-white');
+                }
+            }
+            
+            container.appendChild(cell);
+        }
+    }
+}
+
+initializeGrid();
+</script>
+{% endif %}
+{% endblock %}
+
