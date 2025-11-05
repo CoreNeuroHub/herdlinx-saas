@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Pen {{ pen.pen_number }} - {{ feedlot.name }}{% endblock %}
+{% block title %}{{ pen.pen_number }} - {{ feedlot.name }}{% endblock %}
 
 {% block nav_items %}
 <a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Back to Pens</a>
@@ -10,7 +10,7 @@
 <div class="mb-6">
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">Pen {{ pen.pen_number }}</h1>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ pen.pen_number }}</h1>
             {% if pen.description %}
             <p class="text-gray-600">{{ pen.description }}</p>
             {% endif %}

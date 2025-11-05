@@ -60,7 +60,7 @@
                          draggable="true" 
                          data-pen-id="{{ pen._id }}"
                          data-pen-number="{{ pen.pen_number }}">
-                        <div class="font-semibold text-gray-800">Pen {{ pen.pen_number }}</div>
+                        <div class="font-semibold text-gray-800">{{ pen.pen_number }}</div>
                         <div class="text-sm text-gray-600">Capacity: {{ pen.capacity }}</div>
                     </div>
                     {% endfor %}
@@ -122,7 +122,7 @@ function initializeGrid() {
                     const penNumber = penItem.dataset.penNumber;
                     cell.innerHTML = `
                         <div class="text-center p-2">
-                            <div class="font-bold text-teal">Pen ${penNumber}</div>
+                            <div class="font-bold text-teal">${penNumber}</div>
                         </div>
                     `;
                     cell.classList.add('bg-teal', 'bg-opacity-10');
@@ -186,7 +186,7 @@ function handleDrop(e) {
         // Update cell display
         this.innerHTML = `
             <div class="text-center p-2">
-                <div class="font-bold text-teal">Pen ${draggedPen.number}</div>
+                <div class="font-bold text-teal">${draggedPen.number}</div>
             </div>
         `;
         this.classList.add('bg-teal', 'bg-opacity-10');

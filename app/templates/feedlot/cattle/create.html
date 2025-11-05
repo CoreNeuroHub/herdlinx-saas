@@ -170,7 +170,7 @@
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
                             <option value="">No pen assigned</option>
                             {% for pen in pens %}
-                            <option value="{{ pen._id }}">Pen {{ pen.pen_number }} ({{ pen.capacity }} capacity)</option>
+                            <option value="{{ pen._id }}">{{ pen.pen_number }} ({{ pen.capacity }} capacity)</option>
                             {% endfor %}
                         </select>
                     </div>

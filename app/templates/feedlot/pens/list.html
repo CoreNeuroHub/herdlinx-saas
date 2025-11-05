@@ -66,7 +66,7 @@
     {% for pen in pens %}
     <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200 p-6">
         <div class="flex items-start justify-between mb-4">
-            <h3 class="text-xl font-bold text-gray-800">Pen {{ pen.pen_number }}</h3>
+            <h3 class="text-xl font-bold text-gray-800">{{ pen.pen_number }}</h3>
             <span class="bg-teal bg-opacity-10 text-teal text-sm font-semibold px-3 py-1 rounded-full">
                 {{ pen.current_count }}/{{ pen.capacity }}
             </span>
@@ -146,7 +146,7 @@ function initializePenMapGrid() {
                     cell.innerHTML = `
                         <a href="${penUrl}" 
                            class="text-center p-2 w-full h-full flex flex-col items-center justify-center hover:bg-teal hover:bg-opacity-20 rounded transition">
-                            <div class="font-bold text-teal">Pen ${pen.pen_number}</div>
+                            <div class="font-bold text-teal">${pen.pen_number}</div>
                         </a>
                     `;
                     cell.classList.add('bg-teal', 'bg-opacity-10');

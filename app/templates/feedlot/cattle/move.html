@@ -35,7 +35,7 @@
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
                     <option value="">Remove from pen</option>
                     {% for pen in pens %}
-                    <option value="{{ pen._id }}">Pen {{ pen.pen_number }} ({{ pen.capacity }} capacity)</option>
+                    <option value="{{ pen._id }}">{{ pen.pen_number }} ({{ pen.capacity }} capacity)</option>
                     {% endfor %}
                 </select>
             </div>
