@@ -83,6 +83,11 @@ class User:
         return list(db.users.find({'user_type': 'business_admin'}))
     
     @staticmethod
+    def find_business_owners():
+        """Find all business owner users"""
+        return list(db.users.find({'user_type': 'business_owner', 'is_active': True}))
+    
+    @staticmethod
     def update_user(user_id, update_data):
         """Update user information"""
         db.users.update_one(

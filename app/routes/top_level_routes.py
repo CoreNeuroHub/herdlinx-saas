@@ -81,6 +81,9 @@ def dashboard():
 @admin_access_required
 def feedlot_hub():
     """Feedlot Hub page showing all feedlots with search/filter"""
+    from app.models.pen import Pen
+    from app.models.cattle import Cattle
+    
     user_type = session.get('user_type')
     
     if user_type in ['business_owner', 'business_admin']:
@@ -95,11 +98,31 @@ def feedlot_hub():
         # Super owner and super admin see all feedlots
         feedlots = Feedlot.find_all()
     
+    # Enrich feedlots with statistics and owner information
+    enriched_feedlots = []
+    for feedlot in feedlots:
+        feedlot_id = str(feedlot['_id'])
+        
+        # Get statistics for this feedlot
+        total_pens = db.pens.count_documents({'feedlot_id': ObjectId(feedlot_id)})
+        total_cattle = db.cattle.count_documents({'feedlot_id': ObjectId(feedlot_id)})
+        
+        # Get owner information
+        owner = Feedlot.get_owner(feedlot_id)
+        
+        # Create enriched feedlot dict
+        enriched_feedlot = dict(feedlot)
+        enriched_feedlot['total_pens'] = total_pens
+        enriched_feedlot['total_cattle'] = total_cattle
+        enriched_feedlot['owner'] = owner
+        
+        enriched_feedlots.append(enriched_feedlot)
+    
     # Get unique locations for filter dropdown
-    unique_locations = sorted(list(set([f.get('location', '') for f in feedlots if f.get('location')])))
+    unique_locations = sorted(list(set([f.get('location', '') for f in enriched_feedlots if f.get('location')])))
     
     user_type = session.get('user_type')
-    return render_template('top_level/feedlot_hub.html', feedlots=feedlots, user_type=user_type, unique_locations=unique_locations)
+    return render_template('top_level/feedlot_hub.html', feedlots=enriched_feedlots, user_type=user_type, unique_locations=unique_locations)
 
 @top_level_bp.route('/feedlot/create', methods=['GET', 'POST'])
 @login_required
@@ -168,7 +191,8 @@ def view_feedlot(feedlot_id):
         return redirect(url_for('top_level.dashboard'))
     
     statistics = Feedlot.get_statistics(feedlot_id)
-    return render_template('top_level/view_feedlot.html', feedlot=feedlot, statistics=statistics)
+    owner = Feedlot.get_owner(feedlot_id)
+    return render_template('top_level/view_feedlot.html', feedlot=feedlot, statistics=statistics, owner=owner)
 
 @top_level_bp.route('/feedlot/<feedlot_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -179,6 +203,9 @@ def edit_feedlot(feedlot_id):
     if not feedlot:
         flash('Feedlot not found.', 'error')
         return redirect(url_for('top_level.dashboard'))
+    
+    # Get all business owners for the dropdown
+    business_owners = User.find_business_owners()
     
     if request.method == 'POST':
         update_data = {
@@ -191,11 +218,31 @@ def edit_feedlot(feedlot_id):
             }
         }
         
+        # Handle owner assignment
+        owner_id = request.form.get('owner_id', '').strip()
+        if owner_id:
+            # Validate that the selected user is a business owner
+            owner = User.find_by_id(owner_id)
+            if owner and owner.get('user_type') == 'business_owner':
+                update_data['owner_id'] = ObjectId(owner_id)
+            else:
+                flash('Selected user must be a business owner.', 'error')
+                return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners)
+        
+        # Update feedlot with all fields
         Feedlot.update_feedlot(feedlot_id, update_data)
+        
+        # If owner_id was cleared (empty), remove the field from database
+        if not owner_id:
+            db.feedlots.update_one(
+                {'_id': ObjectId(feedlot_id)},
+                {'$unset': {'owner_id': ''}}
+            )
+        
         flash('Feedlot updated successfully.', 'success')
         return redirect(url_for('top_level.view_feedlot', feedlot_id=feedlot_id))
     
-    return render_template('top_level/edit_feedlot.html', feedlot=feedlot)
+    return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners)
 
 @top_level_bp.route('/feedlot/<feedlot_id>/users')
 @login_required
