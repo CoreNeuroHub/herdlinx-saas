@@ -259,33 +259,45 @@
                 </select>
             </div>
             
-            <div id="user-feedlot-single-field">
-                <label for="feedlot_id" class="block text-sm font-medium text-gray-700 mb-2">Feedlot *</label>
-                <select id="feedlot_id" name="feedlot_id"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
-                    <option value="">Select a feedlot</option>
-                    {% if feedlots %}
-                        {% for feedlot in feedlots %}
-                        <option value="{{ feedlot._id }}">
-                            {{ feedlot.name }} - {{ feedlot.location }}
-                        </option>
-                        {% endfor %}
-                    {% endif %}
-                </select>
-            </div>
-            
-            <div id="user-feedlot-multiple-field" style="display: none;">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Feedlots *</label>
-                <div class="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
-                    {% if feedlots %}
-                        {% for feedlot in feedlots %}
-                        <label class="flex items-center space-x-2 py-1 px-2 hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" name="feedlot_ids" value="{{ feedlot._id }}" 
-                                   class="rounded border-gray-300 text-teal focus:ring-teal">
-                            <span class="text-sm text-gray-700">{{ feedlot.name }} - {{ feedlot.location }}</span>
-                        </label>
-                        {% endfor %}
-                    {% endif %}
+            <div id="user-feedlot-field" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <span id="user-feedlot-label">Feedlot</span> *
+                </label>
+                <div class="relative">
+                    <!-- Selected Feedlots Chips -->
+                    <div id="user-feedlot-chips" class="flex flex-wrap gap-2 mb-2 min-h-[2rem]"></div>
+                    
+                    <!-- Searchable Dropdown -->
+                    <div class="relative">
+                        <input type="text" 
+                               id="user-feedlot-search" 
+                               placeholder="Search feedlots..."
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               autocomplete="off">
+                        <svg class="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                        
+                        <!-- Dropdown Options -->
+                        <div id="user-feedlot-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            <div id="user-feedlot-options" class="p-2">
+                                {% if feedlots %}
+                                    {% for feedlot in feedlots %}
+                                    <div class="feedlot-option px-3 py-2 hover:bg-gray-50 cursor-pointer rounded text-sm text-gray-700" 
+                                         data-feedlot-id="{{ feedlot._id }}" 
+                                         data-feedlot-name="{{ feedlot.name }}"
+                                         data-feedlot-location="{{ feedlot.location }}">
+                                        {{ feedlot.name }} - {{ feedlot.location }}
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden inputs for form submission -->
+                    <input type="hidden" id="user-feedlot-id" name="feedlot_id" value="">
+                    <div id="user-feedlot-ids-container"></div>
                 </div>
             </div>
             
@@ -368,33 +380,45 @@
                 </label>
             </div>
             
-            <div id="edit-user-feedlot-single-field">
-                <label for="edit_feedlot_id" class="block text-sm font-medium text-gray-700 mb-2">Feedlot *</label>
-                <select id="edit_feedlot_id" name="feedlot_id"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
-                    <option value="">Select a feedlot</option>
-                    {% if feedlots %}
-                        {% for feedlot in feedlots %}
-                        <option value="{{ feedlot._id }}">
-                            {{ feedlot.name }} - {{ feedlot.location }}
-                        </option>
-                        {% endfor %}
-                    {% endif %}
-                </select>
-            </div>
-            
-            <div id="edit-user-feedlot-multiple-field" style="display: none;">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Feedlots *</label>
-                <div class="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
-                    {% if feedlots %}
-                        {% for feedlot in feedlots %}
-                        <label class="flex items-center space-x-2 py-1 px-2 hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" name="edit_feedlot_ids" value="{{ feedlot._id }}" 
-                                   class="rounded border-gray-300 text-teal focus:ring-teal edit-feedlot-checkbox">
-                            <span class="text-sm text-gray-700">{{ feedlot.name }} - {{ feedlot.location }}</span>
-                        </label>
-                        {% endfor %}
-                    {% endif %}
+            <div id="edit-user-feedlot-field" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <span id="edit-user-feedlot-label">Feedlot</span> *
+                </label>
+                <div class="relative">
+                    <!-- Selected Feedlots Chips -->
+                    <div id="edit-user-feedlot-chips" class="flex flex-wrap gap-2 mb-2 min-h-[2rem]"></div>
+                    
+                    <!-- Searchable Dropdown -->
+                    <div class="relative">
+                        <input type="text" 
+                               id="edit-user-feedlot-search" 
+                               placeholder="Search feedlots..."
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               autocomplete="off">
+                        <svg class="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                        
+                        <!-- Dropdown Options -->
+                        <div id="edit-user-feedlot-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            <div id="edit-user-feedlot-options" class="p-2">
+                                {% if feedlots %}
+                                    {% for feedlot in feedlots %}
+                                    <div class="edit-feedlot-option px-3 py-2 hover:bg-gray-50 cursor-pointer rounded text-sm text-gray-700" 
+                                         data-feedlot-id="{{ feedlot._id }}" 
+                                         data-feedlot-name="{{ feedlot.name }}"
+                                         data-feedlot-location="{{ feedlot.location }}">
+                                        {{ feedlot.name }} - {{ feedlot.location }}
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden inputs for form submission -->
+                    <input type="hidden" id="edit-user-feedlot-id" name="feedlot_id" value="">
+                    <div id="edit-user-feedlot-ids-container"></div>
                 </div>
             </div>
             
@@ -451,9 +475,8 @@
             updateFeedlotField();
         }
         
-        // Clear all checkboxes
-        const checkboxes = document.querySelectorAll('input[name="feedlot_ids"]');
-        checkboxes.forEach(checkbox => checkbox.checked = false);
+        // Clear feedlot selection
+        clearFeedlotSelection('user');
         
         // Remove any error states
         const inputs = form.querySelectorAll('input, select');
@@ -462,36 +485,189 @@
         });
     }
     
+    // Feedlot selection state for add user modal
+    let userFeedlotSelections = [];
+    let userFeedlotMultipleMode = false;
+    
     function updateFeedlotField() {
         const userTypeSelect = document.getElementById('user_type');
-        const feedlotSingleField = document.getElementById('user-feedlot-single-field');
-        const feedlotMultipleField = document.getElementById('user-feedlot-multiple-field');
-        const feedlotSelect = document.getElementById('feedlot_id');
+        const feedlotField = document.getElementById('user-feedlot-field');
+        const feedlotLabel = document.getElementById('user-feedlot-label');
         
-        if (userTypeSelect && feedlotSingleField && feedlotMultipleField) {
+        if (userTypeSelect && feedlotField) {
             if (userTypeSelect.value === 'business_admin' || userTypeSelect.value === 'business_owner') {
-                // Show multiple feedlot selection for business_admin and business_owner
-                feedlotSingleField.style.display = 'none';
-                feedlotMultipleField.style.display = 'block';
-                if (feedlotSelect) {
-                    feedlotSelect.removeAttribute('required');
-                }
+                // Show multiple feedlot selection
+                feedlotField.style.display = 'block';
+                feedlotLabel.textContent = 'Feedlots';
+                userFeedlotMultipleMode = true;
+                clearFeedlotSelection('user');
             } else if (userTypeSelect.value === 'user') {
-                // Show single feedlot selection for regular users
-                feedlotSingleField.style.display = 'block';
-                feedlotMultipleField.style.display = 'none';
-                if (feedlotSelect) {
-                    feedlotSelect.setAttribute('required', 'required');
-                }
+                // Show single feedlot selection
+                feedlotField.style.display = 'block';
+                feedlotLabel.textContent = 'Feedlot';
+                userFeedlotMultipleMode = false;
+                clearFeedlotSelection('user');
             } else {
                 // Super owner or super admin - no feedlot required
-                feedlotSingleField.style.display = 'none';
-                feedlotMultipleField.style.display = 'none';
-                if (feedlotSelect) {
-                    feedlotSelect.removeAttribute('required');
-                }
+                feedlotField.style.display = 'none';
+                clearFeedlotSelection('user');
             }
         }
+    }
+    
+    function clearFeedlotSelection(prefix) {
+        if (prefix === 'user') {
+            userFeedlotSelections = [];
+            document.getElementById('user-feedlot-chips').innerHTML = '';
+            document.getElementById('user-feedlot-search').value = '';
+            document.getElementById('user-feedlot-id').value = '';
+            document.getElementById('user-feedlot-ids-container').innerHTML = '';
+            document.getElementById('user-feedlot-dropdown').classList.add('hidden');
+        } else if (prefix === 'edit-user') {
+            editUserFeedlotSelections = [];
+            document.getElementById('edit-user-feedlot-chips').innerHTML = '';
+            document.getElementById('edit-user-feedlot-search').value = '';
+            document.getElementById('edit-user-feedlot-id').value = '';
+            document.getElementById('edit-user-feedlot-ids-container').innerHTML = '';
+            document.getElementById('edit-user-feedlot-dropdown').classList.add('hidden');
+        }
+    }
+    
+    function addFeedlotSelection(prefix, feedlotId, feedlotName, feedlotLocation) {
+        const selection = { id: feedlotId, name: feedlotName, location: feedlotLocation };
+        
+        if (prefix === 'user') {
+            if (userFeedlotMultipleMode) {
+                // Multiple selection mode
+                if (!userFeedlotSelections.find(s => s.id === feedlotId)) {
+                    userFeedlotSelections.push(selection);
+                    updateFeedlotChips('user');
+                    updateFeedlotHiddenInputs('user');
+                }
+            } else {
+                // Single selection mode
+                userFeedlotSelections = [selection];
+                updateFeedlotChips('user');
+                updateFeedlotHiddenInputs('user');
+                document.getElementById('user-feedlot-dropdown').classList.add('hidden');
+            }
+        } else if (prefix === 'edit-user') {
+            if (editUserFeedlotMultipleMode) {
+                // Multiple selection mode
+                if (!editUserFeedlotSelections.find(s => s.id === feedlotId)) {
+                    editUserFeedlotSelections.push(selection);
+                    updateFeedlotChips('edit-user');
+                    updateFeedlotHiddenInputs('edit-user');
+                }
+            } else {
+                // Single selection mode
+                editUserFeedlotSelections = [selection];
+                updateFeedlotChips('edit-user');
+                updateFeedlotHiddenInputs('edit-user');
+                document.getElementById('edit-user-feedlot-dropdown').classList.add('hidden');
+            }
+        }
+    }
+    
+    function removeFeedlotSelection(prefix, feedlotId) {
+        if (prefix === 'user') {
+            userFeedlotSelections = userFeedlotSelections.filter(s => s.id !== feedlotId);
+            updateFeedlotChips('user');
+            updateFeedlotHiddenInputs('user');
+        } else if (prefix === 'edit-user') {
+            editUserFeedlotSelections = editUserFeedlotSelections.filter(s => s.id !== feedlotId);
+            updateFeedlotChips('edit-user');
+            updateFeedlotHiddenInputs('edit-user');
+        }
+    }
+    
+    function updateFeedlotChips(prefix) {
+        const chipsContainer = prefix === 'user' 
+            ? document.getElementById('user-feedlot-chips')
+            : document.getElementById('edit-user-feedlot-chips');
+        const selections = prefix === 'user' ? userFeedlotSelections : editUserFeedlotSelections;
+        
+        chipsContainer.innerHTML = '';
+        
+        selections.forEach(selection => {
+            const chip = document.createElement('span');
+            chip.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800';
+            chip.innerHTML = `
+                ${selection.name} - ${selection.location}
+                <button type="button" 
+                        onclick="removeFeedlotSelection('${prefix}', '${selection.id}'); event.stopPropagation();" 
+                        class="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-teal-200 focus:outline-none">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            chipsContainer.appendChild(chip);
+        });
+    }
+    
+    function updateFeedlotHiddenInputs(prefix) {
+        const selections = prefix === 'user' ? userFeedlotSelections : editUserFeedlotSelections;
+        const multipleMode = prefix === 'user' ? userFeedlotMultipleMode : editUserFeedlotMultipleMode;
+        
+        if (multipleMode) {
+            // Multiple mode - use feedlot_ids
+            const container = prefix === 'user' 
+                ? document.getElementById('user-feedlot-ids-container')
+                : document.getElementById('edit-user-feedlot-ids-container');
+            container.innerHTML = '';
+            
+            selections.forEach(selection => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = prefix === 'user' ? 'feedlot_ids' : 'edit_feedlot_ids';
+                input.value = selection.id;
+                container.appendChild(input);
+            });
+            
+            // Clear single feedlot_id
+            const singleInput = prefix === 'user' 
+                ? document.getElementById('user-feedlot-id')
+                : document.getElementById('edit-user-feedlot-id');
+            singleInput.value = '';
+        } else {
+            // Single mode - use feedlot_id
+            const singleInput = prefix === 'user' 
+                ? document.getElementById('user-feedlot-id')
+                : document.getElementById('edit-user-feedlot-id');
+            singleInput.value = selections.length > 0 ? selections[0].id : '';
+            
+            // Clear multiple feedlot_ids
+            const container = prefix === 'user' 
+                ? document.getElementById('user-feedlot-ids-container')
+                : document.getElementById('edit-user-feedlot-ids-container');
+            container.innerHTML = '';
+        }
+    }
+    
+    function filterFeedlotOptions(prefix, searchTerm) {
+        const options = prefix === 'user' 
+            ? document.querySelectorAll('.feedlot-option')
+            : document.querySelectorAll('.edit-feedlot-option');
+        const selections = prefix === 'user' ? userFeedlotSelections : editUserFeedlotSelections;
+        const searchLower = (searchTerm || '').toLowerCase();
+        
+        options.forEach(option => {
+            const feedlotName = option.getAttribute('data-feedlot-name') || '';
+            const feedlotLocation = option.getAttribute('data-feedlot-location') || '';
+            const feedlotId = option.getAttribute('data-feedlot-id') || '';
+            const text = `${feedlotName} - ${feedlotLocation}`.toLowerCase();
+            
+            // Check if already selected
+            const isSelected = selections.find(s => s.id === feedlotId);
+            
+            // Show if matches search and not already selected
+            if ((!searchLower || text.includes(searchLower)) && !isSelected) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
     }
     
     // User type change handler
@@ -500,6 +676,102 @@
         if (userTypeSelect) {
             userTypeSelect.addEventListener('change', updateFeedlotField);
         }
+        
+        // Add user modal - feedlot search and selection handlers
+        const userFeedlotSearch = document.getElementById('user-feedlot-search');
+        const userFeedlotDropdown = document.getElementById('user-feedlot-dropdown');
+        
+        if (userFeedlotSearch) {
+            // Show dropdown on focus
+            userFeedlotSearch.addEventListener('focus', function() {
+                if (userFeedlotSearch.value) {
+                    filterFeedlotOptions('user', userFeedlotSearch.value);
+                } else {
+                    // Show all available options
+                    filterFeedlotOptions('user', '');
+                }
+                userFeedlotDropdown.classList.remove('hidden');
+            });
+            
+            // Filter options on input
+            userFeedlotSearch.addEventListener('input', function(e) {
+                filterFeedlotOptions('user', e.target.value);
+                userFeedlotDropdown.classList.remove('hidden');
+            });
+        }
+        
+        // Handle option clicks for add user modal
+        document.addEventListener('click', function(e) {
+            const feedlotOption = e.target.closest('.feedlot-option');
+            if (feedlotOption) {
+                const feedlotId = feedlotOption.getAttribute('data-feedlot-id');
+                const feedlotName = feedlotOption.getAttribute('data-feedlot-name');
+                const feedlotLocation = feedlotOption.getAttribute('data-feedlot-location');
+                addFeedlotSelection('user', feedlotId, feedlotName, feedlotLocation);
+                if (userFeedlotSearch) {
+                    userFeedlotSearch.value = '';
+                    filterFeedlotOptions('user', '');
+                }
+            }
+        });
+        
+        // Edit user modal - feedlot search and selection handlers
+        const editUserFeedlotSearch = document.getElementById('edit-user-feedlot-search');
+        const editUserFeedlotDropdown = document.getElementById('edit-user-feedlot-dropdown');
+        
+        if (editUserFeedlotSearch) {
+            // Show dropdown on focus
+            editUserFeedlotSearch.addEventListener('focus', function() {
+                if (editUserFeedlotSearch.value) {
+                    filterFeedlotOptions('edit-user', editUserFeedlotSearch.value);
+                } else {
+                    // Show all available options
+                    filterFeedlotOptions('edit-user', '');
+                }
+                editUserFeedlotDropdown.classList.remove('hidden');
+            });
+            
+            // Filter options on input
+            editUserFeedlotSearch.addEventListener('input', function(e) {
+                filterFeedlotOptions('edit-user', e.target.value);
+                editUserFeedlotDropdown.classList.remove('hidden');
+            });
+        }
+        
+        // Handle option clicks for edit user modal
+        document.addEventListener('click', function(e) {
+            const feedlotOption = e.target.closest('.edit-feedlot-option');
+            if (feedlotOption) {
+                const feedlotId = feedlotOption.getAttribute('data-feedlot-id');
+                const feedlotName = feedlotOption.getAttribute('data-feedlot-name');
+                const feedlotLocation = feedlotOption.getAttribute('data-feedlot-location');
+                addFeedlotSelection('edit-user', feedlotId, feedlotName, feedlotLocation);
+                if (editUserFeedlotSearch) {
+                    editUserFeedlotSearch.value = '';
+                    filterFeedlotOptions('edit-user', '');
+                }
+            }
+        });
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            const userFeedlotChips = document.getElementById('user-feedlot-chips');
+            const editUserFeedlotChips = document.getElementById('edit-user-feedlot-chips');
+            
+            if (userFeedlotDropdown && userFeedlotSearch && userFeedlotChips &&
+                !userFeedlotSearch.contains(e.target) && 
+                !userFeedlotDropdown.contains(e.target) && 
+                !userFeedlotChips.contains(e.target)) {
+                userFeedlotDropdown.classList.add('hidden');
+            }
+            
+            if (editUserFeedlotDropdown && editUserFeedlotSearch && editUserFeedlotChips &&
+                !editUserFeedlotSearch.contains(e.target) && 
+                !editUserFeedlotDropdown.contains(e.target) && 
+                !editUserFeedlotChips.contains(e.target)) {
+                editUserFeedlotDropdown.classList.add('hidden');
+            }
+        });
         
         // Close user modal when clicking outside
         const userModal = document.getElementById('add-user-modal');
@@ -660,6 +932,10 @@
         }
     });
     
+    // Feedlot selection state for edit user modal
+    let editUserFeedlotSelections = [];
+    let editUserFeedlotMultipleMode = false;
+    
     // Edit User Modal Functions
     async function openEditUserModal(userId) {
         const modal = document.getElementById('edit-user-modal');
@@ -693,28 +969,33 @@
                 document.getElementById('edit_user_type').value = user.user_type || 'user';
                 document.getElementById('edit_is_active').checked = user.is_active !== false;
                 
-                // Handle feedlot assignments
-                if (user.feedlot_id) {
-                    document.getElementById('edit_feedlot_id').value = user.feedlot_id;
-                }
+                // Update feedlot field visibility first
+                updateEditFeedlotField();
                 
-                // Handle multiple feedlots
-                const feedlotCheckboxes = document.querySelectorAll('.edit-feedlot-checkbox');
-                feedlotCheckboxes.forEach(checkbox => {
-                    checkbox.checked = false;
-                });
-                
-                if (user.feedlot_ids && Array.isArray(user.feedlot_ids)) {
+                // Load feedlot selections
+                editUserFeedlotSelections = [];
+                if (user.feedlot_ids && Array.isArray(user.feedlot_ids) && user.feedlot_ids.length > 0) {
+                    // Multiple feedlots
                     user.feedlot_ids.forEach(feedlotId => {
-                        const checkbox = document.querySelector(`.edit-feedlot-checkbox[value="${feedlotId}"]`);
-                        if (checkbox) {
-                            checkbox.checked = true;
+                        const option = document.querySelector(`.edit-feedlot-option[data-feedlot-id="${feedlotId}"]`);
+                        if (option) {
+                            const name = option.getAttribute('data-feedlot-name');
+                            const location = option.getAttribute('data-feedlot-location');
+                            editUserFeedlotSelections.push({ id: feedlotId, name: name, location: location });
                         }
                     });
+                } else if (user.feedlot_id) {
+                    // Single feedlot
+                    const option = document.querySelector(`.edit-feedlot-option[data-feedlot-id="${user.feedlot_id}"]`);
+                    if (option) {
+                        const name = option.getAttribute('data-feedlot-name');
+                        const location = option.getAttribute('data-feedlot-location');
+                        editUserFeedlotSelections.push({ id: user.feedlot_id, name: name, location: location });
+                    }
                 }
                 
-                // Update feedlot field visibility
-                updateEditFeedlotField();
+                updateFeedlotChips('edit-user');
+                updateFeedlotHiddenInputs('edit-user');
                 
                 // Show modal
                 modal.classList.remove('hidden');
@@ -739,9 +1020,8 @@
         document.body.style.overflow = 'auto';
         form.reset();
         
-        // Clear all checkboxes
-        const checkboxes = document.querySelectorAll('.edit-feedlot-checkbox');
-        checkboxes.forEach(checkbox => checkbox.checked = false);
+        // Clear feedlot selection
+        clearFeedlotSelection('edit-user');
         
         // Remove any error states
         const inputs = form.querySelectorAll('input, select');
@@ -752,32 +1032,23 @@
     
     function updateEditFeedlotField() {
         const userTypeSelect = document.getElementById('edit_user_type');
-        const feedlotSingleField = document.getElementById('edit-user-feedlot-single-field');
-        const feedlotMultipleField = document.getElementById('edit-user-feedlot-multiple-field');
-        const feedlotSelect = document.getElementById('edit_feedlot_id');
+        const feedlotField = document.getElementById('edit-user-feedlot-field');
+        const feedlotLabel = document.getElementById('edit-user-feedlot-label');
         
-        if (userTypeSelect && feedlotSingleField && feedlotMultipleField) {
+        if (userTypeSelect && feedlotField) {
             if (userTypeSelect.value === 'business_admin' || userTypeSelect.value === 'business_owner') {
-                // Show multiple feedlot selection for business_admin and business_owner
-                feedlotSingleField.style.display = 'none';
-                feedlotMultipleField.style.display = 'block';
-                if (feedlotSelect) {
-                    feedlotSelect.removeAttribute('required');
-                }
+                // Show multiple feedlot selection
+                feedlotField.style.display = 'block';
+                feedlotLabel.textContent = 'Feedlots';
+                editUserFeedlotMultipleMode = true;
             } else if (userTypeSelect.value === 'user') {
-                // Show single feedlot selection for regular users
-                feedlotSingleField.style.display = 'block';
-                feedlotMultipleField.style.display = 'none';
-                if (feedlotSelect) {
-                    feedlotSelect.setAttribute('required', 'required');
-                }
+                // Show single feedlot selection
+                feedlotField.style.display = 'block';
+                feedlotLabel.textContent = 'Feedlot';
+                editUserFeedlotMultipleMode = false;
             } else {
                 // Super owner or super admin - no feedlot required
-                feedlotSingleField.style.display = 'none';
-                feedlotMultipleField.style.display = 'none';
-                if (feedlotSelect) {
-                    feedlotSelect.removeAttribute('required');
-                }
+                feedlotField.style.display = 'none';
             }
         }
     }
