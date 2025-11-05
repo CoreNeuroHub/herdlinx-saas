@@ -13,13 +13,104 @@
             <h1 class="text-3xl font-bold text-gray-800 mb-2">User Management</h1>
             <p class="text-gray-600">Manage all users across the system</p>
         </div>
-        <div class="space-x-2">
-            <button onclick="openAddUserModal()" class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
-                + Create New User
+        <div class="relative inline-block text-left">
+            <button id="actions-dropdown-btn" type="button" onclick="toggleActionsDropdown(event)" class="inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal transition duration-200" aria-expanded="false" aria-haspopup="true">
+                <span>Actions</span>
+                <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
             </button>
-            <a href="{{ url_for('top_level.dashboard') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
-                Back to Dashboard
-            </a>
+            <div id="actions-dropdown-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" role="menu" aria-orientation="vertical" aria-labelledby="actions-dropdown-btn" style="display: none;">
+                <div class="py-1" role="none">
+                    <button onclick="openAddUserModal(); closeActionsDropdown(); event.stopPropagation();" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Add new user</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search, Filter, and Sort Controls -->
+<div class="mb-6 bg-white rounded-lg shadow-md p-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Search Bar -->
+        <div>
+            <label for="search-users" class="block text-sm font-medium text-gray-700 mb-2">Search Users</label>
+            <div class="relative">
+                <input type="text" id="search-users" placeholder="Search by username, email, name..."
+                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Filter by User Type -->
+        <div class="relative">
+            <label for="filter-user-type" class="block text-sm font-medium text-gray-700 mb-2">Filter by User Type</label>
+            <div class="relative">
+                <div id="filter-user-type-display" class="w-full min-h-[42px] px-3 py-2 border border-gray-300 rounded-lg bg-white cursor-pointer focus-within:ring-2 focus-within:ring-teal focus-within:border-transparent flex flex-wrap items-center gap-2" onclick="toggleUserTypeDropdown()">
+                    <div id="filter-user-type-chips" class="flex flex-wrap gap-2 flex-1">
+                        <span id="filter-user-type-placeholder" class="text-gray-500 text-sm">All User Types</span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+                <div id="filter-user-type-dropdown" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    <div class="p-2">
+                        <label class="flex items-center space-x-2 py-2 px-3 hover:bg-gray-50 cursor-pointer rounded">
+                            <input type="checkbox" name="filter_user_types" value="super_owner" 
+                                   class="rounded border-gray-300 text-teal focus:ring-teal filter-user-type-checkbox">
+                            <span class="text-sm text-gray-700">Super Owner</span>
+                        </label>
+                        <label class="flex items-center space-x-2 py-2 px-3 hover:bg-gray-50 cursor-pointer rounded">
+                            <input type="checkbox" name="filter_user_types" value="super_admin" 
+                                   class="rounded border-gray-300 text-teal focus:ring-teal filter-user-type-checkbox">
+                            <span class="text-sm text-gray-700">Super Admin</span>
+                        </label>
+                        <label class="flex items-center space-x-2 py-2 px-3 hover:bg-gray-50 cursor-pointer rounded">
+                            <input type="checkbox" name="filter_user_types" value="business_owner" 
+                                   class="rounded border-gray-300 text-teal focus:ring-teal filter-user-type-checkbox">
+                            <span class="text-sm text-gray-700">Business Owner</span>
+                        </label>
+                        <label class="flex items-center space-x-2 py-2 px-3 hover:bg-gray-50 cursor-pointer rounded">
+                            <input type="checkbox" name="filter_user_types" value="business_admin" 
+                                   class="rounded border-gray-300 text-teal focus:ring-teal filter-user-type-checkbox">
+                            <span class="text-sm text-gray-700">Business Admin</span>
+                        </label>
+                        <label class="flex items-center space-x-2 py-2 px-3 hover:bg-gray-50 cursor-pointer rounded">
+                            <input type="checkbox" name="filter_user_types" value="user" 
+                                   class="rounded border-gray-300 text-teal focus:ring-teal filter-user-type-checkbox">
+                            <span class="text-sm text-gray-700">User</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filter by Status -->
+        <div>
+            <label for="filter-status" class="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
+            <select id="filter-status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Results Count and Action Buttons -->
+    <div class="mt-4 flex items-center justify-between">
+        <div class="text-sm text-gray-600">
+            <span id="users-count">{{ users|length if users else 0 }}</span> user(s) found
+        </div>
+        <div class="flex space-x-2">
+            <button id="search-filters-btn" onclick="applyFilters()" class="px-4 py-2 bg-teal hover:opacity-90 text-white text-sm font-semibold rounded-lg transition duration-200">
+                Search
+            </button>
+            <button id="reset-filters" onclick="resetFilters()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-lg transition duration-200">
+                Reset Filters
+            </button>
         </div>
     </div>
 </div>
@@ -29,19 +120,44 @@
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Type</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('first-name')">
+                    First Name <span class="sort-indicator" data-field="first-name"></span>
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('last-name')">
+                    Last Name <span class="sort-indicator" data-field="last-name"></span>
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('username')">
+                    Username <span class="sort-indicator" data-field="username"></span>
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('email')">
+                    Email <span class="sort-indicator" data-field="email"></span>
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('user_type')">
+                    User Type <span class="sort-indicator" data-field="user_type"></span>
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('status')">
+                    Status <span class="sort-indicator" data-field="status"></span>
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onclick="sortTable('created_at')">
+                    Created <span class="sort-indicator" data-field="created_at"></span>
+                </th>
                 {% if user_type in ['super_owner', 'super_admin'] %}
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 {% endif %}
             </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
             {% for user in users %}
-            <tr>
+            <tr class="user-row" 
+                data-username="{{ user.username|lower }}"
+                data-email="{{ user.email|lower }}"
+                data-first-name="{{ (user.first_name or '')|lower }}"
+                data-last-name="{{ (user.last_name or '')|lower }}"
+                data-user-type="{{ user.user_type }}"
+                data-status="{{ 'active' if user.is_active else 'inactive' }}"
+                data-created-at="{% if user.created_at %}{% if user.created_at is string %}{{ user.created_at }}{% else %}{{ user.created_at.strftime('%Y-%m-%dT%H:%M:%S') }}{% endif %}{% else %}1970-01-01T00:00:00{% endif %}">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.first_name or '-' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.last_name or '-' }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.username }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -61,6 +177,9 @@
                 </td>
                 {% if user_type in ['super_owner', 'super_admin'] %}
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div class="flex space-x-2">
+                        <button onclick="openEditUserModal('{{ user._id }}')" class="text-teal-600 hover:text-teal-900">Edit</button>
+                        <span class="text-gray-300">|</span>
                     {% if not user.is_active %}
                     <form method="POST" action="{{ url_for('top_level.activate_user', user_id=user._id) }}" class="inline">
                         <button type="submit" class="text-green-600 hover:text-green-900">Activate</button>
@@ -70,6 +189,7 @@
                         <button type="submit" class="text-red-600 hover:text-red-900">Deactivate</button>
                     </form>
                     {% endif %}
+                    </div>
                 </td>
                 {% endif %}
             </tr>
@@ -181,6 +301,131 @@
     </div>
 </div>
 
+<!-- Edit User Modal -->
+<div id="edit-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Edit User</h2>
+                <button onclick="closeEditUserModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <form id="edit-user-form" method="POST" class="p-6 space-y-4">
+            <input type="hidden" id="edit_user_id" name="user_id" value="">
+            
+            <div>
+                <label for="edit_username" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                <input type="text" id="edit_username" name="username" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                <input type="email" id="edit_email" name="email" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_first_name" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                <input type="text" id="edit_first_name" name="first_name"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_last_name" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                <input type="text" id="edit_last_name" name="last_name"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_contact_number" class="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+                <input type="text" id="edit_contact_number" name="contact_number"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_user_type" class="block text-sm font-medium text-gray-700 mb-2">User Type *</label>
+                <select id="edit_user_type" name="user_type" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    <option value="super_owner">Super Owner</option>
+                    <option value="super_admin">Super Admin</option>
+                    <option value="business_owner">Business Owner</option>
+                    <option value="business_admin">Business Admin</option>
+                    <option value="user">User</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="edit_is_active" name="is_active" value="1"
+                           class="rounded border-gray-300 text-teal focus:ring-teal">
+                    <span class="text-sm text-gray-700">Active</span>
+                </label>
+            </div>
+            
+            <div id="edit-user-feedlot-single-field">
+                <label for="edit_feedlot_id" class="block text-sm font-medium text-gray-700 mb-2">Feedlot *</label>
+                <select id="edit_feedlot_id" name="feedlot_id"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    <option value="">Select a feedlot</option>
+                    {% if feedlots %}
+                        {% for feedlot in feedlots %}
+                        <option value="{{ feedlot._id }}">
+                            {{ feedlot.name }} - {{ feedlot.location }}
+                        </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            
+            <div id="edit-user-feedlot-multiple-field" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Feedlots *</label>
+                <div class="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                    {% if feedlots %}
+                        {% for feedlot in feedlots %}
+                        <label class="flex items-center space-x-2 py-1 px-2 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="edit_feedlot_ids" value="{{ feedlot._id }}" 
+                                   class="rounded border-gray-300 text-teal focus:ring-teal edit-feedlot-checkbox">
+                            <span class="text-sm text-gray-700">{{ feedlot.name }} - {{ feedlot.location }}</span>
+                        </label>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-4">
+                <p class="text-sm text-gray-600 mb-2">Change Password (leave blank to keep current password)</p>
+                <div class="space-y-4">
+                    <div>
+                        <label for="edit_new_password" class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                        <input type="password" id="edit_new_password" name="new_password"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="edit_confirm_password" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                        <input type="password" id="edit_confirm_password" name="confirm_password"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4 pt-4">
+                <button type="submit" id="submit-edit-user-btn" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Update User
+                </button>
+                <button type="button" onclick="closeEditUserModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     // Add New User Modal Functions
     function openAddUserModal() {
@@ -269,9 +514,12 @@
         // Close modal on Escape key
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
-                const userModal = document.getElementById('add-user-modal');
-                if (userModal && !userModal.classList.contains('hidden')) {
+                const addUserModal = document.getElementById('add-user-modal');
+                const editUserModal = document.getElementById('edit-user-modal');
+                if (addUserModal && !addUserModal.classList.contains('hidden')) {
                     closeAddUserModal();
+                } else if (editUserModal && !editUserModal.classList.contains('hidden')) {
+                    closeEditUserModal();
                 }
             }
         });
@@ -334,7 +582,549 @@
                 }
             });
         }
+        
+        // Edit User Modal Functions
+        const editModal = document.getElementById('edit-user-modal');
+        if (editModal) {
+            editModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeEditUserModal();
+                }
+            });
+        }
+        
+        // Handle edit user form submission via AJAX
+        const editUserForm = document.getElementById('edit-user-form');
+        if (editUserForm) {
+            editUserForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const submitBtn = document.getElementById('submit-edit-user-btn');
+                const userId = document.getElementById('edit_user_id').value;
+                const formData = new FormData(form);
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating...';
+                
+                try {
+                    const response = await fetch(`/user/${userId}/edit`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showToast(data.message || 'User updated successfully.', 'success');
+                        closeEditUserModal();
+                        // Reload the page to reflect changes
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } else {
+                        showToast(data.message || 'Failed to update user. Please try again.', 'error');
+                        
+                        // Re-enable submit button
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Update User';
+                        
+                        // Highlight error fields if provided
+                        if (data.errors) {
+                            Object.keys(data.errors).forEach(field => {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    input.classList.add('border-red-500');
+                                }
+                            });
+                        }
+                    }
+                } catch (error) {
+                    showToast('An error occurred while updating the user. Please try again.', 'error');
+                    
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Update User';
+                }
+            });
+        }
+        
+        // Handle edit user type change
+        const editUserTypeSelect = document.getElementById('edit_user_type');
+        if (editUserTypeSelect) {
+            editUserTypeSelect.addEventListener('change', updateEditFeedlotField);
+        }
     });
+    
+    // Edit User Modal Functions
+    async function openEditUserModal(userId) {
+        const modal = document.getElementById('edit-user-modal');
+        const form = document.getElementById('edit-user-form');
+        
+        // Show loading state
+        form.style.opacity = '0.5';
+        form.style.pointerEvents = 'none';
+        
+        try {
+            // Fetch user data
+            const response = await fetch(`/user/${userId}/edit`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.user) {
+                const user = data.user;
+                
+                // Populate form fields
+                document.getElementById('edit_user_id').value = userId;
+                document.getElementById('edit_username').value = user.username || '';
+                document.getElementById('edit_email').value = user.email || '';
+                document.getElementById('edit_first_name').value = user.first_name || '';
+                document.getElementById('edit_last_name').value = user.last_name || '';
+                document.getElementById('edit_contact_number').value = user.contact_number || '';
+                document.getElementById('edit_user_type').value = user.user_type || 'user';
+                document.getElementById('edit_is_active').checked = user.is_active !== false;
+                
+                // Handle feedlot assignments
+                if (user.feedlot_id) {
+                    document.getElementById('edit_feedlot_id').value = user.feedlot_id;
+                }
+                
+                // Handle multiple feedlots
+                const feedlotCheckboxes = document.querySelectorAll('.edit-feedlot-checkbox');
+                feedlotCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                if (user.feedlot_ids && Array.isArray(user.feedlot_ids)) {
+                    user.feedlot_ids.forEach(feedlotId => {
+                        const checkbox = document.querySelector(`.edit-feedlot-checkbox[value="${feedlotId}"]`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
+                    });
+                }
+                
+                // Update feedlot field visibility
+                updateEditFeedlotField();
+                
+                // Show modal
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                showToast(data.message || 'Failed to load user data.', 'error');
+            }
+        } catch (error) {
+            showToast('An error occurred while loading user data. Please try again.', 'error');
+        } finally {
+            // Remove loading state
+            form.style.opacity = '1';
+            form.style.pointerEvents = 'auto';
+        }
+    }
+    
+    function closeEditUserModal() {
+        const modal = document.getElementById('edit-user-modal');
+        const form = document.getElementById('edit-user-form');
+        
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        form.reset();
+        
+        // Clear all checkboxes
+        const checkboxes = document.querySelectorAll('.edit-feedlot-checkbox');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+        
+        // Remove any error states
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.classList.remove('border-red-500');
+        });
+    }
+    
+    function updateEditFeedlotField() {
+        const userTypeSelect = document.getElementById('edit_user_type');
+        const feedlotSingleField = document.getElementById('edit-user-feedlot-single-field');
+        const feedlotMultipleField = document.getElementById('edit-user-feedlot-multiple-field');
+        const feedlotSelect = document.getElementById('edit_feedlot_id');
+        
+        if (userTypeSelect && feedlotSingleField && feedlotMultipleField) {
+            if (userTypeSelect.value === 'business_admin' || userTypeSelect.value === 'business_owner') {
+                // Show multiple feedlot selection for business_admin and business_owner
+                feedlotSingleField.style.display = 'none';
+                feedlotMultipleField.style.display = 'block';
+                if (feedlotSelect) {
+                    feedlotSelect.removeAttribute('required');
+                }
+            } else if (userTypeSelect.value === 'user') {
+                // Show single feedlot selection for regular users
+                feedlotSingleField.style.display = 'block';
+                feedlotMultipleField.style.display = 'none';
+                if (feedlotSelect) {
+                    feedlotSelect.setAttribute('required', 'required');
+                }
+            } else {
+                // Super owner or super admin - no feedlot required
+                feedlotSingleField.style.display = 'none';
+                feedlotMultipleField.style.display = 'none';
+                if (feedlotSelect) {
+                    feedlotSelect.removeAttribute('required');
+                }
+            }
+        }
+    }
+    
+    // Search, Filter, and Sort Functionality
+    let currentSortField = 'username';
+    let currentSortOrder = 'asc';
+    let originalUserRows = []; // Store original rows for filtering
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search-users');
+        const filterUserTypeCheckboxes = document.querySelectorAll('.filter-user-type-checkbox');
+        const filterStatus = document.getElementById('filter-status');
+        const usersTableBody = document.getElementById('users-table-body');
+        
+        if (!usersTableBody) return;
+        
+        // Store original rows as clones (before any filtering)
+        const initialRows = Array.from(document.querySelectorAll('.user-row'));
+        originalUserRows = initialRows.map(row => row.cloneNode(true));
+        
+        // Define filter and sort function (make it globally accessible)
+        window.filterAndSortUsers = function filterAndSortUsers() {
+            const searchTerm = (searchInput?.value || '').toLowerCase().trim();
+            
+            // Get selected user types from checkboxes
+            const selectedUserTypes = Array.from(filterUserTypeCheckboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value);
+            
+            const selectedStatus = filterStatus?.value || '';
+            
+            // Always filter from the original stored rows
+            const userRows = originalUserRows.map(row => row.cloneNode(true));
+            let visibleRows = userRows.filter(row => {
+                const username = row.getAttribute('data-username') || '';
+                const email = row.getAttribute('data-email') || '';
+                const firstName = row.getAttribute('data-first-name') || '';
+                const lastName = row.getAttribute('data-last-name') || '';
+                const userType = row.getAttribute('data-user-type') || '';
+                const status = row.getAttribute('data-status') || '';
+                
+                // Search filter
+                const matchesSearch = !searchTerm || 
+                    username.includes(searchTerm) || 
+                    email.includes(searchTerm) ||
+                    firstName.includes(searchTerm) ||
+                    lastName.includes(searchTerm);
+                
+                // User type filter - check if user type is in selected types (or no filter selected)
+                const matchesUserType = selectedUserTypes.length === 0 || selectedUserTypes.includes(userType);
+                
+                // Status filter
+                const matchesStatus = !selectedStatus || status === selectedStatus;
+                
+                return matchesSearch && matchesUserType && matchesStatus;
+            });
+            
+            // Sort the visible rows
+            visibleRows.sort((a, b) => {
+                // Handle field name mapping for data attributes
+                let fieldName = currentSortField;
+                if (fieldName === 'first-name') {
+                    fieldName = 'first-name';
+                } else if (fieldName === 'last-name') {
+                    fieldName = 'last-name';
+                }
+                
+                let aValue = a.getAttribute(`data-${fieldName}`) || '';
+                let bValue = b.getAttribute(`data-${fieldName}`) || '';
+                
+                // Handle date sorting
+                if (currentSortField === 'created_at') {
+                    aValue = aValue ? new Date(aValue).getTime() : 0;
+                    bValue = bValue ? new Date(bValue).getTime() : 0;
+                } else {
+                    // String comparison for other fields
+                    aValue = (aValue || '').toLowerCase();
+                    bValue = (bValue || '').toLowerCase();
+                }
+                
+                let comparison = 0;
+                if (aValue < bValue) {
+                    comparison = -1;
+                } else if (aValue > bValue) {
+                    comparison = 1;
+                }
+                
+                return currentSortOrder === 'asc' ? comparison : -comparison;
+            });
+            
+            // Update table body
+            usersTableBody.innerHTML = '';
+            
+            if (visibleRows.length === 0) {
+                // Show "no results" message
+                const noResultsRow = document.createElement('tr');
+                // Count columns from table header (excluding sort indicators)
+                const headerCells = document.querySelectorAll('thead th');
+                const colSpan = headerCells.length || 6;
+                noResultsRow.innerHTML = `
+                    <td colspan="${colSpan}" class="px-6 py-8 text-center text-gray-500">
+                        <p class="text-lg mb-2">No users found matching your criteria.</p>
+                        <p class="text-sm">Try adjusting your search or filters.</p>
+                    </td>
+                `;
+                usersTableBody.appendChild(noResultsRow);
+            } else {
+                visibleRows.forEach(row => {
+                    usersTableBody.appendChild(row);
+                });
+            }
+            
+            // Update count
+            const countElement = document.getElementById('users-count');
+            if (countElement) {
+                countElement.textContent = visibleRows.length;
+            }
+            
+            // Update sort indicators
+            updateSortIndicators();
+        }
+        
+        function updateSortIndicators() {
+            const indicators = document.querySelectorAll('.sort-indicator');
+            indicators.forEach(indicator => {
+                const field = indicator.getAttribute('data-field');
+                indicator.innerHTML = '';
+                // Map field names for comparison
+                let compareField = field;
+                let compareSortField = currentSortField;
+                if (field === 'first-name') compareField = 'first-name';
+                if (field === 'last-name') compareField = 'last-name';
+                if (currentSortField === 'first-name') compareSortField = 'first-name';
+                if (currentSortField === 'last-name') compareSortField = 'last-name';
+                
+                if (compareField === compareSortField) {
+                    indicator.innerHTML = currentSortOrder === 'asc' ? '↑' : '↓';
+                }
+            });
+        }
+        
+        // Event listeners - only for chip updates, not filtering
+        // Add event listeners to all user type checkboxes for chip display only
+        filterUserTypeCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateUserTypeChips();
+            });
+        });
+        
+        // Make functions globally accessible
+        window.filterAndSortUsers = filterAndSortUsers;
+        window.updateUserTypeChips = updateUserTypeChips;
+        window.updateUserTypeFilter = updateUserTypeFilter;
+        window.removeUserTypeFilter = removeUserTypeFilter;
+        
+        // Initialize user type chips display
+        updateUserTypeChips();
+        
+        // Run initial filter and sort on page load (show all users initially)
+        filterAndSortUsers();
+    });
+    
+    // Apply filters function (triggered by Search button)
+    function applyFilters() {
+        if (typeof window.filterAndSortUsers === 'function') {
+            window.filterAndSortUsers();
+        }
+    }
+    
+    // User Type Filter Dropdown Functions
+    function toggleUserTypeDropdown() {
+        const dropdown = document.getElementById('filter-user-type-dropdown');
+        if (dropdown) {
+            dropdown.classList.toggle('hidden');
+        }
+    }
+    
+    function updateUserTypeFilter() {
+        if (typeof window.updateUserTypeChips === 'function') {
+            window.updateUserTypeChips();
+        }
+        // Don't trigger filter automatically - wait for Search button
+    }
+    
+    function updateUserTypeChips() {
+        const checkboxes = document.querySelectorAll('.filter-user-type-checkbox:checked');
+        const chipsContainer = document.getElementById('filter-user-type-chips');
+        const placeholder = document.getElementById('filter-user-type-placeholder');
+        
+        if (!chipsContainer) return;
+        
+        const userTypeLabels = {
+            'super_owner': 'Super Owner',
+            'super_admin': 'Super Admin',
+            'business_owner': 'Business Owner',
+            'business_admin': 'Business Admin',
+            'user': 'User'
+        };
+        
+        // Remove all chips but keep placeholder
+        const existingChips = chipsContainer.querySelectorAll('span:not(#filter-user-type-placeholder)');
+        existingChips.forEach(chip => chip.remove());
+        
+        if (checkboxes.length === 0) {
+            // Show placeholder if nothing selected
+            if (placeholder) {
+                placeholder.style.display = 'inline';
+            }
+        } else {
+            // Hide placeholder
+            if (placeholder) {
+                placeholder.style.display = 'none';
+            }
+            
+            // Create chips for each selected type
+            checkboxes.forEach(checkbox => {
+                const chip = document.createElement('span');
+                chip.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800';
+                chip.innerHTML = `
+                    ${userTypeLabels[checkbox.value] || checkbox.value}
+                    <button type="button" onclick="removeUserTypeFilter('${checkbox.value}'); event.stopPropagation();" 
+                            class="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-teal-200 focus:outline-none">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                `;
+                chipsContainer.appendChild(chip);
+            });
+        }
+    }
+    
+    function removeUserTypeFilter(value) {
+        const checkbox = document.querySelector(`.filter-user-type-checkbox[value="${value}"]`);
+        if (checkbox) {
+            checkbox.checked = false;
+            if (typeof window.updateUserTypeChips === 'function') {
+                window.updateUserTypeChips();
+            }
+        }
+        // Don't trigger filter automatically - wait for Search button
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('filter-user-type-dropdown');
+        const display = document.getElementById('filter-user-type-display');
+        
+        if (dropdown && display && !dropdown.contains(event.target) && !display.contains(event.target)) {
+            dropdown.classList.add('hidden');
+        }
+        
+        // Close actions dropdown when clicking outside
+        const actionsDropdown = document.getElementById('actions-dropdown-menu');
+        const actionsButton = document.getElementById('actions-dropdown-btn');
+        if (actionsDropdown && actionsButton && !actionsDropdown.contains(event.target) && 
+            !actionsButton.contains(event.target)) {
+            actionsDropdown.classList.add('hidden');
+            actionsButton.setAttribute('aria-expanded', 'false');
+        }
+    });
+    
+    // Actions dropdown functions
+    function toggleActionsDropdown(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        const dropdown = document.getElementById('actions-dropdown-menu');
+        const button = document.getElementById('actions-dropdown-btn');
+        if (dropdown && button) {
+            const isHidden = dropdown.classList.contains('hidden');
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                dropdown.style.display = 'block';
+                button.setAttribute('aria-expanded', 'true');
+            } else {
+                dropdown.classList.add('hidden');
+                dropdown.style.display = 'none';
+                button.setAttribute('aria-expanded', 'false');
+            }
+        }
+    }
+    
+    function closeActionsDropdown() {
+        const dropdown = document.getElementById('actions-dropdown-menu');
+        const button = document.getElementById('actions-dropdown-btn');
+        if (dropdown) {
+            dropdown.classList.add('hidden');
+            dropdown.style.display = 'none';
+        }
+        if (button) {
+            button.setAttribute('aria-expanded', 'false');
+        }
+    }
+    
+    // Reset filters function
+    function resetFilters() {
+        const searchInput = document.getElementById('search-users');
+        const filterUserTypeCheckboxes = document.querySelectorAll('.filter-user-type-checkbox');
+        const filterStatus = document.getElementById('filter-status');
+        
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        // Uncheck all user type checkboxes
+        filterUserTypeCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updateUserTypeChips();
+        if (filterStatus) {
+            filterStatus.value = '';
+        }
+        
+        // Reset sort to default
+        currentSortField = 'username';
+        currentSortOrder = 'asc';
+        
+        // Update chips display
+        if (typeof window.updateUserTypeChips === 'function') {
+            window.updateUserTypeChips();
+        }
+        
+        // Trigger filter and sort after reset
+        if (typeof window.filterAndSortUsers === 'function') {
+            window.filterAndSortUsers();
+        }
+    }
+    
+    // Sort table by clicking header
+    function sortTable(field) {
+        if (currentSortField === field) {
+            // Toggle sort order if clicking the same field
+            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            // New field, default to ascending
+            currentSortField = field;
+            currentSortOrder = 'asc';
+        }
+        
+        // Trigger filter and sort
+        const searchInput = document.getElementById('search-users');
+        if (searchInput) {
+            searchInput.dispatchEvent(new Event('input'));
+        }
+    }
 </script>
 {% endblock %}
 

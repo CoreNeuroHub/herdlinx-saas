@@ -4,6 +4,7 @@ from app.models.feedlot import Feedlot
 from app.models.user import User
 from app.routes.auth_routes import login_required, super_admin_required, admin_access_required
 from app import db
+import bcrypt
 
 top_level_bp = Blueprint('top_level', __name__)
 
@@ -240,4 +241,153 @@ def manage_users():
         users = list(db.users.find())
     
     return render_template('top_level/manage_users.html', users=users, user_type=user_type, feedlots=feedlots)
+
+@top_level_bp.route('/user/<user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@super_admin_required
+def edit_user(user_id):
+    """Edit a user profile"""
+    user = User.find_by_id(user_id)
+    if not user:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'User not found.'}), 404
+        flash('User not found.', 'error')
+        return redirect(url_for('top_level.manage_users'))
+    
+    # Check if this is an AJAX request
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    if request.method == 'GET':
+        # Return user data as JSON for AJAX requests
+        if is_ajax:
+            # Convert ObjectId to string for JSON serialization
+            user_data = {
+                'username': user.get('username', ''),
+                'email': user.get('email', ''),
+                'first_name': user.get('first_name', ''),
+                'last_name': user.get('last_name', ''),
+                'contact_number': user.get('contact_number', ''),
+                'user_type': user.get('user_type', 'user'),
+                'is_active': user.get('is_active', True),
+                'feedlot_id': str(user.get('feedlot_id', '')) if user.get('feedlot_id') else '',
+                'feedlot_ids': [str(fid) for fid in user.get('feedlot_ids', [])] if user.get('feedlot_ids') else []
+            }
+            return jsonify({'success': True, 'user': user_data})
+        else:
+            # For non-AJAX GET requests, redirect to manage users
+            return redirect(url_for('top_level.manage_users'))
+    
+    # Handle POST request for updating user
+    try:
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        contact_number = request.form.get('contact_number', '').strip()
+        user_type = request.form.get('user_type', '').strip()
+        is_active = request.form.get('is_active') == '1'
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        
+        # Validate required fields
+        if not username or not email or not user_type:
+            error_msg = 'Username, email, and user type are required.'
+            if is_ajax:
+                return jsonify({'success': False, 'message': error_msg}), 400
+            flash(error_msg, 'error')
+            return redirect(url_for('top_level.manage_users'))
+        
+        # Check if username is being changed and if it's already taken
+        if username != user.get('username'):
+            existing_user = User.find_by_username(username)
+            if existing_user and str(existing_user['_id']) != user_id:
+                error_msg = 'Username already exists.'
+                if is_ajax:
+                    return jsonify({'success': False, 'message': error_msg}), 400
+                flash(error_msg, 'error')
+                return redirect(url_for('top_level.manage_users'))
+        
+        # Check if email is being changed and if it's already taken
+        if email != user.get('email'):
+            existing_user = User.find_by_email(email)
+            if existing_user and str(existing_user['_id']) != user_id:
+                error_msg = 'Email already exists.'
+                if is_ajax:
+                    return jsonify({'success': False, 'message': error_msg}), 400
+                flash(error_msg, 'error')
+                return redirect(url_for('top_level.manage_users'))
+        
+        # Prepare update data
+        update_data = {
+            'username': username,
+            'email': email,
+            'first_name': first_name if first_name else None,
+            'last_name': last_name if last_name else None,
+            'contact_number': contact_number if contact_number else None,
+            'user_type': user_type,
+            'is_active': is_active
+        }
+        
+        # Handle feedlot assignments based on user type
+        if user_type in ['business_admin', 'business_owner']:
+            # Get selected feedlot IDs from checkboxes
+            feedlot_ids = request.form.getlist('edit_feedlot_ids')
+            if feedlot_ids:
+                update_data['feedlot_ids'] = [ObjectId(fid) for fid in feedlot_ids]
+                # Clear single feedlot_id if it exists
+                update_data['feedlot_id'] = None
+            else:
+                update_data['feedlot_ids'] = []
+                update_data['feedlot_id'] = None
+        elif user_type == 'user':
+            # Single feedlot assignment
+            feedlot_id = request.form.get('feedlot_id', '').strip()
+            if feedlot_id:
+                update_data['feedlot_id'] = ObjectId(feedlot_id)
+            else:
+                update_data['feedlot_id'] = None
+            # Clear multiple feedlot_ids if it exists
+            update_data['feedlot_ids'] = []
+        else:
+            # Super owner or super admin - no feedlots
+            update_data['feedlot_id'] = None
+            update_data['feedlot_ids'] = []
+        
+        # Handle password change if provided
+        if new_password:
+            # Validate password confirmation
+            if new_password != confirm_password:
+                error_msg = 'New password and confirmation do not match.'
+                if is_ajax:
+                    return jsonify({'success': False, 'message': error_msg}), 400
+                flash(error_msg, 'error')
+                return redirect(url_for('top_level.manage_users'))
+            
+            # Validate password length
+            if len(new_password) < 6:
+                error_msg = 'New password must be at least 6 characters long.'
+                if is_ajax:
+                    return jsonify({'success': False, 'message': error_msg}), 400
+                flash(error_msg, 'error')
+                return redirect(url_for('top_level.manage_users'))
+            
+            # Hash new password
+            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            update_data['password_hash'] = hashed_password
+        
+        # Update user
+        User.update_user(user_id, update_data)
+        
+        success_msg = 'User updated successfully.'
+        if is_ajax:
+            return jsonify({'success': True, 'message': success_msg}), 200
+        flash(success_msg, 'success')
+        return redirect(url_for('top_level.manage_users'))
+    
+    except Exception as e:
+        error_msg = f'Failed to update user: {str(e)}'
+        if is_ajax:
+            return jsonify({'success': False, 'message': error_msg}), 500
+        flash(error_msg, 'error')
+        return redirect(url_for('top_level.manage_users'))
 
