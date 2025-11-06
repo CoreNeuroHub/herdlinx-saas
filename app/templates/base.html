@@ -43,7 +43,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Navigation -->
     <nav class="bg-navy text-white shadow-lg relative">
         <div class="container mx-auto px-4 py-3">
@@ -66,8 +66,52 @@
                         <span id="brand-name" class="text-2xl font-bold hover:text-teal" style="display:none;">HerdLinx SaaS</span>
                     </a>
                 </div>
-                <!-- Right side spacer for balance -->
-                <div class="w-10"></div>
+                <!-- Profile Section - Right Side -->
+                {% if session.user_id %}
+                    {% set user_profile = session.get('user_profile') %}
+                    <div class="relative">
+                        <button id="profile-dropdown-btn" class="flex items-center space-x-3 p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Profile menu" aria-expanded="false">
+                            {% if user_profile and user_profile.get('profile_picture') %}
+                            <img src="{{ user_profile.profile_picture }}" alt="Profile" 
+                                 class="w-10 h-10 rounded-full object-cover border-2 border-teal">
+                            {% else %}
+                            <div class="w-10 h-10 bg-teal rounded-full flex items-center justify-center">
+                                <span class="text-lg font-bold text-white">{{ session.username[0].upper() }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex flex-col items-start hidden sm:flex">
+                                <span class="text-white font-semibold">
+                                    {% if user_profile and user_profile.get('first_name') %}
+                                        {{ user_profile.first_name }}{% if user_profile.get('last_name') %} {{ user_profile.last_name }}{% endif %}
+                                    {% else %}
+                                        {{ session.username }}
+                                    {% endif %}
+                                </span>
+                                {% set user_type = session.get('user_type') %}
+                                {% if user_type %}
+                                    {% set user_type_display = user_type.replace('_', ' ').title() %}
+                                    <span class="text-white text-xs opacity-75">{{ user_type_display }}</span>
+                                {% endif %}
+                            </div>
+                            <svg class="w-5 h-5 text-white hidden sm:inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <!-- Profile Dropdown Menu -->
+                        <div id="profile-dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
+                            <div class="py-1">
+                                <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Edit Profile
+                                </a>
+                                <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="w-10"></div>
+                {% endif %}
             </div>
         </div>
         <!-- Hamburger Menu Overlay -->
@@ -76,7 +120,7 @@
         <div id="menu-panel" class="fixed top-0 left-0 h-full w-80 bg-navy shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-y-auto">
             <div class="flex flex-col h-full">
                 <div class="p-6 border-b border-teal border-opacity-30">
-                    <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center justify-between">
                         <h2 class="text-xl font-bold text-white">Menu</h2>
                         <button onclick="toggleMenu()" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Close menu">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,17 +128,6 @@
                             </svg>
                         </button>
                     </div>
-                    {% if session.user_id %}
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-teal rounded-full flex items-center justify-center">
-                                <span class="text-xl font-bold">{{ session.username[0].upper() }}</span>
-                            </div>
-                            <div>
-                                <p class="text-white font-semibold">{{ session.username }}</p>
-                                <p class="text-gray-400 text-sm">Logged in</p>
-                            </div>
-                        </div>
-                    {% endif %}
                 </div>
                 <div class="flex-1 py-4">
                     <div class="space-y-1">
@@ -208,6 +241,53 @@
         } else {
             initActionsDropdown();
         }
+        
+        // Profile Dropdown functionality
+        function initProfileDropdown() {
+            const profileDropdownBtn = document.getElementById('profile-dropdown-btn');
+            const profileDropdownMenu = document.getElementById('profile-dropdown-menu');
+            
+            if (profileDropdownBtn && profileDropdownMenu) {
+                profileDropdownBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isHidden = profileDropdownMenu.classList.contains('hidden');
+                    
+                    if (isHidden) {
+                        profileDropdownMenu.classList.remove('hidden');
+                        profileDropdownBtn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        profileDropdownMenu.classList.add('hidden');
+                        profileDropdownBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    const target = e.target;
+                    const isClickInside = profileDropdownBtn.contains(target) || profileDropdownMenu.contains(target);
+                    if (!isClickInside && !profileDropdownMenu.classList.contains('hidden')) {
+                        profileDropdownMenu.classList.add('hidden');
+                        profileDropdownBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                
+                // Close dropdown on escape key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && !profileDropdownMenu.classList.contains('hidden')) {
+                        profileDropdownMenu.classList.add('hidden');
+                        profileDropdownBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+        }
+        
+        // Initialize profile dropdown on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initProfileDropdown);
+        } else {
+            initProfileDropdown();
+        }
     </script>
 
     <!-- Toast Container -->
@@ -313,12 +393,12 @@
     </script>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-6 relative">
+    <main class="container mx-auto px-4 py-6 relative flex-1">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="bg-navy text-white mt-auto py-6">
+    <footer class="bg-navy text-white py-6">
         <div class="container mx-auto px-4 text-center">
             <p>&copy; 2025 Herdlinx. All rights reserved.</p>
         </div>

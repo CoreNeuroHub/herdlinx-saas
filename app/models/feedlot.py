@@ -4,8 +4,15 @@ from app import db
 
 class Feedlot:
     @staticmethod
-    def create_feedlot(name, location, contact_info=None):
-        """Create a new feedlot"""
+    def create_feedlot(name, location, contact_info=None, owner_id=None):
+        """Create a new feedlot
+        
+        Args:
+            name: Feedlot name
+            location: Feedlot location
+            contact_info: Contact information dictionary
+            owner_id: Optional owner user ID (must be business_owner type)
+        """
         feedlot_data = {
             'name': name,
             'location': location,
@@ -13,6 +20,9 @@ class Feedlot:
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow()
         }
+        
+        if owner_id:
+            feedlot_data['owner_id'] = ObjectId(owner_id)
         
         result = db.feedlots.insert_one(feedlot_data)
         return str(result.inserted_id)
@@ -68,4 +78,36 @@ class Feedlot:
             'total_batches': total_batches,
             'cattle_by_pen': len(cattle_by_pen)
         }
+    
+    @staticmethod
+    def save_pen_map(feedlot_id, grid_width, grid_height, pen_placements):
+        """Save pen map configuration for a feedlot"""
+        pen_map_data = {
+            'grid_width': grid_width,
+            'grid_height': grid_height,
+            'pen_placements': pen_placements,  # List of {row, col, pen_id}
+            'updated_at': datetime.utcnow()
+        }
+        
+        db.feedlots.update_one(
+            {'_id': ObjectId(feedlot_id)},
+            {'$set': {'pen_map': pen_map_data, 'updated_at': datetime.utcnow()}}
+        )
+    
+    @staticmethod
+    def get_pen_map(feedlot_id):
+        """Get pen map configuration for a feedlot"""
+        feedlot = Feedlot.find_by_id(feedlot_id)
+        if feedlot and feedlot.get('pen_map'):
+            return feedlot['pen_map']
+        return None
+    
+    @staticmethod
+    def get_owner(feedlot_id):
+        """Get the owner user for a feedlot"""
+        from app.models.user import User
+        feedlot = Feedlot.find_by_id(feedlot_id)
+        if feedlot and feedlot.get('owner_id'):
+            return User.find_by_id(str(feedlot['owner_id']))
+        return None
 
