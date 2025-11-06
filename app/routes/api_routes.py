@@ -735,62 +735,7 @@ def sync_repair_events():
             'message': f'Error processing request: {str(e)}'
         }), 500
 
-@api_bp.route('/v1/admin/generate-key', methods=['POST'])
-@login_required
-@admin_access_required
-def generate_api_key():
-    """Generate a new API key for a feedlot (admin only)"""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({
-                'success': False,
-                'message': 'Request body must be JSON'
-            }), 400
-        
-        feedlot_id = data.get('feedlot_id')
-        if not feedlot_id:
-            return jsonify({
-                'success': False,
-                'message': 'feedlot_id is required'
-            }), 400
-        
-        # Verify feedlot exists
-        feedlot = Feedlot.find_by_id(feedlot_id)
-        if not feedlot:
-            return jsonify({
-                'success': False,
-                'message': 'Feedlot not found'
-            }), 404
-        
-        # Check if user has access to this feedlot (for business owners/admins)
-        user_type = session.get('user_type')
-        if user_type in ['business_owner', 'business_admin']:
-            user_feedlot_ids = [str(fid) for fid in session.get('feedlot_ids', [])]
-            if str(feedlot_id) not in user_feedlot_ids:
-                return jsonify({
-                    'success': False,
-                    'message': 'Access denied. You do not have access to this feedlot.'
-                }), 403
-        
-        description = data.get('description', '').strip() or None
-        
-        # Generate API key
-        api_key_string, api_key_id = APIKey.create_api_key(feedlot_id, description)
-        
-        return jsonify({
-            'success': True,
-            'message': 'API key generated successfully',
-            'api_key': api_key_string,  # Return plain text key (only time it's shown)
-            'api_key_id': api_key_id,
-            'feedlot_id': feedlot_id,
-            'feedlot_name': feedlot.get('name'),
-            'warning': 'Save this API key immediately. It will not be shown again.'
-        }), 200
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Error generating API key: {str(e)}'
-        }), 500
+# API key generation is now only available through the web UI (Settings → API Keys)
+# This endpoint has been removed to restrict key generation to the secure web interface
+# Use the Settings page in the web application to generate and manage API keys
 
