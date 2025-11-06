@@ -120,7 +120,7 @@ def sync_batches():
                 
                 # Map office app fields to SaaS structure
                 batch_number = batch_name
-                source = batch_item.get('funder', '') or ''
+                funder = batch_item.get('funder', '') or ''
                 notes = batch_item.get('notes', '') or ''
                 
                 if existing_batch:
@@ -128,14 +128,14 @@ def sync_batches():
                     update_data = {
                         'batch_number': batch_number,
                         'induction_date': induction_date,
-                        'source': source,
+                        'funder': funder,
                         'notes': notes
                     }
                     Batch.update_batch(str(existing_batch['_id']), update_data)
                     records_updated += 1
                 else:
                     # Create new batch
-                    Batch.create_batch(feedlot_id, batch_number, induction_date, source, notes)
+                    Batch.create_batch(feedlot_id, batch_number, induction_date, funder, notes)
                     records_created += 1
                     
             except Exception as e:
