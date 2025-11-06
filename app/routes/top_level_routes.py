@@ -136,6 +136,7 @@ def create_feedlot():
         try:
             name = request.form.get('name')
             location = request.form.get('location')
+            feedlot_code = request.form.get('feedlot_code', '').strip()
             contact_info = {
                 'phone': request.form.get('phone') or None,
                 'email': request.form.get('email') or None,
@@ -143,8 +144,8 @@ def create_feedlot():
             }
             
             # Validate required fields
-            if not name or not location:
-                error_msg = 'Feedlot name and location are required.'
+            if not name or not location or not feedlot_code:
+                error_msg = 'Feedlot name, location, and feedlot code are required.'
                 if is_ajax:
                     return jsonify({'success': False, 'message': error_msg}), 400
                 flash(error_msg, 'error')
@@ -152,7 +153,7 @@ def create_feedlot():
                     return redirect(url_for('top_level.dashboard'))
                 return jsonify({'success': False, 'message': error_msg}), 400
             
-            feedlot_id = Feedlot.create_feedlot(name, location, contact_info)
+            feedlot_id = Feedlot.create_feedlot(name, location, feedlot_code, contact_info)
             
             success_msg = 'Feedlot created successfully.'
             if is_ajax:
@@ -208,9 +209,20 @@ def edit_feedlot(feedlot_id):
     business_owners = User.find_business_owners()
     
     if request.method == 'POST':
+        feedlot_code = request.form.get('feedlot_code', '').strip()
+        
+        # Validate feedlot_code uniqueness if it's being changed
+        if feedlot_code:
+            feedlot_code_upper = feedlot_code.upper().strip()
+            existing = Feedlot.find_by_code(feedlot_code_upper)
+            if existing and str(existing['_id']) != feedlot_id:
+                flash(f"Feedlot code '{feedlot_code}' already exists.", 'error')
+                return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners)
+        
         update_data = {
             'name': request.form.get('name'),
             'location': request.form.get('location'),
+            'feedlot_code': feedlot_code.upper().strip() if feedlot_code else None,
             'contact_info': {
                 'phone': request.form.get('phone'),
                 'email': request.form.get('email'),
