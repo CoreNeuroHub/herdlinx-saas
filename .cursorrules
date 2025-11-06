@@ -36,6 +36,14 @@
         Access specific to their feedlot instance, manage pens/batches/cattle within their feedlot, cannot access other feedlot instances
       </type>
     </user_types>
+    <terminology_clarifications>
+      <term name="top_level">
+        Refers to Super Owner and Super Admin user types. These are the highest-level users with system-wide access.
+      </term>
+      <term name="business_level">
+        Refers to all user types that are not top level (i.e., all user types except Super Owner and Super Admin). These users operate within specific feedlot instances.
+      </term>
+    </terminology_clarifications>
     <authentication_requirements>
       - Separate authentication contexts for top-level vs feedlot-level
       - Role-based access control (RBAC)
