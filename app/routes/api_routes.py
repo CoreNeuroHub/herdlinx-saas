@@ -44,7 +44,7 @@ def api_key_required(f):
     
     return decorated_function
 
-@api_bp.route('/v1/office/batches', methods=['POST'])
+@api_bp.route('/v1/feedlot/batches', methods=['POST'])
 @api_key_required
 def sync_batches():
     """Sync batch data from office app"""
@@ -158,7 +158,7 @@ def sync_batches():
             'message': f'Error processing request: {str(e)}'
         }), 500
 
-@api_bp.route('/v1/office/livestock', methods=['POST'])
+@api_bp.route('/v1/feedlot/livestock', methods=['POST'])
 @api_key_required
 def sync_livestock():
     """Sync livestock (current state) from office app"""
@@ -268,7 +268,7 @@ def sync_livestock():
             'message': f'Error processing request: {str(e)}'
         }), 500
 
-@api_bp.route('/v1/office/induction-events', methods=['POST'])
+@api_bp.route('/v1/feedlot/induction-events', methods=['POST'])
 @api_key_required
 def sync_induction_events():
     """Sync induction events from office app"""
@@ -416,7 +416,7 @@ def sync_induction_events():
             'message': f'Error processing request: {str(e)}'
         }), 500
 
-@api_bp.route('/v1/office/pairing-events', methods=['POST'])
+@api_bp.route('/v1/feedlot/pairing-events', methods=['POST'])
 @api_key_required
 def sync_pairing_events():
     """Sync pairing events from office app"""
@@ -516,7 +516,7 @@ def sync_pairing_events():
             'message': f'Error processing request: {str(e)}'
         }), 500
 
-@api_bp.route('/v1/office/checkin-events', methods=['POST'])
+@api_bp.route('/v1/feedlot/checkin-events', methods=['POST'])
 @api_key_required
 def sync_checkin_events():
     """Sync check-in events (weight measurements) from office app"""
@@ -620,7 +620,7 @@ def sync_checkin_events():
             'message': f'Error processing request: {str(e)}'
         }), 500
 
-@api_bp.route('/v1/office/repair-events', methods=['POST'])
+@api_bp.route('/v1/feedlot/repair-events', methods=['POST'])
 @api_key_required
 def sync_repair_events():
     """Sync repair events from office app"""

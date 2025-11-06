@@ -69,10 +69,10 @@ API keys can be provided in two ways:
 
 ## Base URL
 
-All API endpoints are prefixed with `/api/v1/office`:
+All API endpoints are prefixed with `/api/v1/feedlot`:
 
 ```
-https://your-domain.com/api/v1/office
+https://your-domain.com/api/v1/feedlot
 ```
 
 ---
@@ -131,7 +131,7 @@ All endpoints return JSON responses with the following structure:
 
 ### 1. Sync Batches
 
-**Endpoint**: `POST /api/v1/office/batches`
+**Endpoint**: `POST /api/v1/feedlot/batches`
 
 **Description**: Syncs batch data from the office app to the SaaS system.
 
@@ -186,7 +186,7 @@ All endpoints return JSON responses with the following structure:
 
 ### 2. Sync Livestock (Current State)
 
-**Endpoint**: `POST /api/v1/office/livestock`
+**Endpoint**: `POST /api/v1/feedlot/livestock`
 
 **Description**: Syncs current livestock state, primarily updating tag information.
 
@@ -236,7 +236,7 @@ All endpoints return JSON responses with the following structure:
 
 ### 3. Sync Induction Events
 
-**Endpoint**: `POST /api/v1/office/induction-events`
+**Endpoint**: `POST /api/v1/feedlot/induction-events`
 
 **Description**: Creates cattle records when animals are inducted into the system.
 
@@ -287,7 +287,7 @@ All endpoints return JSON responses with the following structure:
 
 ### 4. Sync Pairing Events
 
-**Endpoint**: `POST /api/v1/office/pairing-events`
+**Endpoint**: `POST /api/v1/feedlot/pairing-events`
 
 **Description**: Records when LF and UHF tags are paired together.
 
@@ -336,7 +336,7 @@ All endpoints return JSON responses with the following structure:
 
 ### 5. Sync Check-in Events
 
-**Endpoint**: `POST /api/v1/office/checkin-events`
+**Endpoint**: `POST /api/v1/feedlot/checkin-events`
 
 **Description**: Records weight measurements during check-in operations.
 
@@ -384,7 +384,7 @@ All endpoints return JSON responses with the following structure:
 
 ### 6. Sync Repair Events
 
-**Endpoint**: `POST /api/v1/office/repair-events`
+**Endpoint**: `POST /api/v1/feedlot/repair-events`
 
 **Description**: Records when tags are replaced due to damage or loss.
 
@@ -542,7 +542,7 @@ All endpoints are designed to be idempotent:
 import requests
 import json
 
-API_BASE_URL = "https://your-domain.com/api/v1/office"
+API_BASE_URL = "https://your-domain.com/api/v1/feedlot"
 API_KEY = "your_api_key_here"
 FEEDLOT_CODE = "FEEDLOT001"
 
@@ -579,7 +579,7 @@ print(f"Errors: {result['errors']}")
 ### cURL Example
 
 ```bash
-curl -X POST https://your-domain.com/api/v1/office/batches \
+curl -X POST https://your-domain.com/api/v1/feedlot/batches \
   -H "X-API-Key: your_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{
