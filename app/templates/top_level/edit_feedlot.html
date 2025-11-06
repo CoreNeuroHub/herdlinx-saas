@@ -2,14 +2,6 @@
 
 {% block title %}Edit Feedlot - HerdLinx SaaS{% endblock %}
 
-{% block nav_items %}
-<a href="{{ url_for('top_level.dashboard') }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
-<a href="{{ url_for('top_level.feedlot_hub') }}" class="px-4 py-2 hover:bg-teal rounded transition">Feedlot Hub</a>
-{% if user_type in ['super_owner', 'super_admin'] %}
-<a href="{{ url_for('top_level.settings') }}" class="px-4 py-2 hover:bg-teal rounded transition">Settings</a>
-{% endif %}
-{% endblock %}
-
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <h1 class="text-3xl font-bold text-gray-800 mb-6">Edit Feedlot</h1>

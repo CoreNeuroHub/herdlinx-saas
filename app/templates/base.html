@@ -131,6 +131,31 @@
                 </div>
                 <div class="flex-1 py-4 overflow-y-auto min-h-0">
                     <div class="space-y-1">
+                        {% if show_top_level_nav %}
+                        <!-- Top-Level Navigation Section -->
+                        <div class="px-4 py-2">
+                            <h3 class="text-xs font-semibold text-teal uppercase tracking-wider mb-2">Main Navigation</h3>
+                            <div class="space-y-1">
+                                <a href="{{ url_for('top_level.dashboard') }}" class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
+                                <a href="{{ url_for('top_level.feedlot_hub') }}" class="px-4 py-2 hover:bg-teal rounded transition block">Feedlot Hub</a>
+                                <a href="{{ url_for('top_level.settings') }}" class="px-4 py-2 hover:bg-teal rounded transition block">Settings</a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if show_feedlot_nav and current_feedlot %}
+                        <!-- Feedlot Navigation Section -->
+                        <div class="px-4 py-2 border-t border-teal border-opacity-30 mt-2 pt-4">
+                            <h3 class="text-xs font-semibold text-teal uppercase tracking-wider mb-2">{{ current_feedlot.name }}</h3>
+                            <div class="space-y-1">
+                                <a href="{{ url_for('feedlot.dashboard', feedlot_id=current_feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
+                                <a href="{{ url_for('feedlot.list_pens', feedlot_id=current_feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition block">Pens</a>
+                                <a href="{{ url_for('feedlot.list_batches', feedlot_id=current_feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition block">Batches</a>
+                                <a href="{{ url_for('feedlot.list_cattle', feedlot_id=current_feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition block">Cattle</a>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
                         {% block nav_items %}{% endblock %}
                     </div>
                 </div>
