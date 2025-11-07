@@ -4,18 +4,26 @@ from app import db
 
 class Feedlot:
     @staticmethod
-    def create_feedlot(name, location, contact_info=None, owner_id=None):
+    def create_feedlot(name, location, feedlot_code, contact_info=None, owner_id=None):
         """Create a new feedlot
         
         Args:
             name: Feedlot name
             location: Feedlot location
+            feedlot_code: Unique feedlot code for office app integration (required, unique, case-insensitive)
             contact_info: Contact information dictionary
             owner_id: Optional owner user ID (must be business_owner type)
         """
+        # Validate feedlot_code uniqueness (case-insensitive)
+        if feedlot_code:
+            existing = Feedlot.find_by_code(feedlot_code)
+            if existing:
+                raise ValueError(f"Feedlot code '{feedlot_code}' already exists.")
+        
         feedlot_data = {
             'name': name,
             'location': location,
+            'feedlot_code': feedlot_code.upper().strip() if feedlot_code else None,
             'contact_info': contact_info or {},
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow()
@@ -43,6 +51,13 @@ class Feedlot:
         if not feedlot_ids:
             return []
         return db.feedlots.find({'_id': {'$in': feedlot_ids}})
+    
+    @staticmethod
+    def find_by_code(feedlot_code):
+        """Find feedlot by feedlot_code (case-insensitive)"""
+        if not feedlot_code:
+            return None
+        return db.feedlots.find_one({'feedlot_code': feedlot_code.upper().strip()})
     
     @staticmethod
     def update_feedlot(feedlot_id, update_data):

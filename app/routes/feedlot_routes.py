@@ -213,13 +213,13 @@ def create_batch(feedlot_id):
     if request.method == 'POST':
         batch_number = request.form.get('batch_number')
         induction_date_str = request.form.get('induction_date')
-        source = request.form.get('source')
+        funder = request.form.get('funder')
         notes = request.form.get('notes')
         
         # Convert date string to datetime object
         induction_date = datetime.strptime(induction_date_str, '%Y-%m-%d') if induction_date_str else None
         
-        batch_id = Batch.create_batch(feedlot_id, batch_number, induction_date, source, notes)
+        batch_id = Batch.create_batch(feedlot_id, batch_number, induction_date, funder, notes)
         flash('Batch created successfully.', 'success')
         return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
     

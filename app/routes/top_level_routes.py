@@ -3,6 +3,7 @@ from bson import ObjectId
 from datetime import datetime
 from app.models.feedlot import Feedlot
 from app.models.user import User
+from app.models.api_key import APIKey
 from app.routes.auth_routes import login_required, super_admin_required, admin_access_required
 from app import db
 import bcrypt
@@ -136,6 +137,7 @@ def create_feedlot():
         try:
             name = request.form.get('name')
             location = request.form.get('location')
+            feedlot_code = request.form.get('feedlot_code', '').strip()
             contact_info = {
                 'phone': request.form.get('phone') or None,
                 'email': request.form.get('email') or None,
@@ -143,8 +145,8 @@ def create_feedlot():
             }
             
             # Validate required fields
-            if not name or not location:
-                error_msg = 'Feedlot name and location are required.'
+            if not name or not location or not feedlot_code:
+                error_msg = 'Feedlot name, location, and feedlot code are required.'
                 if is_ajax:
                     return jsonify({'success': False, 'message': error_msg}), 400
                 flash(error_msg, 'error')
@@ -152,7 +154,7 @@ def create_feedlot():
                     return redirect(url_for('top_level.dashboard'))
                 return jsonify({'success': False, 'message': error_msg}), 400
             
-            feedlot_id = Feedlot.create_feedlot(name, location, contact_info)
+            feedlot_id = Feedlot.create_feedlot(name, location, feedlot_code, contact_info)
             
             success_msg = 'Feedlot created successfully.'
             if is_ajax:
@@ -192,7 +194,8 @@ def view_feedlot(feedlot_id):
     
     statistics = Feedlot.get_statistics(feedlot_id)
     owner = Feedlot.get_owner(feedlot_id)
-    return render_template('top_level/view_feedlot.html', feedlot=feedlot, statistics=statistics, owner=owner)
+    user_type = session.get('user_type')
+    return render_template('top_level/view_feedlot.html', feedlot=feedlot, statistics=statistics, owner=owner, user_type=user_type)
 
 @top_level_bp.route('/feedlot/<feedlot_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -206,11 +209,23 @@ def edit_feedlot(feedlot_id):
     
     # Get all business owners for the dropdown
     business_owners = User.find_business_owners()
+    user_type = session.get('user_type')
     
     if request.method == 'POST':
+        feedlot_code = request.form.get('feedlot_code', '').strip()
+        
+        # Validate feedlot_code uniqueness if it's being changed
+        if feedlot_code:
+            feedlot_code_upper = feedlot_code.upper().strip()
+            existing = Feedlot.find_by_code(feedlot_code_upper)
+            if existing and str(existing['_id']) != feedlot_id:
+                flash(f"Feedlot code '{feedlot_code}' already exists.", 'error')
+                return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners, user_type=user_type)
+        
         update_data = {
             'name': request.form.get('name'),
             'location': request.form.get('location'),
+            'feedlot_code': feedlot_code.upper().strip() if feedlot_code else None,
             'contact_info': {
                 'phone': request.form.get('phone'),
                 'email': request.form.get('email'),
@@ -227,7 +242,7 @@ def edit_feedlot(feedlot_id):
                 update_data['owner_id'] = ObjectId(owner_id)
             else:
                 flash('Selected user must be a business owner.', 'error')
-                return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners)
+                return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners, user_type=user_type)
         
         # Update feedlot with all fields
         Feedlot.update_feedlot(feedlot_id, update_data)
@@ -242,7 +257,7 @@ def edit_feedlot(feedlot_id):
         flash('Feedlot updated successfully.', 'success')
         return redirect(url_for('top_level.view_feedlot', feedlot_id=feedlot_id))
     
-    return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners)
+    return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners, user_type=user_type)
 
 @top_level_bp.route('/feedlot/<feedlot_id>/users')
 @login_required
@@ -263,7 +278,8 @@ def feedlot_users(feedlot_id):
         return redirect(url_for('top_level.dashboard'))
     
     users = User.find_by_feedlot(feedlot_id)
-    return render_template('top_level/feedlot_users.html', feedlot=feedlot, users=users)
+    user_type = session.get('user_type')
+    return render_template('top_level/feedlot_users.html', feedlot=feedlot, users=users, user_type=user_type)
 
 @top_level_bp.route('/user/<user_id>/activate', methods=['POST'])
 @login_required
@@ -527,4 +543,150 @@ def save_dashboard_preferences():
     
     except Exception as e:
         return jsonify({'success': False, 'message': f'Failed to save preferences: {str(e)}'}), 500
+
+@top_level_bp.route('/settings')
+@login_required
+@admin_access_required
+def settings():
+    """Main settings page (all admin users)"""
+    user_type = session.get('user_type')
+    
+    return render_template('top_level/settings.html', user_type=user_type)
+
+@top_level_bp.route('/settings/api-keys')
+@login_required
+@admin_access_required
+def api_keys():
+    """API Keys management page (top-level users only)"""
+    user_type = session.get('user_type')
+    
+    # Only allow top-level users
+    if user_type not in ['super_owner', 'super_admin']:
+        flash('Access denied. API Keys management is only available for top-level users.', 'error')
+        return redirect(url_for('top_level.dashboard'))
+    
+    # Get all feedlots
+    feedlots = Feedlot.find_all()
+    
+    # Enrich feedlots with their API keys
+    enriched_feedlots = []
+    for feedlot in feedlots:
+        feedlot_id = str(feedlot['_id'])
+        api_keys = APIKey.find_by_feedlot(feedlot_id)
+        
+        enriched_feedlot = dict(feedlot)
+        enriched_feedlot['api_keys'] = api_keys
+        enriched_feedlots.append(enriched_feedlot)
+    
+    return render_template('top_level/api_keys.html', feedlots=enriched_feedlots, user_type=user_type)
+
+@top_level_bp.route('/settings/api-keys/generate', methods=['POST'])
+@login_required
+@admin_access_required
+def generate_api_key():
+    """Generate a new API key for a feedlot (top-level users only)"""
+    user_type = session.get('user_type')
+    
+    # Only allow top-level users
+    if user_type not in ['super_owner', 'super_admin']:
+        return jsonify({'success': False, 'message': 'Access denied.'}), 403
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'Request body must be JSON'}), 400
+        
+        feedlot_id = data.get('feedlot_id')
+        if not feedlot_id:
+            return jsonify({'success': False, 'message': 'feedlot_id is required'}), 400
+        
+        # Verify feedlot exists
+        feedlot = Feedlot.find_by_id(feedlot_id)
+        if not feedlot:
+            return jsonify({'success': False, 'message': 'Feedlot not found'}), 404
+        
+        description = data.get('description', '').strip() or None
+        
+        # Generate API key
+        api_key_string, api_key_id = APIKey.create_api_key(feedlot_id, description)
+        
+        return jsonify({
+            'success': True,
+            'message': 'API key generated successfully',
+            'api_key': api_key_string,
+            'api_key_id': api_key_id,
+            'feedlot_id': feedlot_id,
+            'feedlot_name': feedlot.get('name'),
+            'feedlot_code': feedlot.get('feedlot_code'),
+            'warning': 'Save this API key immediately. It will not be shown again.'
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error generating API key: {str(e)}'}), 500
+
+@top_level_bp.route('/settings/api-keys/<key_id>/deactivate', methods=['POST'])
+@login_required
+@admin_access_required
+def deactivate_api_key(key_id):
+    """Deactivate an API key (top-level users only)"""
+    user_type = session.get('user_type')
+    
+    # Only allow top-level users
+    if user_type not in ['super_owner', 'super_admin']:
+        return jsonify({'success': False, 'message': 'Access denied.'}), 403
+    
+    try:
+        api_key = APIKey.find_by_id(key_id)
+        if not api_key:
+            return jsonify({'success': False, 'message': 'API key not found'}), 404
+        
+        APIKey.deactivate_key(key_id)
+        return jsonify({'success': True, 'message': 'API key deactivated successfully'}), 200
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error deactivating API key: {str(e)}'}), 500
+
+@top_level_bp.route('/settings/api-keys/<key_id>/activate', methods=['POST'])
+@login_required
+@admin_access_required
+def activate_api_key(key_id):
+    """Activate an API key (top-level users only)"""
+    user_type = session.get('user_type')
+    
+    # Only allow top-level users
+    if user_type not in ['super_owner', 'super_admin']:
+        return jsonify({'success': False, 'message': 'Access denied.'}), 403
+    
+    try:
+        api_key = APIKey.find_by_id(key_id)
+        if not api_key:
+            return jsonify({'success': False, 'message': 'API key not found'}), 404
+        
+        APIKey.activate_key(key_id)
+        return jsonify({'success': True, 'message': 'API key activated successfully'}), 200
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error activating API key: {str(e)}'}), 500
+
+@top_level_bp.route('/settings/api-keys/<key_id>/delete', methods=['POST'])
+@login_required
+@admin_access_required
+def delete_api_key(key_id):
+    """Delete an API key (top-level users only)"""
+    user_type = session.get('user_type')
+    
+    # Only allow top-level users
+    if user_type not in ['super_owner', 'super_admin']:
+        return jsonify({'success': False, 'message': 'Access denied.'}), 403
+    
+    try:
+        api_key = APIKey.find_by_id(key_id)
+        if not api_key:
+            return jsonify({'success': False, 'message': 'API key not found'}), 404
+        
+        APIKey.delete_key(key_id)
+        return jsonify({'success': True, 'message': 'API key deleted successfully'}), 200
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error deleting API key: {str(e)}'}), 500
 

@@ -1,0 +1,186 @@
+<cursor_rule>
+  <project_context>
+    <name>Cattle Tracking SaaS Application</name>
+    <description>
+      Multi-tenant SaaS application for tracking cattle in feedlots. The system consists of a top-level website that serves as a hub to navigate between individual feedlot instances (SaaS tenants). Each feedlot manages pens, batches of inducted cattle, and individual cattle details.
+    </description>
+  </project_context>
+
+  <tech_stack>
+    <backend>Python with Flask</backend>
+    <frontend>Tailwind CSS</frontend>
+    <database>MongoDB</database>
+    <authentication>User login system for both top-level and SaaS-level users</authentication>
+  </tech_stack>
+
+  <architecture>
+    <multi_tenant_structure>
+      <level name="top_level">
+        Main hub for navigation, access to all feedlot instances, top-level user authentication and management
+      </level>
+      <level name="feedlot_instances">
+        Individual feedlot dashboards, feedlot-specific user authentication, manages pens, batches, and cattle
+      </level>
+      <hierarchy>
+        Top-Level Hub → Feedlot Instance → (Pens | Batches | Individual Cattle Details)
+      </hierarchy>
+    </multi_tenant_structure>
+  </architecture>
+
+  <user_management>
+    <user_types>
+      <type name="top_level_users">
+        Can access the main hub, navigate between different feedlot instances, manage feedlot accounts
+      </type>
+      <type name="saas_level_users">
+        Access specific to their feedlot instance, manage pens/batches/cattle within their feedlot, cannot access other feedlot instances
+      </type>
+    </user_types>
+    <terminology_clarifications>
+      <term name="top_level">
+        Refers to Super Owner and Super Admin user types. These are the highest-level users with system-wide access.
+      </term>
+      <term name="business_level">
+        Refers to all user types that are not top level (i.e., all user types except Super Owner and Super Admin). These users operate within specific feedlot instances.
+      </term>
+    </terminology_clarifications>
+    <authentication_requirements>
+      - Separate authentication contexts for top-level vs feedlot-level
+      - Role-based access control (RBAC)
+      - Secure session management
+      - Password encryption and security best practices
+    </authentication_requirements>
+  </user_management>
+
+  <database_schema>
+    <collections>
+      <collection name="users">Top-level and feedlot users</collection>
+      <collection name="feedlots">Feedlot instances/tenants</collection>
+      <collection name="pens">Physical pen locations within feedlots</collection>
+      <collection name="batches">Groups of cattle inducted together</collection>
+      <collection name="cattle">Individual cattle records</collection>
+    </collections>
+    <relationships>
+      - Feedlots contain multiple pens and batches
+      - Batches contain multiple cattle
+      - Cattle are assigned to pens
+      - Users are associated with feedlots (for SaaS-level users)
+    </relationships>
+  </database_schema>
+
+  <ui_ux_requirements>
+    <responsive_design>
+      - Follow best practices for multiple screen sizes
+      - Mobile-first approach using Tailwind CSS
+      - Breakpoints: mobile (&lt; 640px), tablet (640px - 1024px), desktop (&gt; 1024px)
+      - Ensure all features are accessible across devices
+      - Touch-friendly interfaces for mobile/tablet
+      - Optimized navigation for smaller screens
+    </responsive_design>
+    <design_principles>
+      - Clean, modern interface using Tailwind CSS utilities
+      - Intuitive navigation between hierarchy levels
+      - Clear visual distinction between top-level and feedlot contexts
+      - Consistent component design across the application
+      - Accessible forms and data tables
+    </design_principles>
+  </ui_ux_requirements>
+
+  <core_features>
+    <top_level_website>
+      - Dashboard showing all feedlot instances
+      - Feedlot management (create, edit, view)
+      - User management for top-level access
+      - Navigation to individual feedlot instances
+    </top_level_website>
+    <feedlot_instance>
+      <pen_management>
+        Create, view, edit, delete pens | View cattle currently in each pen | Pen capacity tracking
+      </pen_management>
+      <batch_management>
+        Record cattle induction in batches | Track batch details (induction date, source, etc.) | View all cattle in a batch
+      </batch_management>
+      <cattle_details>
+        Individual cattle records | Track cattle information (ID, breed, weight, health status, etc.) | Movement history between pens | Batch association
+      </cattle_details>
+    </feedlot_instance>
+    <authentication_flow>
+      Login pages for both top-level and feedlot users | Session management | Logout functionality | Password reset capability
+    </authentication_flow>
+  </core_features>
+
+  <technical_guidelines>
+    <flask_structure>
+      /app
+        /routes (top_level_routes.py, feedlot_routes.py, auth_routes.py)
+        /models (user.py, feedlot.py, pen.py, batch.py, cattle.py)
+        /templates (Base templates with Tailwind CSS)
+        /static (CSS, JS, images)
+        config.py
+        __init__.py
+    </flask_structure>
+    <mongodb_best_practices>
+      - Use proper indexing for performance
+      - Implement data validation
+      - Handle multi-tenant data isolation
+      - Efficient querying with aggregation pipelines where needed
+    </mongodb_best_practices>
+    <security>
+      - Input validation and sanitization
+      - CSRF protection
+      - NoSQL injection prevention for MongoDB
+      - Secure password hashing (bcrypt)
+      - Environment variables for sensitive data
+      - JWT or session-based authentication
+    </security>
+    <code_quality>
+      - Follow PEP 8 style guidelines for Python
+      - Write clean, maintainable code
+      - Include error handling and logging
+      - Add comments for complex logic
+      - Modular and reusable components
+    </code_quality>
+  </technical_guidelines>
+
+  <development_priorities>
+    1. Set up Flask application structure and MongoDB connection
+    2. Implement authentication system (top-level and feedlot)
+    3. Build top-level hub with feedlot navigation
+    4. Create feedlot instance views
+    5. Implement pen management
+    6. Implement batch management
+    7. Implement cattle details and tracking
+    8. Ensure responsive design across all views
+    9. Add data validation and security measures
+    10. Testing and refinement
+  </development_priorities>
+
+  <coding_instructions>
+    When generating code for this project:
+    - Always consider the multi-tenant context and data isolation
+    - Ensure clear separation between top-level and feedlot contexts
+    - Maintain consistent naming conventions
+    - Plan for scalability as feedlots and cattle data grow
+    - Consider pagination for large datasets
+    - Implement search and filter functionality where appropriate
+    - Use Tailwind CSS utility classes for all styling
+    - Ensure responsive design patterns are applied
+    - Include proper error handling and user feedback
+    - Write self-documenting code with clear variable and function names
+  </coding_instructions>
+
+  <ui_components>
+    <actions_button>
+      The "Actions" dropdown button must always follow this exact pattern:
+      - Button styling: "inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal transition duration-200"
+      - Button ID: "actions-dropdown-btn" with type="button" and aria-expanded="false" aria-haspopup="true"
+      - Icon: SVG chevron with class "-mr-1 ml-2 h-5 w-5" using the path: "M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+      - Dropdown container: "relative inline-block text-left"
+      - Dropdown menu ID: "actions-dropdown-menu" with classes: "hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" and role="menu"
+      - Menu items: Inside a div with class "py-1" role="none", each item should have: "block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem"
+      - JavaScript: Use toggleActionsDropdown() function that manages both classList and style.display properties
+      - Always include proper event handling with preventDefault and stopPropagation
+    </actions_button>
+  </ui_components>
+</cursor_rule>
+
