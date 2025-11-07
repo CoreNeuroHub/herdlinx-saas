@@ -1,0 +1,940 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - HerdLinx SaaS{% endblock %}
+
+{% block nav_items %}
+<a href="{{ url_for('top_level.dashboard') }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
+<a href="{{ url_for('top_level.feedlot_hub') }}" class="px-4 py-2 hover:bg-teal rounded transition">Feedlot Hub</a>
+{% endblock %}
+
+{% block home_url %}{{ url_for('top_level.dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-start justify-between mb-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Dashboard</h1>
+            <p class="text-gray-600">Overview of all feedlots and system statistics</p>
+        </div>
+        {% block actions_dropdown %}
+        <div class="relative inline-block text-left">
+            <button id="actions-dropdown-btn" type="button" class="inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal transition duration-200" aria-expanded="false" aria-haspopup="true">
+                <span>Actions</span>
+                <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+            <div id="actions-dropdown-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-[100]" role="menu" aria-orientation="vertical" aria-labelledby="actions-dropdown-btn">
+                <div class="py-1" role="none">
+                    {% block actions_items %}
+                    <a href="{{ url_for('top_level.feedlot_hub') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" role="menuitem">View Feedlot Hub</a>
+                    <button onclick="openWidgetSettingsModal()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Show/Hide Widgets</button>
+                    {% if user_type in ['super_owner', 'super_admin'] %}
+                    <button onclick="openAddFeedlotModal()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Add New Feedlot</button>
+                    {% endif %}
+                    <button onclick="openAddUserModal()" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Add New User</button>
+                    <a href="{{ url_for('top_level.manage_users') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" role="menuitem">Manage Users</a>
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+    </div>
+
+    <!-- Statistics Widgets -->
+    <div id="widgets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
+        <!-- Total Feedlots Widget -->
+        <div id="widget-feedlots" data-widget-id="feedlots" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Feedlots</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_feedlots }}</p>
+                </div>
+                <div class="bg-teal bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{{ url_for('top_level.feedlot_hub') }}" class="text-sm text-teal hover:underline font-medium">View all feedlots →</a>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Total Pens Widget -->
+        <div id="widget-pens" data-widget-id="pens" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Pens</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_pens }}</p>
+                </div>
+                <div class="bg-navy bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Total Cattle Widget -->
+        <div id="widget-cattle" data-widget-id="cattle" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Cattle</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_cattle }}</p>
+                </div>
+                <div class="bg-gold bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Total Batches Widget -->
+        <div id="widget-batches" data-widget-id="batches" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Batches</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_batches }}</p>
+                </div>
+                <div class="bg-teal bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+    </div>
+
+    <!-- Additional Statistics Row -->
+    <div id="widgets-container-2" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
+        <!-- Total Users Widget -->
+        <div id="widget-users" data-widget-id="users" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Users</p>
+                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_users }}</p>
+                </div>
+                <div class="bg-navy bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{{ url_for('top_level.manage_users') }}" class="text-sm text-teal hover:underline font-medium">Manage users →</a>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Quick Actions Widget -->
+        <div id="widget-quick-actions" data-widget-id="quick-actions" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+            <div class="space-y-3">
+                <a href="{{ url_for('top_level.feedlot_hub') }}" class="block w-full bg-teal hover:opacity-90 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    View Feedlot Hub
+                </a>
+                {% if user_type in ['super_owner', 'super_admin'] %}
+                <button onclick="openAddFeedlotModal()" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Add New Feedlot
+                </button>
+                {% endif %}
+                <button onclick="openAddUserModal()" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Add New User
+                </button>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+    </div>
+
+    <!-- Recent Feedlots Section -->
+    {% if dashboard_stats.recent_feedlots %}
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-800">Recent Feedlots</h2>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" class="text-teal hover:underline font-medium">View all →</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for feedlot in dashboard_stats.recent_feedlots %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ feedlot.name }}</h3>
+                <p class="text-sm text-gray-600 mb-3">{{ feedlot.location }}</p>
+                <div class="flex space-x-2">
+                    <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="flex-1 bg-teal hover:opacity-90 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
+                        Open
+                    </a>
+                    <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
+                        View
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Widget Settings Modal -->
+<div id="widget-settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Show/Hide Widgets</h2>
+                <button onclick="closeWidgetSettingsModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <p class="text-sm text-gray-600 mb-4">Select which widgets to display on your dashboard:</p>
+            <div class="space-y-3">
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-feedlots" data-widget-id="feedlots" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Feedlots</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-pens" data-widget-id="pens" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Pens</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-cattle" data-widget-id="cattle" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Cattle</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-batches" data-widget-id="batches" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Batches</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-users" data-widget-id="users" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Total Users</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-quick-actions" data-widget-id="quick-actions" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Quick Actions</span>
+                </label>
+            </div>
+            
+            <div class="flex space-x-4 pt-6 mt-6 border-t border-gray-200">
+                <button onclick="saveWidgetSettings()" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Save Settings
+                </button>
+                <button onclick="closeWidgetSettingsModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add New Feedlot Modal -->
+<div id="add-feedlot-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Add New Feedlot</h2>
+                <button onclick="closeAddFeedlotModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <form id="add-feedlot-form" method="POST" action="{{ url_for('top_level.create_feedlot') }}" class="p-6 space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Feedlot Name *</label>
+                <input type="text" id="name" name="name" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                <input type="text" id="location" name="location" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-4">Contact Information</h3>
+            
+            <div>
+                <label for="contact_person" class="block text-sm font-medium text-gray-700 mb-2">Contact Person</label>
+                <input type="text" id="contact_person" name="contact_person"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                <input type="tel" id="phone" name="phone"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="feedlot_email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input type="email" id="feedlot_email" name="email"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div class="flex space-x-4 pt-4">
+                <button type="submit" id="submit-feedlot-btn" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Create Feedlot
+                </button>
+                <button type="button" onclick="closeAddFeedlotModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAddFeedlotModal() {
+        const modal = document.getElementById('add-feedlot-modal');
+        const dropdown = document.getElementById('actions-dropdown-menu');
+        const dropdownBtn = document.getElementById('actions-dropdown-btn');
+        
+        // Close dropdown if open
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+            dropdownBtn.setAttribute('aria-expanded', 'false');
+        }
+        
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeAddFeedlotModal() {
+        const modal = document.getElementById('add-feedlot-modal');
+        const form = document.getElementById('add-feedlot-form');
+        
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        form.reset();
+        
+        // Remove any error states
+        const inputs = form.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.classList.remove('border-red-500');
+        });
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('add-feedlot-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeAddFeedlotModal();
+        }
+    });
+    
+    // Close modals on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const feedlotModal = document.getElementById('add-feedlot-modal');
+            const userModal = document.getElementById('add-user-modal');
+            if (feedlotModal && !feedlotModal.classList.contains('hidden')) {
+                closeAddFeedlotModal();
+            }
+            if (userModal && !userModal.classList.contains('hidden')) {
+                closeAddUserModal();
+            }
+        }
+    });
+    
+    // Handle form submission via AJAX
+    document.getElementById('add-feedlot-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = document.getElementById('submit-feedlot-btn');
+        const formData = new FormData(form);
+        
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating...';
+        
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(data.message || 'Feedlot created successfully.', 'success');
+                closeAddFeedlotModal();
+                // Reload the page to show the new feedlot
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            } else {
+                showToast(data.message || 'Failed to create feedlot. Please try again.', 'error');
+                
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Feedlot';
+                
+                // Highlight error fields if provided
+                if (data.errors) {
+                    Object.keys(data.errors).forEach(field => {
+                        const input = form.querySelector(`[name="${field}"]`);
+                        if (input) {
+                            input.classList.add('border-red-500');
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            showToast('An error occurred while creating the feedlot. Please try again.', 'error');
+            
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Feedlot';
+        }
+    });
+    
+    // Add New User Modal Functions
+    function openAddUserModal() {
+        const modal = document.getElementById('add-user-modal');
+        const dropdown = document.getElementById('actions-dropdown-menu');
+        const dropdownBtn = document.getElementById('actions-dropdown-btn');
+        
+        // Close dropdown if open
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+            dropdownBtn.setAttribute('aria-expanded', 'false');
+        }
+        
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Initialize user type dropdown behavior
+        updateFeedlotField();
+    }
+    
+    function closeAddUserModal() {
+        const modal = document.getElementById('add-user-modal');
+        const form = document.getElementById('add-user-form');
+        
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        form.reset();
+        
+        // Reset user type to default
+        const userTypeSelect = document.getElementById('user_type');
+        if (userTypeSelect) {
+            userTypeSelect.value = 'user';
+            updateFeedlotField();
+        }
+        
+        // Clear all checkboxes
+        const checkboxes = document.querySelectorAll('input[name="feedlot_ids"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+        
+        // Remove any error states
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.classList.remove('border-red-500');
+        });
+    }
+    
+    function updateFeedlotField() {
+        const userTypeSelect = document.getElementById('user_type');
+        const feedlotSingleField = document.getElementById('user-feedlot-single-field');
+        const feedlotMultipleField = document.getElementById('user-feedlot-multiple-field');
+        const feedlotSelect = document.getElementById('feedlot_id');
+        
+        if (userTypeSelect && feedlotSingleField && feedlotMultipleField) {
+            if (userTypeSelect.value === 'business_admin' || userTypeSelect.value === 'business_owner') {
+                // Show multiple feedlot selection for business_admin and business_owner
+                feedlotSingleField.style.display = 'none';
+                feedlotMultipleField.style.display = 'block';
+                if (feedlotSelect) {
+                    feedlotSelect.removeAttribute('required');
+                }
+            } else if (userTypeSelect.value === 'user') {
+                // Show single feedlot selection for regular users
+                feedlotSingleField.style.display = 'block';
+                feedlotMultipleField.style.display = 'none';
+                if (feedlotSelect) {
+                    feedlotSelect.setAttribute('required', 'required');
+                }
+            } else {
+                // Super owner or super admin - no feedlot required
+                feedlotSingleField.style.display = 'none';
+                feedlotMultipleField.style.display = 'none';
+                if (feedlotSelect) {
+                    feedlotSelect.removeAttribute('required');
+                }
+            }
+        }
+    }
+</script>
+
+<!-- Add New User Modal -->
+<div id="add-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Add New User</h2>
+                <button onclick="closeAddUserModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <form id="add-user-form" method="POST" action="{{ url_for('auth.register') }}" class="p-6 space-y-4">
+            {% if user_type in ['business_owner', 'business_admin'] %}
+            <p class="text-sm text-gray-600 mb-4">You can create business owner, business admin, and user accounts for your assigned feedlots.</p>
+            {% else %}
+            <p class="text-sm text-gray-600 mb-4">Create new user accounts for the system.</p>
+            {% endif %}
+            
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                <input type="text" id="username" name="username" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                <input type="email" id="email" name="email" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                <input type="password" id="password" name="password" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="user_type" class="block text-sm font-medium text-gray-700 mb-2">User Type *</label>
+                <select id="user_type" name="user_type" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    {% if user_type in ['super_owner', 'super_admin'] %}
+                    <option value="super_owner">Super Owner</option>
+                    <option value="super_admin">Super Admin</option>
+                    {% endif %}
+                    <option value="business_owner">Business Owner</option>
+                    <option value="business_admin">Business Admin</option>
+                    <option value="user" selected>User</option>
+                </select>
+            </div>
+            
+            <div id="user-feedlot-single-field">
+                <label for="feedlot_id" class="block text-sm font-medium text-gray-700 mb-2">Feedlot *</label>
+                <select id="feedlot_id" name="feedlot_id"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    <option value="">Select a feedlot</option>
+                    {% if feedlots %}
+                        {% for feedlot in feedlots %}
+                        <option value="{{ feedlot._id }}">
+                            {{ feedlot.name }} - {{ feedlot.location }}
+                        </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            
+            <div id="user-feedlot-multiple-field" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Feedlots *</label>
+                <div class="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                    {% if feedlots %}
+                        {% for feedlot in feedlots %}
+                        <label class="flex items-center space-x-2 py-1 px-2 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" name="feedlot_ids" value="{{ feedlot._id }}" 
+                                   class="rounded border-gray-300 text-teal focus:ring-teal">
+                            <span class="text-sm text-gray-700">{{ feedlot.name }} - {{ feedlot.location }}</span>
+                        </label>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex space-x-4 pt-4">
+                <button type="submit" id="submit-user-btn" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Create User
+                </button>
+                <button type="button" onclick="closeAddUserModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // User type change handler
+    document.addEventListener('DOMContentLoaded', function() {
+        const userTypeSelect = document.getElementById('user_type');
+        if (userTypeSelect) {
+            userTypeSelect.addEventListener('change', updateFeedlotField);
+        }
+        
+        // Close user modal when clicking outside
+        const userModal = document.getElementById('add-user-modal');
+        if (userModal) {
+            userModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeAddUserModal();
+                }
+            });
+        }
+        
+        // Handle user form submission via AJAX
+        const userForm = document.getElementById('add-user-form');
+        if (userForm) {
+            userForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const submitBtn = document.getElementById('submit-user-btn');
+                const formData = new FormData(form);
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating...';
+                
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showToast(data.message || 'User created successfully.', 'success');
+                        closeAddUserModal();
+                        // Reload the page to reflect changes
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } else {
+                        showToast(data.message || 'Failed to create user. Please try again.', 'error');
+                        
+                        // Re-enable submit button
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Create User';
+                        
+                        // Highlight error fields if provided
+                        if (data.errors) {
+                            Object.keys(data.errors).forEach(field => {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    input.classList.add('border-red-500');
+                                }
+                            });
+                        }
+                    }
+                } catch (error) {
+                    showToast('An error occurred while creating the user. Please try again.', 'error');
+                    
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create User';
+                }
+            });
+        }
+    });
+
+    // Dashboard Widget Customization
+    const dashboardPreferences = {{ dashboard_preferences|tojson|safe }};
+    let draggedElement = null;
+    let resizeElement = null;
+    let resizeStartX = 0;
+    let resizeStartY = 0;
+    let resizeStartWidth = 0;
+    let resizeStartHeight = 0;
+
+    // Widget Settings Modal Functions
+    function openWidgetSettingsModal() {
+        const modal = document.getElementById('widget-settings-modal');
+        const dropdown = document.getElementById('actions-dropdown-menu');
+        const dropdownBtn = document.getElementById('actions-dropdown-btn');
+        
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+            dropdownBtn.setAttribute('aria-expanded', 'false');
+        }
+        
+        // Load current visibility state
+        const visibility = dashboardPreferences.widget_visibility || {};
+        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions'];
+        allWidgets.forEach(widgetId => {
+            const checkbox = document.getElementById(`widget-check-${widgetId}`);
+            if (checkbox) {
+                checkbox.checked = visibility[widgetId] !== false; // Default to true if not set
+            }
+        });
+        
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeWidgetSettingsModal() {
+        const modal = document.getElementById('widget-settings-modal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+    }
+    
+    function saveWidgetSettings() {
+        const visibility = {};
+        const checkboxes = document.querySelectorAll('#widget-settings-modal input[type="checkbox"]');
+        
+        checkboxes.forEach(checkbox => {
+            const widgetId = checkbox.getAttribute('data-widget-id');
+            visibility[widgetId] = checkbox.checked;
+        });
+        
+        // Update widget visibility immediately
+        updateWidgetVisibility(visibility);
+        
+        // Save preferences
+        saveDashboardPreferences({
+            widget_visibility: visibility,
+            widget_order: getWidgetOrder(),
+            widget_sizes: getWidgetSizes()
+        });
+        
+        closeWidgetSettingsModal();
+        showToast('Widget settings saved successfully.', 'success');
+    }
+    
+    function updateWidgetVisibility(visibility) {
+        Object.keys(visibility).forEach(widgetId => {
+            const widget = document.getElementById(`widget-${widgetId}`);
+            if (widget) {
+                if (visibility[widgetId]) {
+                    widget.style.display = '';
+                } else {
+                    widget.style.display = 'none';
+                }
+            }
+        });
+    }
+    
+    function getWidgetOrder() {
+        const widgets = Array.from(document.querySelectorAll('.widget-item'));
+        return widgets.map(widget => widget.getAttribute('data-widget-id'));
+    }
+    
+    function getWidgetSizes() {
+        const sizes = {};
+        document.querySelectorAll('.widget-item').forEach(widget => {
+            const widgetId = widget.getAttribute('data-widget-id');
+            sizes[widgetId] = {
+                width: widget.offsetWidth,
+                height: widget.offsetHeight
+            };
+        });
+        return sizes;
+    }
+    
+    async function saveDashboardPreferences(preferences) {
+        try {
+            const response = await fetch('{{ url_for("top_level.save_dashboard_preferences") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(preferences)
+            });
+            
+            const data = await response.json();
+            if (!data.success) {
+                console.error('Failed to save preferences:', data.message);
+            }
+        } catch (error) {
+            console.error('Error saving preferences:', error);
+        }
+    }
+    
+    // Load preferences on page load
+    function loadDashboardPreferences() {
+        if (!dashboardPreferences) return;
+        
+        // Load widget visibility
+        if (dashboardPreferences.widget_visibility) {
+            updateWidgetVisibility(dashboardPreferences.widget_visibility);
+        }
+        
+        // Load widget order
+        if (dashboardPreferences.widget_order && dashboardPreferences.widget_order.length > 0) {
+            const container1 = document.getElementById('widgets-container');
+            const container2 = document.getElementById('widgets-container-2');
+            const allContainers = [container1, container2].filter(c => c);
+            
+            dashboardPreferences.widget_order.forEach(widgetId => {
+                const widget = document.getElementById(`widget-${widgetId}`);
+                if (widget) {
+                    // Find which container it should be in
+                    const currentContainer = widget.parentElement;
+                    if (allContainers.includes(currentContainer)) {
+                        currentContainer.appendChild(widget);
+                    }
+                }
+            });
+        }
+        
+        // Load widget sizes
+        if (dashboardPreferences.widget_sizes) {
+            Object.keys(dashboardPreferences.widget_sizes).forEach(widgetId => {
+                const widget = document.getElementById(`widget-${widgetId}`);
+                if (widget && dashboardPreferences.widget_sizes[widgetId]) {
+                    const size = dashboardPreferences.widget_sizes[widgetId];
+                    if (size.width && size.width >= 200 && size.width <= 600) {
+                        widget.style.width = size.width + 'px';
+                    }
+                    if (size.height && size.height >= 150) {
+                        widget.style.height = size.height + 'px';
+                    }
+                }
+            });
+        }
+    }
+    
+    // Drag and Drop Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardPreferences();
+        
+        const widgets = document.querySelectorAll('.widget-item');
+        const containers = [
+            document.getElementById('widgets-container'),
+            document.getElementById('widgets-container-2')
+        ].filter(c => c);
+        
+        widgets.forEach(widget => {
+            widget.addEventListener('dragstart', function(e) {
+                draggedElement = this;
+                this.style.opacity = '0.5';
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            
+            widget.addEventListener('dragend', function() {
+                this.style.opacity = '';
+                draggedElement = null;
+            });
+            
+            widget.addEventListener('dragover', function(e) {
+                if (e.preventDefault) {
+                    e.preventDefault();
+                }
+                e.dataTransfer.dropEffect = 'move';
+                return false;
+            });
+            
+            widget.addEventListener('drop', function(e) {
+                if (e.stopPropagation) {
+                    e.stopPropagation();
+                }
+                
+                if (draggedElement !== this) {
+                    const container = this.parentElement;
+                    const allWidgets = Array.from(container.querySelectorAll('.widget-item'));
+                    const draggedIndex = allWidgets.indexOf(draggedElement);
+                    const targetIndex = allWidgets.indexOf(this);
+                    
+                    if (draggedIndex < targetIndex) {
+                        container.insertBefore(draggedElement, this.nextSibling);
+                    } else {
+                        container.insertBefore(draggedElement, this);
+                    }
+                    
+                    // Save new order
+                    saveDashboardPreferences({
+                        widget_order: getWidgetOrder(),
+                        widget_visibility: dashboardPreferences.widget_visibility || {},
+                        widget_sizes: getWidgetSizes()
+                    });
+                }
+                
+                return false;
+            });
+        });
+        
+        // Resize functionality
+        const resizeHandles = document.querySelectorAll('.resize-handle');
+        resizeHandles.forEach(handle => {
+            handle.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                resizeElement = this.parentElement;
+                resizeStartX = e.clientX;
+                resizeStartY = e.clientY;
+                resizeStartWidth = resizeElement.offsetWidth;
+                resizeStartHeight = resizeElement.offsetHeight;
+                
+                document.addEventListener('mousemove', handleResize);
+                document.addEventListener('mouseup', stopResize);
+            });
+        });
+        
+        function handleResize(e) {
+            if (!resizeElement) return;
+            
+            const deltaX = e.clientX - resizeStartX;
+            const deltaY = e.clientY - resizeStartY;
+            
+            let newWidth = resizeStartWidth + deltaX;
+            let newHeight = resizeStartHeight + deltaY;
+            
+            // Apply min/max constraints
+            newWidth = Math.max(200, Math.min(600, newWidth));
+            newHeight = Math.max(150, newHeight);
+            
+            resizeElement.style.width = newWidth + 'px';
+            resizeElement.style.height = newHeight + 'px';
+        }
+        
+        function stopResize() {
+            if (resizeElement) {
+                // Save new sizes
+                saveDashboardPreferences({
+                    widget_order: getWidgetOrder(),
+                    widget_visibility: dashboardPreferences.widget_visibility || {},
+                    widget_sizes: getWidgetSizes()
+                });
+            }
+            resizeElement = null;
+            document.removeEventListener('mousemove', handleResize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+        
+        // Close widget settings modal when clicking outside
+        const widgetModal = document.getElementById('widget-settings-modal');
+        if (widgetModal) {
+            widgetModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeWidgetSettingsModal();
+                }
+            });
+        }
+        
+        // Close widget settings modal on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const widgetModal = document.getElementById('widget-settings-modal');
+                if (widgetModal && !widgetModal.classList.contains('hidden')) {
+                    closeWidgetSettingsModal();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

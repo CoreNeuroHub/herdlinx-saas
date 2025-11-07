@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Map Pens - {{ feedlot.name }}{% endblock %}
+
+{% block nav_items %}
+<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
+<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Pens</a>
+<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Batches</a>
+<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Cattle</a>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Map Pens</h1>
+            <p class="text-gray-600">{{ feedlot.name }}</p>
+        </div>
+        <a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            Back to Pens
+        </a>
+    </div>
+
+    {% if not pens %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <p class="text-gray-600 text-lg mb-4">No pens available. Please create pens first.</p>
+        <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Create Pen
+        </a>
+    </div>
+    {% else %}
+    <!-- Grid Configuration -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Grid Configuration</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="grid-width" class="block text-sm font-medium text-gray-700 mb-2">Width (columns)</label>
+                <input type="number" id="grid-width" min="1" max="20" value="{{ pen_map.grid_width if pen_map else 10 }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal">
+            </div>
+            <div>
+                <label for="grid-height" class="block text-sm font-medium text-gray-700 mb-2">Height (rows)</label>
+                <input type="number" id="grid-height" min="1" max="20" value="{{ pen_map.grid_height if pen_map else 10 }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal">
+            </div>
+            <div class="flex items-end">
+                <button id="apply-grid-btn" class="w-full bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                    Apply Grid
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Pens List (Draggable) -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Available Pens</h2>
+                <div id="pens-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    {% for pen in pens %}
+                    <div class="pen-item bg-teal bg-opacity-10 border-2 border-teal rounded-lg p-3 cursor-move hover:bg-opacity-20 transition" 
+                         draggable="true" 
+                         data-pen-id="{{ pen._id }}"
+                         data-pen-number="{{ pen.pen_number }}">
+                        <div class="font-semibold text-gray-800">{{ pen.pen_number }}</div>
+                        <div class="text-sm text-gray-600">Capacity: {{ pen.capacity }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid Area -->
+        <div class="lg:col-span-3">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Pen Map Grid</h2>
+                    <button id="save-map-btn" class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                        Save Map
+                    </button>
+                </div>
+                <div id="grid-container" class="overflow-auto border-2 border-gray-300 rounded-lg p-4 bg-gray-50">
+                    <!-- Grid will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+let gridWidth = {{ pen_map.grid_width if pen_map else 10 }};
+let gridHeight = {{ pen_map.grid_height if pen_map else 10 }};
+let penPlacements = {{ (pen_map.pen_placements|tojson) if (pen_map and pen_map.pen_placements) else '[]' }};
+let draggedPen = null;
+let draggedCell = null;
+
+// Initialize grid
+function initializeGrid() {
+    const container = document.getElementById('grid-container');
+    container.innerHTML = '';
+    
+    // Create grid
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = `repeat(${gridWidth}, minmax(60px, 1fr))`;
+    container.style.gap = '8px';
+    
+    for (let row = 0; row < gridHeight; row++) {
+        for (let col = 0; col < gridWidth; col++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell bg-white border-2 border-gray-300 rounded-lg min-h-[60px] flex items-center justify-center cursor-pointer hover:border-teal transition';
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+            cell.addEventListener('dragover', handleDragOver);
+            cell.addEventListener('dragleave', handleDragLeave);
+            cell.addEventListener('drop', handleDrop);
+            cell.addEventListener('click', handleCellClick);
+            
+            // Check if there's a pen placement for this cell
+            const placement = penPlacements.find(p => p.row === row && p.col === col);
+            if (placement) {
+                const penItem = document.querySelector(`[data-pen-id="${placement.pen_id}"]`);
+                if (penItem) {
+                    const penNumber = penItem.dataset.penNumber;
+                    cell.innerHTML = `
+                        <div class="text-center p-2">
+                            <div class="font-bold text-teal">${penNumber}</div>
+                        </div>
+                    `;
+                    cell.classList.add('bg-teal', 'bg-opacity-10');
+                    cell.classList.remove('bg-white');
+                }
+            }
+            
+            container.appendChild(cell);
+        }
+    }
+}
+
+// Handle drag start from pen item
+document.querySelectorAll('.pen-item').forEach(item => {
+    item.addEventListener('dragstart', function(e) {
+        draggedPen = {
+            id: this.dataset.penId,
+            number: this.dataset.penNumber
+        };
+        this.style.opacity = '0.5';
+        e.dataTransfer.effectAllowed = 'move';
+    });
+    
+    item.addEventListener('dragend', function(e) {
+        this.style.opacity = '1';
+    });
+});
+
+// Handle drag over on grid cell
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    this.classList.add('border-teal', 'border-4');
+}
+
+// Handle drag leave on grid cell
+function handleDragLeave(e) {
+    e.preventDefault();
+    this.classList.remove('border-teal', 'border-4');
+}
+
+// Handle drop on grid cell
+function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('border-teal', 'border-4');
+    
+    if (draggedPen) {
+        // Remove existing placement for this pen
+        penPlacements = penPlacements.filter(p => p.pen_id !== draggedPen.id);
+        
+        // Remove existing placement for this cell
+        penPlacements = penPlacements.filter(p => !(p.row === parseInt(this.dataset.row) && p.col === parseInt(this.dataset.col)));
+        
+        // Add new placement
+        penPlacements.push({
+            row: parseInt(this.dataset.row),
+            col: parseInt(this.dataset.col),
+            pen_id: draggedPen.id
+        });
+        
+        // Update cell display
+        this.innerHTML = `
+            <div class="text-center p-2">
+                <div class="font-bold text-teal">${draggedPen.number}</div>
+            </div>
+        `;
+        this.classList.add('bg-teal', 'bg-opacity-10');
+        this.classList.remove('bg-white');
+        
+        draggedPen = null;
+    }
+}
+
+// Handle cell click to remove pen
+function handleCellClick(e) {
+    const row = parseInt(this.dataset.row);
+    const col = parseInt(this.dataset.col);
+    
+    // Find placement for this cell
+    const placement = penPlacements.find(p => p.row === row && p.col === col);
+    if (placement) {
+        // Remove placement
+        penPlacements = penPlacements.filter(p => !(p.row === row && p.col === col));
+        
+        // Clear cell
+        this.innerHTML = '';
+        this.classList.remove('bg-teal', 'bg-opacity-10');
+        this.classList.add('bg-white');
+    }
+}
+
+// Apply grid button
+document.getElementById('apply-grid-btn').addEventListener('click', function() {
+    const width = parseInt(document.getElementById('grid-width').value);
+    const height = parseInt(document.getElementById('grid-height').value);
+    
+    if (width < 1 || width > 20 || height < 1 || height > 20) {
+        alert('Grid dimensions must be between 1 and 20.');
+        return;
+    }
+    
+    // Filter placements to only include valid positions
+    penPlacements = penPlacements.filter(p => p.row < height && p.col < width);
+    
+    gridWidth = width;
+    gridHeight = height;
+    initializeGrid();
+});
+
+// Save map button
+document.getElementById('save-map-btn').addEventListener('click', async function() {
+    const btn = this;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    
+    try {
+        const response = await fetch('{{ url_for("feedlot.map_pens", feedlot_id=feedlot._id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                grid_width: gridWidth,
+                grid_height: gridHeight,
+                pen_placements: penPlacements
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast('Pen map saved successfully.', 'success');
+            setTimeout(() => {
+                window.location.href = '{{ url_for("feedlot.list_pens", feedlot_id=feedlot._id) }}';
+            }, 1000);
+        } else {
+            showToast('Failed to save pen map.', 'error');
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('Error saving map:', error);
+        showToast('An error occurred while saving the map.', 'error');
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+});
+
+// Initialize on page load
+initializeGrid();
+</script>
+{% endblock %}
+

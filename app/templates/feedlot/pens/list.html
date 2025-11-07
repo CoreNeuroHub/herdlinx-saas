@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Pens - {{ feedlot.name }}{% endblock %}
+
+{% block nav_items %}
+<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
+<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Pens</a>
+<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Batches</a>
+<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Cattle</a>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-start justify-between mb-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Pens</h1>
+            <p class="text-gray-600">{{ feedlot.name }}</p>
+        </div>
+        {% block actions_dropdown %}
+        <div class="relative inline-block text-left">
+            <button id="actions-dropdown-btn" type="button" class="inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal transition duration-200" aria-expanded="false" aria-haspopup="true">
+                <span>Actions</span>
+                <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+            <div id="actions-dropdown-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" role="menu" aria-orientation="vertical" aria-labelledby="actions-dropdown-btn">
+                <div class="py-1" role="none">
+                    {% block actions_items %}
+                    <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Create Pen</a>
+                    <a href="{{ url_for('feedlot.map_pens', feedlot_id=feedlot._id) }}" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Map Pens</a>
+                    {% endblock %}
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+    </div>
+
+{% if pen_map %}
+<!-- Display Pen Map -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-800">Pen Map</h2>
+        <a href="{{ url_for('feedlot.map_pens', feedlot_id=feedlot._id) }}" class="text-sm text-teal hover:underline">
+            Edit Map
+        </a>
+    </div>
+    <div id="pen-map-grid" class="overflow-auto border-2 border-gray-300 rounded-lg p-4 bg-gray-50">
+        <!-- Grid will be generated here -->
+    </div>
+</div>
+{% else %}
+<!-- No Map Configured -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <div class="flex items-center justify-between">
+        <p class="text-gray-600">Map not configured.</p>
+        <a href="{{ url_for('feedlot.map_pens', feedlot_id=feedlot._id) }}" class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            Map pen now
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% if pens %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for pen in pens %}
+    <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200 p-6">
+        <div class="flex items-start justify-between mb-4">
+            <h3 class="text-xl font-bold text-gray-800">{{ pen.pen_number }}</h3>
+            <span class="bg-teal bg-opacity-10 text-teal text-sm font-semibold px-3 py-1 rounded-full">
+                {{ pen.current_count }}/{{ pen.capacity }}
+            </span>
+        </div>
+        
+        {% if pen.description %}
+        <p class="text-gray-600 mb-4">{{ pen.description }}</p>
+        {% endif %}
+        
+        {% if pen.current_count == pen.capacity %}
+        <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            <p class="text-sm font-semibold">Full Capacity</p>
+        </div>
+        {% elif pen.current_count > pen.capacity * 0.8 %}
+        <div class="mb-4 p-3 bg-yellow-100 text-yellow-700 rounded-lg">
+            <p class="text-sm font-semibold">Near Capacity</p>
+        </div>
+        {% else %}
+        <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg">
+            <p class="text-sm font-semibold">Available Space</p>
+        </div>
+        {% endif %}
+        
+            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                {% set usage_percent = (pen.current_count / pen.capacity * 100) if pen.capacity > 0 else 0 %}
+                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ usage_percent }}%"></div>
+            </div>
+        
+        <div class="flex space-x-2">
+            <a href="{{ url_for('feedlot.view_pen', feedlot_id=feedlot._id, pen_id=pen._id) }}" class="flex-1 bg-teal hover:opacity-90 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
+                View
+            </a>
+            <a href="{{ url_for('feedlot.edit_pen', feedlot_id=feedlot._id, pen_id=pen._id) }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                Edit
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-lg shadow-md p-12 text-center">
+    <p class="text-gray-600 text-lg mb-4">No pens found.</p>
+    <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+        Create Your First Pen
+    </a>
+</div>
+{% endif %}
+
+{% if pen_map %}
+<script>
+const feedlotId = '{{ feedlot._id|string }}';
+const gridWidth = {{ pen_map.grid_width }};
+const gridHeight = {{ pen_map.grid_height }};
+const penPlacements = {{ pen_map.pen_placements|tojson }};
+const penLookup = {{ pen_lookup|tojson }};
+
+function initializePenMapGrid() {
+    const container = document.getElementById('pen-map-grid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    container.style.display = 'grid';
+    container.style.gridTemplateColumns = `repeat(${gridWidth}, minmax(60px, 1fr))`;
+    container.style.gap = '8px';
+    
+    for (let row = 0; row < gridHeight; row++) {
+        for (let col = 0; col < gridWidth; col++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell bg-white border-2 border-gray-300 rounded-lg min-h-[60px] flex items-center justify-center';
+            
+            // Check if there's a pen placement for this cell
+            const placement = penPlacements.find(p => p.row === row && p.col === col);
+            if (placement) {
+                const pen = penLookup[placement.pen_id];
+                if (pen) {
+                    const penUrl = `/feedlot/${feedlotId}/pens/${placement.pen_id}/view`;
+                    cell.innerHTML = `
+                        <a href="${penUrl}" 
+                           class="text-center p-2 w-full h-full flex flex-col items-center justify-center hover:bg-teal hover:bg-opacity-20 rounded transition">
+                            <div class="font-bold text-teal">${pen.pen_number}</div>
+                        </a>
+                    `;
+                    cell.classList.add('bg-teal', 'bg-opacity-10');
+                    cell.classList.remove('bg-white');
+                }
+            }
+            
+            container.appendChild(cell);
+        }
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePenMapGrid);
+} else {
+    initializePenMapGrid();
+}
+</script>
+{% endif %}
+{% endblock %}
+

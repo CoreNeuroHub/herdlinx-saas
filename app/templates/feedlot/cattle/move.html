@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Move Cattle - {{ feedlot.name }}{% endblock %}
+
+{% block nav_items %}
+<a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Back</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Move Cattle</h1>
+    
+    <div class="bg-white rounded-lg shadow-lg p-8 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Current Cattle</h3>
+        <div class="space-y-2">
+            <p><span class="font-semibold">ID:</span> {{ cattle.cattle_id }}</p>
+            <p><span class="font-semibold">Sex:</span> {{ cattle.sex }}</p>
+            <p><span class="font-semibold">Weight:</span> {{ cattle.weight }} kg</p>
+            {% if cattle.lf_tag %}
+            <p><span class="font-semibold">LF Tag:</span> {{ cattle.lf_tag }}</p>
+            {% endif %}
+            {% if cattle.uhf_tag %}
+            <p><span class="font-semibold">UHF Tag:</span> {{ cattle.uhf_tag }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Select New Pen</h3>
+        
+        <form method="POST" class="space-y-4">
+            <div>
+                <label for="pen_id" class="block text-sm font-medium text-gray-700 mb-2">Pen *</label>
+                <select id="pen_id" name="pen_id"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    <option value="">Remove from pen</option>
+                    {% for pen in pens %}
+                    <option value="{{ pen._id }}">{{ pen.pen_number }} ({{ pen.capacity }} capacity)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="flex space-x-4 pt-4">
+                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Move Cattle
+                </button>
+                <a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg text-center transition duration-200">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

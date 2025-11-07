@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Add Cattle - {{ feedlot.name }}{% endblock %}
+
+{% block nav_items %}
+<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Back to Cattle</a>
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="relative rounded-2xl p-8 mb-8 text-white overflow-hidden" style="background: linear-gradient(to right, #0A2540, #2D8B8B);">
+    <div class="absolute inset-0 bg-black opacity-10"></div>
+    <div class="relative z-10">
+        <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-4xl font-bold mb-1 text-white">Add Cattle Record</h1>
+                <p class="text-white text-opacity-80 text-lg">{{ feedlot.name }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <!-- Form Header -->
+        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-6 border-b border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                <svg class="w-7 h-7 mr-3" style="color: #2D8B8B;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Cattle Information
+            </h2>
+            <p class="text-gray-600 mt-2">Fill in the details below to create a new cattle record</p>
+        </div>
+        
+        <!-- Form Content -->
+        <form method="POST" class="p-8">
+            <!-- Basic Information Section -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    Basic Information
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="cattle_id" class="block text-sm font-semibold text-gray-700 mb-3">
+                            Cattle ID <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="cattle_id" name="cattle_id" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Enter unique cattle identifier">
+                    </div>
+                    
+                    <div>
+                        <label for="batch_id" class="block text-sm font-semibold text-gray-700 mb-3">
+                            Batch <span class="text-red-500">*</span>
+                        </label>
+                        <select id="batch_id" name="batch_id" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+                            <option value="">Select a batch</option>
+                            {% for batch in batches %}
+                            <option value="{{ batch._id }}">{{ batch.batch_number }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Physical Characteristics Section -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    Physical Characteristics
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="sex" class="block text-sm font-semibold text-gray-700 mb-3">
+                            Sex <span class="text-red-500">*</span>
+                        </label>
+                        <select id="sex" name="sex" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+                            <option value="">Select sex</option>
+                            <option value="Heifer">Heifer</option>
+                            <option value="Steer">Steer</option>
+                            <option value="Unknown">Unknown</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="weight" class="block text-sm font-semibold text-gray-700 mb-3">
+                            Weight (kg) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" id="weight" name="weight" required step="0.1"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Enter weight in kilograms">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Identification Tags Section -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                    </div>
+                    Identification Tags
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="lf_tag" class="block text-sm font-semibold text-gray-700 mb-3">LF Tag</label>
+                        <input type="text" id="lf_tag" name="lf_tag"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Low Frequency tag number">
+                    </div>
+                    
+                    <div>
+                        <label for="uhf_tag" class="block text-sm font-semibold text-gray-700 mb-3">UHF Tag</label>
+                        <input type="text" id="uhf_tag" name="uhf_tag"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Ultra High Frequency tag number">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Health & Assignment Section -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                    <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                    </div>
+                    Health & Assignment
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="health_status" class="block text-sm font-semibold text-gray-700 mb-3">
+                            Health Status <span class="text-red-500">*</span>
+                        </label>
+                        <select id="health_status" name="health_status" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+                            <option value="healthy">Healthy</option>
+                            <option value="sick">Sick</option>
+                            <option value="monitoring">Monitoring</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="pen_id" class="block text-sm font-semibold text-gray-700 mb-3">Pen Assignment</label>
+                        <select id="pen_id" name="pen_id"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+                            <option value="">No pen assigned</option>
+                            {% for pen in pens %}
+                            <option value="{{ pen._id }}">{{ pen.pen_number }} ({{ pen.capacity }} capacity)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notes Section -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                    <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                    </div>
+                    Additional Notes
+                </h3>
+                
+                <div>
+                    <label for="notes" class="block text-sm font-semibold text-gray-700 mb-3">Notes</label>
+                    <textarea id="notes" name="notes" rows="4"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+                              placeholder="Additional information about this cattle (optional)"></textarea>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+                <button type="submit" style="background-color: #2D8B8B;" class="hover:opacity-90 flex-1 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 group">
+                    <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    <span>Add Cattle</span>
+                </button>
+                <a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" 
+                   class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 px-8 rounded-xl text-center transition-all duration-200 flex items-center justify-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    <span>Cancel</span>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
