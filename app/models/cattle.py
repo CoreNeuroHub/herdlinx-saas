@@ -1,6 +1,7 @@
 from datetime import datetime
 from bson import ObjectId
 from app import db
+from app.adapters import get_office_adapter
 
 class Cattle:
     @staticmethod
@@ -35,8 +36,25 @@ class Cattle:
     
     @staticmethod
     def find_by_id(cattle_record_id):
-        """Find cattle by ID"""
-        return db.cattle.find_one({'_id': ObjectId(cattle_record_id)})
+        """Find cattle by ID - supports both ObjectId and integer office IDs"""
+        try:
+            # Try as ObjectId first (native SAAS cattle)
+            if isinstance(cattle_record_id, str) and len(cattle_record_id) == 24:
+                result = db.cattle.find_one({'_id': ObjectId(cattle_record_id)})
+                if result:
+                    return result
+
+            # Try as integer (office synced livestock)
+            if isinstance(cattle_record_id, int) or (isinstance(cattle_record_id, str) and cattle_record_id.isdigit()):
+                office_adapter = get_office_adapter(db)
+                office_livestock = office_adapter.get_office_livestock_by_id(int(cattle_record_id))
+                if office_livestock:
+                    return office_livestock
+
+            return None
+        except Exception as e:
+            print(f"Error in Cattle.find_by_id: {e}")
+            return None
     
     @staticmethod
     def find_by_cattle_id(feedlot_id, cattle_id):
@@ -48,13 +66,63 @@ class Cattle:
     
     @staticmethod
     def find_by_feedlot(feedlot_id):
-        """Find all cattle for a feedlot"""
-        return list(db.cattle.find({'feedlot_id': ObjectId(feedlot_id)}))
+        """Find all cattle for a feedlot - includes office synced livestock"""
+        try:
+            feedlot_oid = ObjectId(feedlot_id) if isinstance(feedlot_id, str) else feedlot_id
+
+            # Get native SAAS cattle
+            native_cattle = list(db.cattle.find({'feedlot_id': feedlot_oid}))
+
+            # Get office synced livestock from all batches in this feedlot
+            from app.models.batch import Batch
+            office_adapter = get_office_adapter(db)
+
+            batches = Batch.find_by_feedlot(feedlot_id)
+            all_cattle = native_cattle.copy()
+            native_cattle_ids = {str(c.get('_id')) for c in native_cattle if '_id' in c}
+
+            # Get livestock for each batch (including office batches)
+            for batch in batches:
+                batch_id = batch.get('_id')
+                if batch_id:
+                    # Try as integer (office batch ID)
+                    if isinstance(batch_id, int):
+                        livestock = office_adapter.get_office_livestock_by_batch(batch_id)
+                        for item in livestock:
+                            if str(item.get('_id')) not in native_cattle_ids:
+                                all_cattle.append(item)
+                    # Try as ObjectId (native SAAS batch ID)
+                    elif isinstance(batch_id, ObjectId):
+                        batch_cattle = list(db.cattle.find({'batch_id': batch_id}))
+                        for item in batch_cattle:
+                            if str(item.get('_id')) not in native_cattle_ids:
+                                all_cattle.append(item)
+
+            return all_cattle
+        except Exception as e:
+            print(f"Error in Cattle.find_by_feedlot: {e}")
+            return []
     
     @staticmethod
     def find_by_batch(batch_id):
-        """Find all cattle in a batch"""
-        return list(db.cattle.find({'batch_id': ObjectId(batch_id)}))
+        """Find all cattle in a batch - supports both ObjectId and integer office IDs"""
+        try:
+            office_adapter = get_office_adapter(db)
+
+            # Try as office batch ID (integer)
+            if isinstance(batch_id, int) or (isinstance(batch_id, str) and batch_id.isdigit()):
+                office_livestock = office_adapter.get_office_livestock_by_batch(int(batch_id))
+                if office_livestock:
+                    return office_livestock
+
+            # Try as SAAS ObjectId
+            if isinstance(batch_id, str) and len(batch_id) == 24:
+                return list(db.cattle.find({'batch_id': ObjectId(batch_id)}))
+
+            return []
+        except Exception as e:
+            print(f"Error in Cattle.find_by_batch: {e}")
+            return []
     
     @staticmethod
     def find_by_pen(pen_id):

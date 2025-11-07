@@ -70,29 +70,62 @@ class Feedlot:
     
     @staticmethod
     def get_statistics(feedlot_id):
-        """Get feedlot statistics"""
-        feedlot_id_obj = ObjectId(feedlot_id)
-        
-        total_pens = db.pens.count_documents({'feedlot_id': feedlot_id_obj})
-        total_cattle = db.cattle.count_documents({'feedlot_id': feedlot_id_obj})
-        total_batches = db.batches.count_documents({'feedlot_id': feedlot_id_obj})
-        
-        # Get cattle in each pen
-        pipeline = [
-            {'$match': {'feedlot_id': feedlot_id_obj}},
-            {'$group': {
-                '_id': '$pen_id',
-                'count': {'$sum': 1}
-            }}
-        ]
-        cattle_by_pen = list(db.cattle.aggregate(pipeline))
-        
-        return {
-            'total_pens': total_pens,
-            'total_cattle': total_cattle,
-            'total_batches': total_batches,
-            'cattle_by_pen': len(cattle_by_pen)
-        }
+        """Get feedlot statistics - includes office synced data"""
+        try:
+            from app.models.batch import Batch
+            from app.models.cattle import Cattle
+            from app.adapters import get_office_adapter
+
+            feedlot_id_obj = ObjectId(feedlot_id)
+
+            # SAAS native statistics
+            total_pens = db.pens.count_documents({'feedlot_id': feedlot_id_obj})
+            native_cattle = db.cattle.count_documents({'feedlot_id': feedlot_id_obj})
+            native_batches = db.batches.count_documents({'feedlot_id': feedlot_id_obj})
+
+            # Office synced statistics
+            office_adapter = get_office_adapter(db)
+            office_batches = office_adapter.get_office_batches_all()
+            total_office_batches = len(office_batches)
+
+            # Count office livestock
+            total_office_cattle = 0
+            for batch in office_batches:
+                batch_id = batch.get('_id')
+                if isinstance(batch_id, int):
+                    livestock = office_adapter.get_office_livestock_by_batch(batch_id)
+                    total_office_cattle += len(livestock)
+
+            # Get cattle in each pen (native only)
+            pipeline = [
+                {'$match': {'feedlot_id': feedlot_id_obj}},
+                {'$group': {
+                    '_id': '$pen_id',
+                    'count': {'$sum': 1}
+                }}
+            ]
+            cattle_by_pen = list(db.cattle.aggregate(pipeline))
+
+            return {
+                'total_pens': total_pens,
+                'total_cattle': native_cattle + total_office_cattle,
+                'native_cattle': native_cattle,
+                'office_cattle': total_office_cattle,
+                'total_batches': native_batches + total_office_batches,
+                'native_batches': native_batches,
+                'office_batches': total_office_batches,
+                'cattle_by_pen': len(cattle_by_pen)
+            }
+        except Exception as e:
+            print(f"Error in Feedlot.get_statistics: {e}")
+            # Return defaults on error
+            feedlot_id_obj = ObjectId(feedlot_id)
+            return {
+                'total_pens': 0,
+                'total_cattle': 0,
+                'total_batches': 0,
+                'cattle_by_pen': 0
+            }
     
     @staticmethod
     def save_pen_map(feedlot_id, grid_width, grid_height, pen_placements):
