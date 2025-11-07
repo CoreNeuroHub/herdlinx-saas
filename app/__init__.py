@@ -107,13 +107,67 @@ def create_app(config_class=Config):
         from .routes.auth_routes import auth_bp
         from .routes.top_level_routes import top_level_bp
         from .routes.feedlot_routes import feedlot_bp
+        from .routes.api_routes import api_bp
         
         app.register_blueprint(auth_bp)
         app.register_blueprint(top_level_bp)
         app.register_blueprint(feedlot_bp)
+        app.register_blueprint(api_bp, url_prefix='/api')
     except Exception as e:
         print(f"Error registering blueprints: {e}")
         raise
+    
+    # Add context processor for navigation
+    @app.context_processor
+    def inject_navigation_context():
+        """Inject navigation context into all templates"""
+        from flask import request, session, url_for
+        from .models.feedlot import Feedlot
+        from bson import ObjectId
+        import re
+        
+        nav_context = {
+            'current_feedlot': None,
+            'current_feedlot_id': None,
+            'show_top_level_nav': False,
+            'show_feedlot_nav': False,
+            'user_type': session.get('user_type'),
+        }
+        
+        # Check if user is logged in
+        if 'user_id' not in session:
+            return nav_context
+        
+        user_type = session.get('user_type')
+        
+        # Determine if we're in a feedlot context by checking URL pattern
+        path = request.path
+        feedlot_pattern = r'/feedlot/([^/]+)'
+        match = re.search(feedlot_pattern, path)
+        
+        if match:
+            feedlot_id = match.group(1)
+            nav_context['current_feedlot_id'] = feedlot_id
+            
+            # Fetch feedlot data
+            try:
+                feedlot = Feedlot.find_by_id(feedlot_id)
+                if feedlot:
+                    nav_context['current_feedlot'] = feedlot
+                    nav_context['show_feedlot_nav'] = True
+            except Exception:
+                # If feedlot not found or error, don't show feedlot nav
+                pass
+        
+        # Determine which navigation sections to show
+        # Top-level users (super_owner, super_admin) always see top-level nav
+        if user_type in ['super_owner', 'super_admin']:
+            nav_context['show_top_level_nav'] = True
+        # Business owner/admin users also see top-level nav (dashboard, feedlot hub, settings)
+        elif user_type in ['business_owner', 'business_admin']:
+            nav_context['show_top_level_nav'] = True
+        
+        return nav_context
     
     return app
 

@@ -2,10 +2,6 @@
 
 {% block title %}Batch {{ batch.batch_number }} - {{ feedlot.name }}{% endblock %}
 
-{% block nav_items %}
-<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Back to Batches</a>
-{% endblock %}
-
 {% block content %}
 <div class="mb-6">
     <h1 class="text-3xl font-bold text-gray-800 mb-2">Batch {{ batch.batch_number }}</h1>
@@ -20,8 +16,8 @@
                 <p class="font-semibold">{{ batch.induction_date | strftime }}</p>
             </div>
             <div>
-                <p class="text-sm text-gray-600">Source</p>
-                <p class="font-semibold">{{ batch.source }}</p>
+                <p class="text-sm text-gray-600">Funder</p>
+                <p class="font-semibold">{{ batch.funder }}</p>
             </div>
             {% if batch.notes %}
             <div>

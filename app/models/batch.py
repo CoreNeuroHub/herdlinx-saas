@@ -4,13 +4,13 @@ from app import db
 
 class Batch:
     @staticmethod
-    def create_batch(feedlot_id, batch_number, induction_date, source, notes=None):
+    def create_batch(feedlot_id, batch_number, induction_date, funder, notes=None):
         """Create a new batch"""
         batch_data = {
             'feedlot_id': ObjectId(feedlot_id),
             'batch_number': batch_number,
             'induction_date': induction_date,
-            'source': source,
+            'funder': funder,
             'notes': notes or '',
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow()

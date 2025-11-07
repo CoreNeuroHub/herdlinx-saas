@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block title %}API Keys - Settings - HerdLinx SaaS{% endblock %}
+
+{% block home_url %}{{ url_for('top_level.dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">API Keys</h1>
+            <p class="text-gray-600">Generate and manage API keys for feedlot integrations</p>
+        </div>
+        <a href="{{ url_for('top_level.settings') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            Back to Settings
+        </a>
+    </div>
+</div>
+
+{% if feedlots %}
+<div class="space-y-6">
+    {% for feedlot in feedlots %}
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-1">{{ feedlot.name }}</h2>
+                <p class="text-gray-600 mb-1">{{ feedlot.location }}</p>
+                <p class="text-sm text-gray-500">
+                    <span class="font-semibold">Feedlot Code:</span> {{ feedlot.get('feedlot_code', 'N/A') }}
+                </p>
+            </div>
+            <button onclick="openGenerateKeyModal('{{ feedlot._id }}', '{{ feedlot.name }}', '{{ feedlot.get('feedlot_code', '') }}')" 
+                    class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                Generate New Key
+            </button>
+        </div>
+
+        {% if feedlot.api_keys %}
+        <div class="mt-4">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Existing API Keys</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Used</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for api_key in feedlot.api_keys %}
+                        <tr>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ api_key.get('description', 'No description') or 'No description' }}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                {% if api_key.get('is_active', True) %}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                {% else %}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if api_key.created_at %}
+                                    {% if api_key.created_at is string %}
+                                        {{ api_key.created_at[:10] }}
+                                    {% else %}
+                                        {{ api_key.created_at.strftime('%Y-%m-%d') }}
+                                    {% endif %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if api_key.get('last_used_at') %}
+                                    {% if api_key.last_used_at is string %}
+                                        {{ api_key.last_used_at[:10] }}
+                                    {% else %}
+                                        {{ api_key.last_used_at.strftime('%Y-%m-%d') }}
+                                    {% endif %}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    {% if api_key.get('is_active', True) %}
+                                    <button onclick="deactivateKey('{{ api_key._id }}')" class="text-orange-600 hover:text-orange-900">Deactivate</button>
+                                    {% else %}
+                                    <button onclick="activateKey('{{ api_key._id }}')" class="text-green-600 hover:text-green-900">Activate</button>
+                                    {% endif %}
+                                    <span class="text-gray-300">|</span>
+                                    <button onclick="deleteKey('{{ api_key._id }}')" class="text-red-600 hover:text-red-900">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg text-center">
+            <p class="text-gray-600">No API keys generated for this feedlot yet.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="bg-white rounded-lg shadow-md p-8 text-center">
+    <p class="text-gray-600 text-lg mb-4">No feedlots found.</p>
+    <a href="{{ url_for('top_level.feedlot_hub') }}" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-2 px-6 rounded-lg transition duration-200">
+        View Feedlot Hub
+    </a>
+</div>
+{% endif %}
+
+<!-- Generate API Key Modal -->
+<div id="generate-key-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Generate API Key</h2>
+                <button onclick="closeGenerateKeyModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <form id="generate-key-form" class="p-6 space-y-4">
+            <input type="hidden" id="generate-feedlot-id" value="">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Feedlot</label>
+                <p class="text-gray-900 font-semibold" id="generate-feedlot-name"></p>
+                <p class="text-sm text-gray-500" id="generate-feedlot-code"></p>
+            </div>
+            
+            <div>
+                <label for="key-description" class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                <input type="text" id="key-description" name="description" 
+                       placeholder="e.g., Production API Key, Testing Key"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <p class="mt-1 text-sm text-gray-500">Add a description to help identify this API key later.</p>
+            </div>
+            
+            <div class="flex space-x-4 pt-4">
+                <button type="submit" id="submit-generate-btn" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Generate Key
+                </button>
+                <button type="button" onclick="closeGenerateKeyModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Display Generated Key Modal -->
+<div id="display-key-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">API Key Generated</h2>
+                <button onclick="closeDisplayKeyModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6 space-y-4">
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-yellow-700">
+                            <strong>Important:</strong> This API key will only be shown once. Please copy it now and store it securely. You will not be able to view it again.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Feedlot</label>
+                <p class="text-gray-900 font-semibold" id="display-feedlot-name"></p>
+                <p class="text-sm text-gray-500" id="display-feedlot-code"></p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                <div class="flex items-center space-x-2">
+                    <input type="text" id="display-api-key" readonly
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm">
+                    <button onclick="copyApiKey()" class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                        Copy
+                    </button>
+                </div>
+            </div>
+            
+            <div id="display-key-description-container" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <p class="text-gray-900" id="display-key-description"></p>
+            </div>
+            
+            <div class="flex justify-end pt-4">
+                <button onclick="closeDisplayKeyModal()" class="bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openGenerateKeyModal(feedlotId, feedlotName, feedlotCode) {
+        document.getElementById('generate-feedlot-id').value = feedlotId;
+        document.getElementById('generate-feedlot-name').textContent = feedlotName;
+        document.getElementById('generate-feedlot-code').textContent = 'Feedlot Code: ' + (feedlotCode || 'N/A');
+        document.getElementById('generate-key-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeGenerateKeyModal() {
+        document.getElementById('generate-key-modal').classList.add('hidden');
+        document.getElementById('generate-key-form').reset();
+        document.body.style.overflow = 'auto';
+    }
+    
+    function openDisplayKeyModal(apiKey, feedlotName, feedlotCode, description) {
+        document.getElementById('display-api-key').value = apiKey;
+        document.getElementById('display-feedlot-name').textContent = feedlotName;
+        document.getElementById('display-feedlot-code').textContent = 'Feedlot Code: ' + (feedlotCode || 'N/A');
+        const descContainer = document.getElementById('display-key-description-container');
+        const descText = document.getElementById('display-key-description');
+        if (description) {
+            descText.textContent = description;
+            descContainer.style.display = 'block';
+        } else {
+            descContainer.style.display = 'none';
+        }
+        document.getElementById('display-key-modal').classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeDisplayKeyModal() {
+        document.getElementById('display-key-modal').classList.add('hidden');
+        document.getElementById('display-api-key').value = '';
+        document.body.style.overflow = 'auto';
+        // Reload page to show new key in the list
+        window.location.reload();
+    }
+    
+    function copyApiKey() {
+        const apiKeyInput = document.getElementById('display-api-key');
+        apiKeyInput.select();
+        apiKeyInput.setSelectionRange(0, 99999); // For mobile devices
+        document.execCommand('copy');
+        
+        // Show feedback
+        const copyBtn = event.target;
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        copyBtn.classList.add('bg-green-600');
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.classList.remove('bg-green-600');
+        }, 2000);
+    }
+    
+    async function deactivateKey(keyId) {
+        if (!confirm('Are you sure you want to deactivate this API key? It will no longer be usable until reactivated.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`{{ url_for('top_level.deactivate_api_key', key_id='') }}${keyId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(data.message || 'API key deactivated successfully.', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            } else {
+                showToast(data.message || 'Failed to deactivate API key.', 'error');
+            }
+        } catch (error) {
+            showToast('An error occurred while deactivating the API key.', 'error');
+        }
+    }
+    
+    async function activateKey(keyId) {
+        try {
+            const response = await fetch(`{{ url_for('top_level.activate_api_key', key_id='') }}${keyId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(data.message || 'API key activated successfully.', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            } else {
+                showToast(data.message || 'Failed to activate API key.', 'error');
+            }
+        } catch (error) {
+            showToast('An error occurred while activating the API key.', 'error');
+        }
+    }
+    
+    async function deleteKey(keyId) {
+        if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`{{ url_for('top_level.delete_api_key', key_id='') }}${keyId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showToast(data.message || 'API key deleted successfully.', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            } else {
+                showToast(data.message || 'Failed to delete API key.', 'error');
+            }
+        } catch (error) {
+            showToast('An error occurred while deleting the API key.', 'error');
+        }
+    }
+    
+    // Handle generate key form submission
+    document.getElementById('generate-key-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const feedlotId = document.getElementById('generate-feedlot-id').value;
+        const description = document.getElementById('key-description').value.trim() || null;
+        const submitBtn = document.getElementById('submit-generate-btn');
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Generating...';
+        
+        try {
+            const response = await fetch('{{ url_for("top_level.generate_api_key") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    feedlot_id: feedlotId,
+                    description: description
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                closeGenerateKeyModal();
+                openDisplayKeyModal(
+                    data.api_key,
+                    data.feedlot_name,
+                    data.feedlot_code,
+                    description
+                );
+            } else {
+                showToast(data.message || 'Failed to generate API key.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Generate Key';
+            }
+        } catch (error) {
+            showToast('An error occurred while generating the API key.', 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Generate Key';
+        }
+    });
+    
+    // Close modals when clicking outside
+    document.getElementById('generate-key-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeGenerateKeyModal();
+        }
+    });
+    
+    document.getElementById('display-key-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDisplayKeyModal();
+        }
+    });
+    
+    // Close modals on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const generateModal = document.getElementById('generate-key-modal');
+            const displayModal = document.getElementById('display-key-modal');
+            if (generateModal && !generateModal.classList.contains('hidden')) {
+                closeGenerateKeyModal();
+            }
+            if (displayModal && !displayModal.classList.contains('hidden')) {
+                closeDisplayKeyModal();
+            }
+        }
+    });
+</script>
+{% endblock %}
+

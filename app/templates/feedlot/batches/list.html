@@ -2,13 +2,6 @@
 
 {% block title %}Batches - {{ feedlot.name }}{% endblock %}
 
-{% block nav_items %}
-<a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Dashboard</a>
-<a href="{{ url_for('feedlot.list_pens', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Pens</a>
-<a href="{{ url_for('feedlot.list_batches', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Batches</a>
-<a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition">Cattle</a>
-{% endblock %}
-
 {% block content %}
 <div class="mb-6">
     <div class="flex items-start justify-between mb-4">
@@ -42,7 +35,7 @@
             <tr>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Batch Number</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Induction Date</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Funder</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cattle Count</th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
@@ -52,7 +45,7 @@
             <tr class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ batch.batch_number }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.induction_date | strftime }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.source }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.funder }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                     <span class="px-2 py-1 bg-teal bg-opacity-10 text-teal rounded-full text-xs font-semibold">
                         {{ batch.cattle_count }} cattle
