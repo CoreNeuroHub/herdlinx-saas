@@ -1,11 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, Response
 from bson import ObjectId
 from datetime import datetime
 from app.models.feedlot import Feedlot
 from app.models.pen import Pen
 from app.models.batch import Batch
 from app.models.cattle import Cattle
+from app.models.manifest_template import ManifestTemplate
 from app.routes.auth_routes import login_required, feedlot_access_required
+from app.utils.manifest_generator import generate_manifest_data, generate_pdf
 
 feedlot_bp = Blueprint('feedlot', __name__)
 
@@ -311,6 +313,11 @@ def create_cattle(feedlot_id):
         uhf_tag = request.form.get('uhf_tag')
         pen_id = request.form.get('pen_id') or None
         notes = request.form.get('notes')
+        color = request.form.get('color')
+        breed = request.form.get('breed')
+        brand_drawings = request.form.get('brand_drawings')
+        brand_locations = request.form.get('brand_locations')
+        other_marks = request.form.get('other_marks')
         
         # Check pen capacity if pen is assigned
         if pen_id and not Pen.is_capacity_available(pen_id):
@@ -323,7 +330,8 @@ def create_cattle(feedlot_id):
                                  pens=pens)
         
         cattle_record_id = Cattle.create_cattle(feedlot_id, batch_id, cattle_id, sex, 
-                                               weight, health_status, lf_tag, uhf_tag, pen_id, notes)
+                                               weight, health_status, lf_tag, uhf_tag, pen_id, notes,
+                                               color, breed, brand_drawings, brand_locations, other_marks)
         flash('Cattle record created successfully.', 'success')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
@@ -427,4 +435,217 @@ def update_tags(feedlot_id, cattle_id):
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     
     return render_template('feedlot/cattle/update_tags.html', feedlot=feedlot, cattle=cattle)
+
+# Manifest Export Routes
+@feedlot_bp.route('/feedlot/<feedlot_id>/manifest/export', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def export_manifest(feedlot_id):
+    """Export manifest for cattle"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
+    
+    if request.method == 'POST':
+        # Get selection method
+        selection_method = request.form.get('selection_method', 'pen')
+        
+        # Get selected cattle
+        cattle_list = []
+        if selection_method == 'pen':
+            pen_ids = request.form.getlist('pen_ids')
+            for pen_id in pen_ids:
+                cattle_list.extend(Cattle.find_by_pen(pen_id))
+        else:  # manual selection
+            cattle_ids = request.form.getlist('cattle_ids')
+            for cattle_id in cattle_ids:
+                cattle = Cattle.find_by_id(cattle_id)
+                if cattle:
+                    cattle_list.append(cattle)
+        
+        if not cattle_list:
+            flash('No cattle selected for export.', 'error')
+            return redirect(url_for('feedlot.export_manifest', feedlot_id=feedlot_id))
+        
+        # Get template or manual data
+        template_id = request.form.get('template_id')
+        template_data = None
+        if template_id and template_id != 'none':
+            template = ManifestTemplate.find_by_id(template_id)
+            if template:
+                template_data = {
+                    'owner_name': template.get('owner_name', ''),
+                    'owner_phone': template.get('owner_phone', ''),
+                    'owner_address': template.get('owner_address', ''),
+                    'dealer_name': template.get('dealer_name', ''),
+                    'dealer_phone': template.get('dealer_phone', ''),
+                    'dealer_address': template.get('dealer_address', ''),
+                    'default_destination_name': template.get('default_destination_name', ''),
+                    'default_destination_address': template.get('default_destination_address', ''),
+                    'default_transporter_name': template.get('default_transporter_name', ''),
+                    'default_transporter_phone': template.get('default_transporter_phone', ''),
+                    'default_transporter_trailer': template.get('default_transporter_trailer', ''),
+                    'default_purpose': template.get('default_purpose', 'transport_only'),
+                    'default_premises_id_before': template.get('default_premises_id_before', ''),
+                    'default_premises_id_destination': template.get('default_premises_id_destination', ''),
+                }
+        
+        # Get manual entry data if no template
+        manual_data = None
+        if not template_data:
+            manual_data = {
+                'date': request.form.get('date', datetime.now().strftime('%Y-%m-%d')),
+                'owner_name': request.form.get('owner_name', ''),
+                'owner_phone': request.form.get('owner_phone', ''),
+                'owner_address': request.form.get('owner_address', ''),
+                'dealer_name': request.form.get('dealer_name', ''),
+                'dealer_phone': request.form.get('dealer_phone', ''),
+                'dealer_address': request.form.get('dealer_address', ''),
+                'on_account_of': request.form.get('on_account_of', ''),
+                'location_before': request.form.get('location_before', feedlot.get('name', '')),
+                'premises_id_before': request.form.get('premises_id_before', ''),
+                'reason_for_transport': request.form.get('reason_for_transport', 'transport_to'),
+                'destination_name': request.form.get('destination_name', ''),
+                'destination_address': request.form.get('destination_address', ''),
+                'transporter_name': request.form.get('transporter_name', ''),
+                'transporter_phone': request.form.get('transporter_phone', ''),
+                'transporter_trailer': request.form.get('transporter_trailer', ''),
+                'purpose': request.form.get('purpose', 'transport_only'),
+                'premises_id_destination': request.form.get('premises_id_destination', ''),
+            }
+        
+        # Generate manifest data
+        manifest_data = generate_manifest_data(cattle_list, template_data, feedlot, manual_data)
+        
+        # Get export format
+        export_format = request.form.get('export_format', 'pdf')
+        
+        if export_format == 'pdf' or export_format == 'both':
+            # Generate PDF
+            pdf_buffer = generate_pdf(manifest_data)
+            if export_format == 'pdf':
+                return Response(
+                    pdf_buffer.getvalue(),
+                    mimetype='application/pdf',
+                    headers={'Content-Disposition': f'attachment; filename=manifest_{feedlot_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'}
+                )
+        
+        if export_format == 'html' or export_format == 'both':
+            # Render HTML template
+            return render_template('feedlot/manifest/manifest_html.html', manifest_data=manifest_data)
+        
+        flash('Invalid export format.', 'error')
+        return redirect(url_for('feedlot.export_manifest', feedlot_id=feedlot_id))
+    
+    # GET request - show export form
+    pens = Pen.find_by_feedlot(feedlot_id)
+    all_cattle = Cattle.find_by_feedlot(feedlot_id)
+    templates = ManifestTemplate.find_by_feedlot(feedlot_id)
+    
+    # Add cattle count to pens
+    for pen in pens:
+        pen['cattle_count'] = Pen.get_current_cattle_count(str(pen['_id']))
+    
+    return render_template('feedlot/manifest/export.html',
+                         feedlot=feedlot,
+                         pens=pens,
+                         cattle=all_cattle,
+                         templates=templates)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/manifest/templates')
+@login_required
+@feedlot_access_required()
+def list_manifest_templates(feedlot_id):
+    """List manifest templates for a feedlot"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
+    
+    templates = ManifestTemplate.find_by_feedlot(feedlot_id)
+    return render_template('feedlot/manifest/templates.html',
+                         feedlot=feedlot,
+                         templates=templates)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/manifest/templates/create', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def create_manifest_template(feedlot_id):
+    """Create a new manifest template"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
+    
+    if request.method == 'POST':
+        template_id = ManifestTemplate.create_template(
+            feedlot_id=feedlot_id,
+            name=request.form.get('name'),
+            owner_name=request.form.get('owner_name'),
+            owner_phone=request.form.get('owner_phone'),
+            owner_address=request.form.get('owner_address'),
+            dealer_name=request.form.get('dealer_name'),
+            dealer_phone=request.form.get('dealer_phone'),
+            dealer_address=request.form.get('dealer_address'),
+            default_destination_name=request.form.get('default_destination_name'),
+            default_destination_address=request.form.get('default_destination_address'),
+            default_transporter_name=request.form.get('default_transporter_name'),
+            default_transporter_phone=request.form.get('default_transporter_phone'),
+            default_transporter_trailer=request.form.get('default_transporter_trailer'),
+            default_purpose=request.form.get('default_purpose', 'transport_only'),
+            default_premises_id_before=request.form.get('default_premises_id_before'),
+            default_premises_id_destination=request.form.get('default_premises_id_destination'),
+            is_default=request.form.get('is_default') == 'on'
+        )
+        flash('Manifest template created successfully.', 'success')
+        return redirect(url_for('feedlot.list_manifest_templates', feedlot_id=feedlot_id))
+    
+    return render_template('feedlot/manifest/template_form.html', feedlot=feedlot, template=None)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/manifest/templates/<template_id>/edit', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def edit_manifest_template(feedlot_id, template_id):
+    """Edit a manifest template"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    template = ManifestTemplate.find_by_id(template_id)
+    
+    if not feedlot or not template:
+        flash('Feedlot or template not found.', 'error')
+        return redirect(url_for('feedlot.list_manifest_templates', feedlot_id=feedlot_id))
+    
+    if request.method == 'POST':
+        update_data = {
+            'name': request.form.get('name'),
+            'owner_name': request.form.get('owner_name'),
+            'owner_phone': request.form.get('owner_phone'),
+            'owner_address': request.form.get('owner_address'),
+            'dealer_name': request.form.get('dealer_name'),
+            'dealer_phone': request.form.get('dealer_phone'),
+            'dealer_address': request.form.get('dealer_address'),
+            'default_destination_name': request.form.get('default_destination_name'),
+            'default_destination_address': request.form.get('default_destination_address'),
+            'default_transporter_name': request.form.get('default_transporter_name'),
+            'default_transporter_phone': request.form.get('default_transporter_phone'),
+            'default_transporter_trailer': request.form.get('default_transporter_trailer'),
+            'default_purpose': request.form.get('default_purpose', 'transport_only'),
+            'default_premises_id_before': request.form.get('default_premises_id_before'),
+            'default_premises_id_destination': request.form.get('default_premises_id_destination'),
+            'is_default': request.form.get('is_default') == 'on'
+        }
+        ManifestTemplate.update_template(template_id, update_data)
+        flash('Manifest template updated successfully.', 'success')
+        return redirect(url_for('feedlot.list_manifest_templates', feedlot_id=feedlot_id))
+    
+    return render_template('feedlot/manifest/template_form.html', feedlot=feedlot, template=template)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/manifest/templates/<template_id>/delete', methods=['POST'])
+@login_required
+@feedlot_access_required()
+def delete_manifest_template(feedlot_id, template_id):
+    """Delete a manifest template"""
+    ManifestTemplate.delete_template(template_id)
+    flash('Manifest template deleted successfully.', 'success')
+    return redirect(url_for('feedlot.list_manifest_templates', feedlot_id=feedlot_id))
 

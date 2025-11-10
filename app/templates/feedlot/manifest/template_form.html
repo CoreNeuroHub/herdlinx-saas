@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}{% if template %}Edit{% else %}Create{% endif %} Manifest Template - {{ feedlot.name }}{% endblock %}
+
+{% block home_url %}{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-start justify-between mb-4">
+        <div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                {% if template %}Edit{% else %}Create{% endif %} Manifest Template
+            </h1>
+            <p class="text-gray-600">{{ feedlot.name }}</p>
+        </div>
+        <a href="{{ url_for('feedlot.list_manifest_templates', feedlot_id=feedlot._id) }}" 
+           class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            Back to Templates
+        </a>
+    </div>
+</div>
+
+<form method="POST" class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Template Information</h2>
+        
+        <div class="mb-6">
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                Template Name <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="name" name="name" required
+                   value="{{ template.name if template else '' }}"
+                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+        </div>
+        
+        <div class="mb-6">
+            <label class="flex items-center">
+                <input type="checkbox" name="is_default" {% if template and template.is_default %}checked{% endif %}
+                       class="mr-2 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                <span class="text-sm font-medium text-gray-700">Set as default template</span>
+            </label>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Owner/Dealer Information</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label for="owner_name" class="block text-sm font-medium text-gray-700 mb-2">Owner Name</label>
+                <input type="text" id="owner_name" name="owner_name"
+                       value="{{ template.owner_name if template else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="owner_phone" class="block text-sm font-medium text-gray-700 mb-2">Owner Phone</label>
+                <input type="text" id="owner_phone" name="owner_phone"
+                       value="{{ template.owner_phone if template else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+            </div>
+            <div class="md:col-span-2">
+                <label for="owner_address" class="block text-sm font-medium text-gray-700 mb-2">Owner Address</label>
+                <textarea id="owner_address" name="owner_address" rows="2"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">{{ template.owner_address if template else '' }}</textarea>
+            </div>
+        </div>
+        
+        <div class="border-t pt-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Dealer Information (Optional)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="dealer_name" class="block text-sm font-medium text-gray-700 mb-2">Dealer Name</label>
+                    <input type="text" id="dealer_name" name="dealer_name"
+                           value="{{ template.dealer_name if template else '' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label for="dealer_phone" class="block text-sm font-medium text-gray-700 mb-2">Dealer Phone</label>
+                    <input type="text" id="dealer_phone" name="dealer_phone"
+                           value="{{ template.dealer_phone if template else '' }}"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="dealer_address" class="block text-sm font-medium text-gray-700 mb-2">Dealer Address</label>
+                    <textarea id="dealer_address" name="dealer_address" rows="2"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">{{ template.dealer_address if template else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Transportation Details</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label for="default_destination_name" class="block text-sm font-medium text-gray-700 mb-2">Default Destination Name</label>
+                <input type="text" id="default_destination_name" name="default_destination_name"
+                       value="{{ template.default_destination_name if template else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="default_destination_address" class="block text-sm font-medium text-gray-700 mb-2">Default Destination Address</label>
+                <input type="text" id="default_destination_address" name="default_destination_address"
+                       value="{{ template.default_destination_address if template else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="default_premises_id_before" class="block text-sm font-medium text-gray-700 mb-2">Premises ID (Before)</label>
+                <input type="text" id="default_premises_id_before" name="default_premises_id_before"
+                       value="{{ template.default_premises_id_before if template else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="default_premises_id_destination" class="block text-sm font-medium text-gray-700 mb-2">Premises ID (Destination)</label>
+                <input type="text" id="default_premises_id_destination" name="default_premises_id_destination"
+                       value="{{ template.default_premises_id_destination if template else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Transporter Information</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="default_transporter_name" class="block text-sm font-medium text-gray-700 mb-2">Transporter Name</label>
+                <input type="text" id="default_transporter_name" name="default_transporter_name"
+                       value="{{ template.default_transporter_name if template else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="default_transporter_phone" class="block text-sm font-medium text-gray-700 mb-2">Transporter Phone</label>
+                <input type="text" id="default_transporter_phone" name="default_transporter_phone"
+                       value="{{ template.default_transporter_phone if template else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="default_transporter_trailer" class="block text-sm font-medium text-gray-700 mb-2">Trailer/Conveyance Number</label>
+                <input type="text" id="default_transporter_trailer" name="default_transporter_trailer"
+                       value="{{ template.default_transporter_trailer if template else '' }}"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+            </div>
+            <div>
+                <label for="default_purpose" class="block text-sm font-medium text-gray-700 mb-2">Default Purpose</label>
+                <select id="default_purpose" name="default_purpose"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                    <option value="transport_only" {% if template and template.default_purpose == 'transport_only' %}selected{% endif %}>Transport Only</option>
+                    <option value="transport_for_sale_owner" {% if template and template.default_purpose == 'transport_for_sale_owner' %}selected{% endif %}>Transport for Sale - By Owner</option>
+                    <option value="transport_for_sale_dealer" {% if template and template.default_purpose == 'transport_for_sale_dealer' %}selected{% endif %}>Transport for Sale - By Dealer</option>
+                    <option value="inspection_only" {% if template and template.default_purpose == 'inspection_only' %}selected{% endif %}>Inspection Only</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex justify-end space-x-4">
+        <a href="{{ url_for('feedlot.list_manifest_templates', feedlot_id=feedlot._id) }}" 
+           class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Cancel
+        </a>
+        <button type="submit" style="background-color: #2D8B8B;" 
+                class="hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            {% if template %}Update{% else %}Create{% endif %} Template
+        </button>
+    </div>
+</form>
+{% endblock %}
+

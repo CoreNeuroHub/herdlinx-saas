@@ -25,6 +25,7 @@
                     <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" role="menuitem">Create Pen</a>
                     <a href="{{ url_for('feedlot.create_batch', feedlot_id=feedlot._id) }}" role="menuitem">Create Batch</a>
                     <a href="{{ url_for('feedlot.create_cattle', feedlot_id=feedlot._id) }}" role="menuitem">Create Cattle</a>
+                    <a href="{{ url_for('feedlot.export_manifest', feedlot_id=feedlot._id) }}" role="menuitem">Export Manifest</a>
                     {% endblock %}
                 </div>
             </div>

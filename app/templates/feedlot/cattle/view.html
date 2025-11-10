@@ -150,6 +150,44 @@
                 <p class="text-sm text-gray-500 italic">No tags assigned</p>
             </div>
             {% endif %}
+            {% if cattle.get('color') or cattle.get('breed') %}
+            <div class="grid grid-cols-2 gap-6 pt-4 border-t border-gray-200">
+                {% if cattle.get('color') %}
+                <div>
+                    <p class="text-sm font-medium text-gray-500 mb-2">Color</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ cattle.color }}</p>
+                </div>
+                {% endif %}
+                {% if cattle.get('breed') %}
+                <div>
+                    <p class="text-sm font-medium text-gray-500 mb-2">Breed (Kind)</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ cattle.breed }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% if cattle.get('brand_drawings') or cattle.get('brand_locations') or cattle.get('other_marks') %}
+            <div class="pt-4 border-t border-gray-200 space-y-4">
+                {% if cattle.get('brand_drawings') %}
+                <div>
+                    <p class="text-sm font-medium text-gray-500 mb-2">Brand Drawings</p>
+                    <p class="text-base text-gray-900">{{ cattle.brand_drawings }}</p>
+                </div>
+                {% endif %}
+                {% if cattle.get('brand_locations') %}
+                <div>
+                    <p class="text-sm font-medium text-gray-500 mb-2">Brand Locations</p>
+                    <p class="text-base text-gray-900">{{ cattle.brand_locations }}</p>
+                </div>
+                {% endif %}
+                {% if cattle.get('other_marks') %}
+                <div>
+                    <p class="text-sm font-medium text-gray-500 mb-2">Other Marks</p>
+                    <p class="text-base text-gray-900">{{ cattle.other_marks }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
     
