@@ -7,8 +7,9 @@ import hashlib
 class APIKey:
     @staticmethod
     def generate_key():
-        """Generate a secure random API key"""
-        return secrets.token_urlsafe(32)
+        """Generate a secure random API key with hlx_ prefix"""
+        random_part = secrets.token_urlsafe(32)
+        return f"hlx_{random_part}"
     
     @staticmethod
     def hash_key(api_key):
