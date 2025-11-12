@@ -41,6 +41,10 @@
             background-color: #f3f4f6;
             color: #111827;
         }
+        #menu-arrow-btn {
+            visibility: visible !important;
+            display: flex !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
@@ -48,13 +52,6 @@
     <nav class="bg-navy text-white shadow-lg relative">
         <div class="container mx-auto px-4 py-3">
             <div class="flex items-center justify-between relative">
-                <!-- Hamburger Menu Button - Left Side -->
-                <button id="hamburger-btn" data-testid="hamburger-menu-button" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Toggle menu">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path id="hamburger-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
                 <!-- Logo and Label - Center -->
                 <div class="absolute left-1/2 transform -translate-x-1/2">
                     <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
@@ -69,7 +66,7 @@
                 <!-- Profile Section - Right Side -->
                 {% if session.user_id %}
                     {% set user_profile = session.get('user_profile') %}
-                    <div class="relative">
+                    <div class="relative ml-auto">
                         <button id="profile-dropdown-btn" data-testid="profile-dropdown-button" class="flex items-center space-x-3 p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Profile menu" aria-expanded="false">
                             {% if user_profile and user_profile.get('profile_picture') %}
                             <img src="{{ user_profile.profile_picture }}" alt="Profile" 
@@ -110,23 +107,24 @@
                         </div>
                     </div>
                 {% else %}
-                    <div class="w-10"></div>
+                    <div class="w-10 ml-auto"></div>
                 {% endif %}
             </div>
         </div>
         <!-- Hamburger Menu Overlay -->
         <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300" onclick="toggleMenu()"></div>
+        <!-- Arrow Button - Sticks to the menu panel -->
+        <button id="menu-arrow-btn" data-testid="menu-arrow-button" onclick="toggleMenu()" class="fixed top-1/2 transform -translate-y-1/2 w-12 h-16 bg-navy hover:bg-teal rounded-r-lg shadow-lg flex items-center justify-center transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal z-[60]" aria-label="Toggle menu" style="left: 0;">
+            <svg id="arrow-icon" class="w-6 h-6 text-white transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
         <!-- Hamburger Menu Panel -->
         <div id="menu-panel" data-testid="hamburger-menu-panel" class="fixed top-0 left-0 h-full w-80 bg-navy shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-hidden">
             <div class="flex flex-col h-full">
                 <div class="p-6 border-b border-teal border-opacity-30 flex-shrink-0">
                     <div class="flex items-center justify-between">
                         <h2 class="text-xl font-bold text-white">Menu</h2>
-                        <button onclick="toggleMenu()" data-testid="close-menu-button" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Close menu">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
                     </div>
                 </div>
                 <div class="flex-1 py-4 overflow-y-auto min-h-0">
@@ -197,25 +195,25 @@
         function toggleMenu() {
             const menuPanel = document.getElementById('menu-panel');
             const menuOverlay = document.getElementById('menu-overlay');
-            const hamburgerIcon = document.getElementById('hamburger-icon');
-            const closeIcon = document.getElementById('close-icon');
+            const arrowIcon = document.getElementById('arrow-icon');
+            const arrowBtn = document.getElementById('menu-arrow-btn');
             
             const isOpen = !menuPanel.classList.contains('-translate-x-full');
             
             if (isOpen) {
                 menuPanel.classList.add('-translate-x-full');
                 menuOverlay.classList.add('hidden');
-                hamburgerIcon.classList.remove('hidden');
-                closeIcon.classList.add('hidden');
+                // Position arrow at left edge (closed state) and point right
+                arrowBtn.style.left = '0';
+                arrowIcon.style.transform = 'rotate(0deg)';
             } else {
                 menuPanel.classList.remove('-translate-x-full');
                 menuOverlay.classList.remove('hidden');
-                hamburgerIcon.classList.add('hidden');
-                closeIcon.classList.remove('hidden');
+                // Position arrow at right edge of menu (open state) and point left
+                arrowBtn.style.left = '320px'; // w-80 = 320px
+                arrowIcon.style.transform = 'rotate(180deg)';
             }
         }
-        
-        document.getElementById('hamburger-btn').addEventListener('click', toggleMenu);
         
         // Close menu when clicking outside
         document.getElementById('menu-overlay').addEventListener('click', toggleMenu);
