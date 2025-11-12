@@ -35,7 +35,7 @@
         </div>
         
         <!-- Form Content -->
-        <form method="POST" class="p-8">
+        <form method="POST" data-testid="create-cattle-form" class="p-8">
             <!-- Basic Information Section -->
             <div class="mb-8">
                 <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
@@ -53,6 +53,7 @@
                             Cattle ID <span class="text-red-500">*</span>
                         </label>
                         <input type="text" id="cattle_id" name="cattle_id" required
+                               data-testid="cattle-id-input"
                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                                placeholder="Enter unique cattle identifier">
                     </div>
@@ -62,6 +63,7 @@
                             Batch <span class="text-red-500">*</span>
                         </label>
                         <select id="batch_id" name="batch_id" required
+                                data-testid="batch-select"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
                             <option value="">Select a batch</option>
                             {% for batch in batches %}
@@ -89,6 +91,7 @@
                             Sex <span class="text-red-500">*</span>
                         </label>
                         <select id="sex" name="sex" required
+                                data-testid="sex-select"
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
                             <option value="">Select sex</option>
                             <option value="Heifer">Heifer</option>
@@ -102,8 +105,23 @@
                             Weight (kg) <span class="text-red-500">*</span>
                         </label>
                         <input type="number" id="weight" name="weight" required step="0.1"
+                               data-testid="weight-input"
                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                                placeholder="Enter weight in kilograms">
+                    </div>
+                    
+                    <div>
+                        <label for="color" class="block text-sm font-semibold text-gray-700 mb-3">Color</label>
+                        <input type="text" id="color" name="color"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="e.g., Black, Red, Brown">
+                    </div>
+                    
+                    <div>
+                        <label for="breed" class="block text-sm font-semibold text-gray-700 mb-3">Breed (Kind)</label>
+                        <input type="text" id="breed" name="breed"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="e.g., Angus, Hereford, Charolais">
                     </div>
                 </div>
             </div>
@@ -173,6 +191,41 @@
                 </div>
             </div>
             
+            <!-- Branding & Marks Section -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                    <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3">
+                        <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                        </svg>
+                    </div>
+                    Branding & Marks
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="brand_drawings" class="block text-sm font-semibold text-gray-700 mb-3">Brand Drawings</label>
+                        <textarea id="brand_drawings" name="brand_drawings" rows="3"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+                                  placeholder="Description or reference to brand drawings"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="brand_locations" class="block text-sm font-semibold text-gray-700 mb-3">Brand Locations</label>
+                        <input type="text" id="brand_locations" name="brand_locations"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="e.g., Left hip, Right shoulder">
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label for="other_marks" class="block text-sm font-semibold text-gray-700 mb-3">Other Marks of Ownership</label>
+                        <textarea id="other_marks" name="other_marks" rows="2"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+                                  placeholder="Any other identifying marks"></textarea>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Notes Section -->
             <div class="mb-8">
                 <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
@@ -194,13 +247,14 @@
             
             <!-- Form Actions -->
             <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-                <button type="submit" style="background-color: #2D8B8B;" class="hover:opacity-90 flex-1 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 group">
+                <button type="submit" data-testid="create-cattle-submit-button" style="background-color: #2D8B8B;" class="hover:opacity-90 flex-1 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 group">
                     <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                     </svg>
                     <span>Add Cattle</span>
                 </button>
                 <a href="{{ url_for('feedlot.list_cattle', feedlot_id=feedlot._id) }}" 
+                   data-testid="cancel-create-cattle-button"
                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 px-8 rounded-xl text-center transition-all duration-200 flex items-center justify-center space-x-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>

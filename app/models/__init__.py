@@ -20,6 +20,9 @@ def init_db():
         db.cattle.create_index('pen_id')
         db.cattle.create_index([('feedlot_id', 1), ('cattle_id', 1)], unique=True)
         
+        db.manifest_templates.create_index('feedlot_id')
+        db.manifest_templates.create_index([('feedlot_id', 1), ('is_default', 1)])
+        
         print("Database initialized successfully")
     except Exception as e:
         print(f"Error initializing database indexes: {e}")

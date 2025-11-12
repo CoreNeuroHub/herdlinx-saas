@@ -49,7 +49,7 @@
         <div class="container mx-auto px-4 py-3">
             <div class="flex items-center justify-between relative">
                 <!-- Hamburger Menu Button - Left Side -->
-                <button id="hamburger-btn" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Toggle menu">
+                <button id="hamburger-btn" data-testid="hamburger-menu-button" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Toggle menu">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path id="hamburger-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -70,7 +70,7 @@
                 {% if session.user_id %}
                     {% set user_profile = session.get('user_profile') %}
                     <div class="relative">
-                        <button id="profile-dropdown-btn" class="flex items-center space-x-3 p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Profile menu" aria-expanded="false">
+                        <button id="profile-dropdown-btn" data-testid="profile-dropdown-button" class="flex items-center space-x-3 p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Profile menu" aria-expanded="false">
                             {% if user_profile and user_profile.get('profile_picture') %}
                             <img src="{{ user_profile.profile_picture }}" alt="Profile" 
                                  class="w-10 h-10 rounded-full object-cover border-2 border-teal">
@@ -98,12 +98,12 @@
                             </svg>
                         </button>
                         <!-- Profile Dropdown Menu -->
-                        <div id="profile-dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
+                        <div id="profile-dropdown-menu" data-testid="profile-dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
                             <div class="py-1">
-                                <a href="{{ url_for('auth.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <a href="{{ url_for('auth.profile') }}" data-testid="profile-edit-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     Edit Profile
                                 </a>
-                                <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <a href="{{ url_for('auth.logout') }}" data-testid="logout-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     Logout
                                 </a>
                             </div>
@@ -117,12 +117,12 @@
         <!-- Hamburger Menu Overlay -->
         <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300" onclick="toggleMenu()"></div>
         <!-- Hamburger Menu Panel -->
-        <div id="menu-panel" class="fixed top-0 left-0 h-full w-80 bg-navy shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-hidden">
+        <div id="menu-panel" data-testid="hamburger-menu-panel" class="fixed top-0 left-0 h-full w-80 bg-navy shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-hidden">
             <div class="flex flex-col h-full">
                 <div class="p-6 border-b border-teal border-opacity-30 flex-shrink-0">
                     <div class="flex items-center justify-between">
                         <h2 class="text-xl font-bold text-white">Menu</h2>
-                        <button onclick="toggleMenu()" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Close menu">
+                        <button onclick="toggleMenu()" data-testid="close-menu-button" class="p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Close menu">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
@@ -136,9 +136,9 @@
                         <div class="px-4 py-2">
                             <h3 class="text-xs font-semibold text-teal uppercase tracking-wider mb-2">Main Navigation</h3>
                             <div class="space-y-1">
-                                <a href="{{ url_for('top_level.dashboard') }}" class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
-                                <a href="{{ url_for('top_level.feedlot_hub') }}" class="px-4 py-2 hover:bg-teal rounded transition block">Feedlot Hub</a>
-                                <a href="{{ url_for('top_level.settings') }}" class="px-4 py-2 hover:bg-teal rounded transition block">Settings</a>
+                                <a href="{{ url_for('top_level.dashboard') }}" data-testid="nav-dashboard-link" class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
+                                <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="nav-feedlot-hub-link" class="px-4 py-2 hover:bg-teal rounded transition block">Feedlot Hub</a>
+                                <a href="{{ url_for('top_level.settings') }}" data-testid="nav-settings-link" class="px-4 py-2 hover:bg-teal rounded transition block">Settings</a>
                             </div>
                         </div>
                         {% endif %}
@@ -148,10 +148,10 @@
                         <div class="px-4 py-2 border-t border-teal border-opacity-30 mt-2 pt-4">
                             <h3 class="text-xs font-semibold text-teal uppercase tracking-wider mb-2">{{ current_feedlot.name }}</h3>
                             <div class="space-y-1">
-                                <a href="{{ url_for('feedlot.dashboard', feedlot_id=current_feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
-                                <a href="{{ url_for('feedlot.list_pens', feedlot_id=current_feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition block">Pens</a>
-                                <a href="{{ url_for('feedlot.list_batches', feedlot_id=current_feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition block">Batches</a>
-                                <a href="{{ url_for('feedlot.list_cattle', feedlot_id=current_feedlot._id) }}" class="px-4 py-2 hover:bg-teal rounded transition block">Cattle</a>
+                                <a href="{{ url_for('feedlot.dashboard', feedlot_id=current_feedlot._id) }}" data-testid="nav-feedlot-dashboard-link" class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
+                                <a href="{{ url_for('feedlot.list_pens', feedlot_id=current_feedlot._id) }}" data-testid="nav-pens-link" class="px-4 py-2 hover:bg-teal rounded transition block">Pens</a>
+                                <a href="{{ url_for('feedlot.list_batches', feedlot_id=current_feedlot._id) }}" data-testid="nav-batches-link" class="px-4 py-2 hover:bg-teal rounded transition block">Batches</a>
+                                <a href="{{ url_for('feedlot.list_cattle', feedlot_id=current_feedlot._id) }}" data-testid="nav-cattle-link" class="px-4 py-2 hover:bg-teal rounded transition block">Cattle</a>
                             </div>
                         </div>
                         {% endif %}
@@ -305,7 +305,7 @@
     </script>
 
     <!-- Toast Container -->
-    <div id="toast-container" class="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 space-y-2"></div>
+    <div id="toast-container" data-testid="toast-container" class="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 space-y-2"></div>
 
     <!-- Toast Notification System -->
     <script>
@@ -407,7 +407,7 @@
     </script>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-6 relative flex-1">
+    <main data-testid="main-content" class="container mx-auto px-4 py-6 relative flex-1">
         {% block content %}{% endblock %}
     </main>
 

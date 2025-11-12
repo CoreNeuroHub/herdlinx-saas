@@ -5,7 +5,8 @@ from app import db
 class Cattle:
     @staticmethod
     def create_cattle(feedlot_id, batch_id, cattle_id, sex, weight, 
-                     health_status, lf_tag=None, uhf_tag=None, pen_id=None, notes=None):
+                     health_status, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
+                     color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None):
         """Create a new cattle record"""
         cattle_data = {
             'feedlot_id': ObjectId(feedlot_id),
@@ -18,6 +19,11 @@ class Cattle:
             'uhf_tag': uhf_tag or '',
             'pen_id': ObjectId(pen_id) if pen_id else None,
             'notes': notes or '',
+            'color': color or '',
+            'breed': breed or '',
+            'brand_drawings': brand_drawings or '',
+            'brand_locations': brand_locations or '',
+            'other_marks': other_marks or '',
             'status': 'active',
             'induction_date': datetime.utcnow(),
             'created_at': datetime.utcnow(),
