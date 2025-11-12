@@ -10,15 +10,15 @@
             <p class="text-gray-600">Manage all users across the system</p>
         </div>
         <div class="relative inline-block text-left">
-            <button id="actions-dropdown-btn" type="button" class="inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal transition duration-200" aria-expanded="false" aria-haspopup="true">
+            <button id="actions-dropdown-btn" type="button" data-testid="manage-users-actions-dropdown-button" class="inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal transition duration-200" aria-expanded="false" aria-haspopup="true">
                 <span>Actions</span>
                 <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                 </svg>
             </button>
-            <div id="actions-dropdown-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" role="menu" aria-orientation="vertical" aria-labelledby="actions-dropdown-btn" style="display: none;">
+            <div id="actions-dropdown-menu" data-testid="manage-users-actions-dropdown-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" role="menu" aria-orientation="vertical" aria-labelledby="actions-dropdown-btn" style="display: none;">
                 <div class="py-1" role="none">
-                    <button onclick="openAddUserModal(); closeActionsDropdown(); event.stopPropagation();" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Add new user</button>
+                    <button onclick="openAddUserModal(); closeActionsDropdown(); event.stopPropagation();" data-testid="add-new-user-action-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Add new user</button>
                 </div>
             </div>
         </div>
@@ -33,6 +33,7 @@
             <label for="search-users" class="block text-sm font-medium text-gray-700 mb-2">Search Users</label>
             <div class="relative">
                 <input type="text" id="search-users" placeholder="Search by username, email, name..."
+                       data-testid="search-users-input"
                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
                 <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
@@ -87,7 +88,7 @@
         <!-- Filter by Status -->
         <div>
             <label for="filter-status" class="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
-            <select id="filter-status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            <select id="filter-status" data-testid="filter-status-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
                 <option value="">All Statuses</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -101,10 +102,10 @@
             <span id="users-count">{{ users|length if users else 0 }}</span> user(s) found
         </div>
         <div class="flex space-x-2">
-            <button id="search-filters-btn" onclick="applyFilters()" class="px-4 py-2 bg-teal hover:opacity-90 text-white text-sm font-semibold rounded-lg transition duration-200">
+            <button id="search-filters-btn" onclick="applyFilters()" data-testid="search-filters-button" class="px-4 py-2 bg-teal hover:opacity-90 text-white text-sm font-semibold rounded-lg transition duration-200">
                 Search
             </button>
-            <button id="reset-filters" onclick="resetFilters()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-lg transition duration-200">
+            <button id="reset-filters" onclick="resetFilters()" data-testid="reset-filters-button" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-semibold rounded-lg transition duration-200">
                 Reset Filters
             </button>
         </div>
@@ -144,7 +145,7 @@
         </thead>
         <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
             {% for user in users %}
-            <tr class="user-row" 
+            <tr class="user-row" data-testid="user-row-{{ user._id }}" 
                 data-username="{{ user.username|lower }}"
                 data-email="{{ user.email|lower }}"
                 data-first-name="{{ (user.first_name or '')|lower }}"
@@ -174,15 +175,15 @@
                 {% if user_type in ['super_owner', 'super_admin'] %}
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div class="flex space-x-2">
-                        <button onclick="openEditUserModal('{{ user._id }}')" class="text-teal-600 hover:text-teal-900">Edit</button>
+                        <button onclick="openEditUserModal('{{ user._id }}')" data-testid="edit-user-button-{{ user._id }}" class="text-teal-600 hover:text-teal-900">Edit</button>
                         <span class="text-gray-300">|</span>
                     {% if not user.is_active %}
                     <form method="POST" action="{{ url_for('top_level.activate_user', user_id=user._id) }}" class="inline">
-                        <button type="submit" class="text-green-600 hover:text-green-900">Activate</button>
+                        <button type="submit" data-testid="activate-user-button-{{ user._id }}" class="text-green-600 hover:text-green-900">Activate</button>
                     </form>
                     {% else %}
                     <form method="POST" action="{{ url_for('top_level.deactivate_user', user_id=user._id) }}" class="inline">
-                        <button type="submit" class="text-red-600 hover:text-red-900">Deactivate</button>
+                        <button type="submit" data-testid="deactivate-user-button-{{ user._id }}" class="text-red-600 hover:text-red-900">Deactivate</button>
                     </form>
                     {% endif %}
                     </div>
@@ -196,19 +197,19 @@
 {% else %}
 <div class="bg-white rounded-lg shadow-md p-8 text-center">
     <p class="text-gray-600 text-lg mb-4">No users found.</p>
-    <button onclick="openAddUserModal()" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-2 px-6 rounded-lg transition duration-200">
+    <button onclick="openAddUserModal()" data-testid="create-first-user-button" class="inline-block bg-teal hover:opacity-90 text-white font-semibold py-2 px-6 rounded-lg transition duration-200">
         Create First User
     </button>
 </div>
 {% endif %}
 
 <!-- Add New User Modal -->
-<div id="add-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="add-user-modal" data-testid="add-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl font-bold text-gray-800">Add New User</h2>
-                <button onclick="closeAddUserModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                <button onclick="closeAddUserModal()" data-testid="close-add-user-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -216,7 +217,7 @@
             </div>
         </div>
         
-        <form id="add-user-form" method="POST" action="{{ url_for('auth.register') }}" class="p-6 space-y-4">
+        <form id="add-user-form" method="POST" action="{{ url_for('auth.register') }}" data-testid="add-user-form" class="p-6 space-y-4">
             {% if user_type in ['business_owner', 'business_admin'] %}
             <p class="text-sm text-gray-600 mb-4">You can create business owner, business admin, and user accounts for your assigned feedlots.</p>
             {% else %}
@@ -226,24 +227,28 @@
             <div>
                 <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
                 <input type="text" id="username" name="username" required
+                       data-testid="add-user-username-input"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
             
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                 <input type="email" id="email" name="email" required
+                       data-testid="add-user-email-input"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
             
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
                 <input type="password" id="password" name="password" required
+                       data-testid="add-user-password-input"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
             
             <div>
                 <label for="user_type" class="block text-sm font-medium text-gray-700 mb-2">User Type *</label>
                 <select id="user_type" name="user_type" required
+                        data-testid="add-user-type-select"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
                     {% if user_type in ['super_owner', 'super_admin'] %}
                     <option value="super_owner">Super Owner</option>
@@ -298,10 +303,10 @@
             </div>
             
             <div class="flex space-x-4 pt-4">
-                <button type="submit" id="submit-user-btn" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button type="submit" id="submit-user-btn" data-testid="submit-add-user-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Create User
                 </button>
-                <button type="button" onclick="closeAddUserModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button type="button" onclick="closeAddUserModal()" data-testid="cancel-add-user-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Cancel
                 </button>
             </div>
@@ -310,12 +315,12 @@
 </div>
 
 <!-- Edit User Modal -->
-<div id="edit-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="edit-user-modal" data-testid="edit-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl font-bold text-gray-800">Edit User</h2>
-                <button onclick="closeEditUserModal()" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                <button onclick="closeEditUserModal()" data-testid="close-edit-user-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -323,18 +328,20 @@
             </div>
         </div>
         
-        <form id="edit-user-form" method="POST" class="p-6 space-y-4">
+        <form id="edit-user-form" method="POST" data-testid="edit-user-form" class="p-6 space-y-4">
             <input type="hidden" id="edit_user_id" name="user_id" value="">
             
             <div>
                 <label for="edit_username" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
                 <input type="text" id="edit_username" name="username" required
+                       data-testid="edit-user-username-input"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
             
             <div>
                 <label for="edit_email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
                 <input type="email" id="edit_email" name="email" required
+                       data-testid="edit-user-email-input"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
             
@@ -435,10 +442,10 @@
             </div>
             
             <div class="flex space-x-4 pt-4">
-                <button type="submit" id="submit-edit-user-btn" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button type="submit" id="submit-edit-user-btn" data-testid="submit-edit-user-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Update User
                 </button>
-                <button type="button" onclick="closeEditUserModal()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button type="button" onclick="closeEditUserModal()" data-testid="cancel-edit-user-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Cancel
                 </button>
             </div>
