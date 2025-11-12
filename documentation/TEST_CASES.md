@@ -540,6 +540,8 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Changes are reflected immediately
 - Session is updated with new profile data
 - Success message displayed
+- Profile picture upload works correctly
+- File validation works (size, type)
 
 ---
 
@@ -633,11 +635,27 @@ This document contains comprehensive test cases for all user types in the HerdLi
    - Batches list
    - Cattle list
    - Create/edit/delete operations
+   - Manifest export
 
 **Expected Result:**
 - All feedlot routes are accessible
 - Can perform all operations
 - No access denied errors
+- Can access manifest export functionality
+
+---
+
+#### TC-SO-035: Access Settings Page
+**Objective:** Verify Super Owner/Admin can access settings page
+
+**Steps:**
+1. Log in as Super Owner/Admin
+2. Navigate to Settings page
+
+**Expected Result:**
+- Settings page loads successfully
+- Can access API Keys management
+- Settings navigation works correctly
 
 ---
 
@@ -957,7 +975,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 **Steps:**
 1. Log in as Business Owner/Admin
 2. Navigate to cattle list for an assigned feedlot
-3. Create new cattle record
+3. Create new cattle record (including color, breed, brand info)
 4. View cattle details
 5. Move cattle between pens
 6. Add weight records
@@ -969,6 +987,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Cattle movement works
 - Weight tracking works
 - Tag management works
+- Additional cattle fields (color, breed, brand info) are saved and displayed
 
 **Test Data:**
 - Cattle ID: "CATTLE-001"
@@ -977,6 +996,11 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Health Status: "Healthy"
 - LF Tag: "LF123456"
 - UHF Tag: "UHF123456"
+- Color: "Black"
+- Breed: "Angus"
+- Brand Drawings: "Circle"
+- Brand Locations: "Left hip"
+- Other Marks: "Ear tag"
 
 ---
 
@@ -1047,6 +1071,37 @@ This document contains comprehensive test cases for all user types in the HerdLi
 **Expected Result:**
 - Password is changed successfully
 - Can log in with new password
+
+---
+
+#### TC-BO-024: Upload Profile Picture
+**Objective:** Verify Business Owner/Admin can upload profile picture
+
+**Steps:**
+1. Log in as Business Owner/Admin
+2. Navigate to Profile page
+3. Upload profile picture
+4. Save changes
+
+**Expected Result:**
+- Profile picture is uploaded successfully
+- Picture is displayed on profile page
+- Picture appears in navigation/user menu
+
+---
+
+#### TC-BO-025: Access Manifest Export
+**Objective:** Verify Business Owner/Admin can access manifest export functionality
+
+**Steps:**
+1. Log in as Business Owner/Admin
+2. Navigate to an assigned feedlot
+3. Access manifest export page
+
+**Expected Result:**
+- Can access manifest export page
+- Can create and manage manifest templates
+- Can export manifests
 
 ---
 
@@ -1423,6 +1478,11 @@ This document contains comprehensive test cases for all user types in the HerdLi
    - LF Tag: "LF123456"
    - UHF Tag: "UHF123456"
    - Pen: (select pen or leave empty)
+   - Color: "Black"
+   - Breed: "Angus"
+   - Brand Drawings: "Circle"
+   - Brand Locations: "Left hip"
+   - Other Marks: "Ear tag"
    - Notes: "Test cattle"
 5. Submit
 
@@ -1431,6 +1491,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Cattle appears in cattle list
 - Success message displayed
 - Pen capacity is validated
+- All additional fields (color, breed, brand info) are saved
 
 **Test Data:**
 - Batch: (existing batch)
@@ -1441,6 +1502,11 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - LF Tag: "LF123456"
 - UHF Tag: "UHF123456"
 - Pen: (existing pen or None)
+- Color: "Black"
+- Breed: "Angus"
+- Brand Drawings: "Circle"
+- Brand Locations: "Left hip"
+- Other Marks: "Ear tag"
 - Notes: "Test cattle"
 
 ---
@@ -1477,6 +1543,9 @@ This document contains comprehensive test cases for all user types in the HerdLi
   - Current pen
   - Batch information
   - Tags (LF, UHF)
+  - Color, breed
+  - Brand drawings, brand locations
+  - Other marks
   - Weight history
   - Tag history
   - Notes
@@ -1642,6 +1711,47 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
+#### TC-U-035: Upload Profile Picture
+**Objective:** Verify user can upload profile picture
+
+**Steps:**
+1. Log in as regular user
+2. Navigate to Profile page
+3. Click "Choose File" for profile picture
+4. Select an image file (PNG, JPG, JPEG, GIF, or WEBP)
+5. Upload file
+6. Save changes
+
+**Expected Result:**
+- Profile picture is uploaded successfully
+- Picture is displayed on profile page
+- Picture appears in navigation/user menu
+- Old picture is replaced if one existed
+- File size validation works (max 5MB)
+- File type validation works (only image formats)
+
+**Test Data:**
+- Image file: Valid image file (< 5MB, PNG/JPG/JPEG/GIF/WEBP format)
+
+---
+
+#### TC-U-036: Upload Invalid Profile Picture
+**Objective:** Verify system rejects invalid profile picture uploads
+
+**Steps:**
+1. Log in as regular user
+2. Navigate to Profile page
+3. Attempt to upload:
+   - Non-image file (e.g., .txt, .pdf)
+   - Image file larger than 5MB
+
+**Expected Result:**
+- Error message displayed for invalid file type
+- Error message displayed for file size exceeding limit
+- Profile picture is not updated
+
+---
+
 ### 3.5 Feedlot Management Restrictions
 
 #### TC-U-032: Cannot View Feedlot Hub
@@ -1670,7 +1780,147 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
-### 3.6 Logout
+### 3.6 Manifest Export
+
+#### TC-U-037: Access Manifest Export Page
+**Objective:** Verify user can access manifest export page
+
+**Steps:**
+1. Log in as regular user
+2. Navigate to manifest export page
+
+**Expected Result:**
+- Manifest export page loads
+- Can select cattle by pen or manual selection
+- Can select manifest template
+- Can enter manual manifest data
+
+---
+
+#### TC-U-038: Export Manifest Using Template
+**Objective:** Verify user can export manifest using a template
+
+**Steps:**
+1. Log in as regular user
+2. Navigate to manifest export page
+3. Select cattle (by pen or manually)
+4. Select a manifest template
+5. Choose export format (PDF, HTML, or both)
+6. Submit export
+
+**Expected Result:**
+- Manifest is generated successfully
+- PDF/HTML file is downloaded or displayed
+- Template data is populated correctly
+- Cattle information is included in manifest
+
+**Test Data:**
+- Template: Existing manifest template
+- Export Format: PDF
+
+---
+
+#### TC-U-039: Export Manifest with Manual Entry
+**Objective:** Verify user can export manifest with manual data entry
+
+**Steps:**
+1. Log in as regular user
+2. Navigate to manifest export page
+3. Select cattle
+4. Choose "No Template - Enter Manually"
+5. Fill in manifest information:
+   - Owner details
+   - Dealer details
+   - Destination information
+   - Transporter information
+6. Choose export format
+7. Submit export
+
+**Expected Result:**
+- Manifest is generated successfully
+- Manual data is included in manifest
+- PDF/HTML file is downloaded or displayed
+
+---
+
+#### TC-U-040: View Manifest Templates
+**Objective:** Verify user can view manifest templates
+
+**Steps:**
+1. Log in as regular user
+2. Navigate to manifest templates page
+
+**Expected Result:**
+- List of manifest templates is displayed
+- Can see template name, default status
+- Can create, edit, or delete templates
+
+---
+
+#### TC-U-041: Create Manifest Template
+**Objective:** Verify user can create manifest template
+
+**Steps:**
+1. Log in as regular user
+2. Navigate to manifest templates page
+3. Click "Create Template"
+4. Fill in template details:
+   - Template name
+   - Owner information
+   - Dealer information
+   - Default destination
+   - Default transporter
+   - Default purpose
+5. Optionally mark as default template
+6. Save template
+
+**Expected Result:**
+- Template is created successfully
+- Template appears in templates list
+- Template can be used for manifest export
+
+**Test Data:**
+- Template Name: "Standard Export Template"
+- Owner Name: "Test Owner"
+- Owner Phone: "123-456-7890"
+- Owner Address: "123 Test St"
+
+---
+
+#### TC-U-042: Edit Manifest Template
+**Objective:** Verify user can edit manifest template
+
+**Steps:**
+1. Log in as regular user
+2. Navigate to manifest templates page
+3. Click "Edit" on a template
+4. Modify template information
+5. Save changes
+
+**Expected Result:**
+- Template is updated successfully
+- Changes are reflected in template
+- Updated template can be used for export
+
+---
+
+#### TC-U-043: Delete Manifest Template
+**Objective:** Verify user can delete manifest template
+
+**Steps:**
+1. Log in as regular user
+2. Navigate to manifest templates page
+3. Click "Delete" on a template
+4. Confirm deletion
+
+**Expected Result:**
+- Template is deleted successfully
+- Template is removed from list
+- Cannot use deleted template for export
+
+---
+
+### 3.7 Logout
 
 #### TC-U-034: Logout
 **Objective:** Verify user can log out
@@ -1861,6 +2111,250 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
+### 4.5 API Endpoints
+
+#### TC-X-011: API Key Authentication
+**Objective:** Verify API endpoints require valid API key authentication
+
+**Steps:**
+1. Attempt to access API endpoint without API key
+2. Attempt to access API endpoint with invalid API key
+3. Attempt to access API endpoint with inactive API key
+4. Access API endpoint with valid active API key
+
+**Expected Result:**
+- Requests without API key are rejected (401)
+- Requests with invalid API key are rejected (401)
+- Requests with inactive API key are rejected (401)
+- Requests with valid active API key are accepted
+
+**Test Data:**
+- Valid API key (from API Keys management)
+- Invalid API key: "invalid_key_12345"
+- Inactive API key (deactivated key)
+
+---
+
+#### TC-X-012: Sync Batches API Endpoint
+**Objective:** Verify batches can be synced via API
+
+**Steps:**
+1. Generate API key for a feedlot
+2. Send POST request to `/api/v1/feedlot/batches`
+3. Include valid API key in header
+4. Send batch data in request body
+
+**Expected Result:**
+- Batches are created/updated successfully
+- Response includes success status and record counts
+- Errors are reported for invalid records
+- Feedlot code validation works
+
+**Test Data:**
+- API Key: Valid API key
+- Request Body:
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "name": "BATCH-001",
+      "funder": "Test Funder",
+      "notes": "Test batch",
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+#### TC-X-013: Sync Livestock API Endpoint
+**Objective:** Verify livestock can be synced via API
+
+**Steps:**
+1. Send POST request to `/api/v1/feedlot/livestock`
+2. Include valid API key
+3. Send livestock data
+
+**Expected Result:**
+- Livestock records are updated successfully
+- Tag updates work correctly
+- Errors are reported for missing livestock
+
+**Test Data:**
+- Request Body:
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "id": 123,
+      "current_lf_id": "LF123456",
+      "current_epc": "UHF123456"
+    }
+  ]
+}
+```
+
+---
+
+#### TC-X-014: Sync Induction Events API Endpoint
+**Objective:** Verify induction events can be synced via API
+
+**Steps:**
+1. Send POST request to `/api/v1/feedlot/induction-events`
+2. Include valid API key
+3. Send induction event data
+
+**Expected Result:**
+- New cattle records are created
+- Batch association works correctly
+- Errors are reported for missing batches
+
+**Test Data:**
+- Request Body:
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "livestock_id": 123,
+      "batch_id": 1,
+      "batch_name": "BATCH-001",
+      "timestamp": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+#### TC-X-015: Sync Pairing Events API Endpoint
+**Objective:** Verify pairing events can be synced via API
+
+**Steps:**
+1. Send POST request to `/api/v1/feedlot/pairing-events`
+2. Include valid API key
+3. Send pairing event data
+
+**Expected Result:**
+- Tag pairs are updated successfully
+- Weight records are added if provided
+- Errors are reported for missing livestock
+
+**Test Data:**
+- Request Body:
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "livestock_id": 123,
+      "lf_id": "LF123456",
+      "epc": "UHF123456",
+      "weight_kg": 500.0
+    }
+  ]
+}
+```
+
+---
+
+#### TC-X-016: Sync Checkin Events API Endpoint
+**Objective:** Verify checkin events can be synced via API
+
+**Steps:**
+1. Send POST request to `/api/v1/feedlot/checkin-events`
+2. Include valid API key
+3. Send checkin event data with weight
+
+**Expected Result:**
+- Weight records are added successfully
+- Errors are reported for missing livestock or invalid weight
+
+**Test Data:**
+- Request Body:
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "livestock_id": 123,
+      "weight_kg": 550.0
+    }
+  ]
+}
+```
+
+---
+
+#### TC-X-017: Sync Repair Events API Endpoint
+**Objective:** Verify repair events can be synced via API
+
+**Steps:**
+1. Send POST request to `/api/v1/feedlot/repair-events`
+2. Include valid API key
+3. Send repair event data
+
+**Expected Result:**
+- Tag pairs are updated successfully
+- Repair reason is added to notes
+- Errors are reported for missing livestock
+
+**Test Data:**
+- Request Body:
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "livestock_id": 123,
+      "old_lf_id": "LF123456",
+      "new_lf_id": "LF789012",
+      "old_epc": "UHF123456",
+      "new_epc": "UHF789012",
+      "reason": "Tag damaged"
+    }
+  ]
+}
+```
+
+---
+
+#### TC-X-018: API Feedlot Code Validation
+**Objective:** Verify API validates feedlot code matches API key
+
+**Steps:**
+1. Generate API key for Feedlot A
+2. Send API request with Feedlot B's code
+3. Send API request with correct feedlot code
+
+**Expected Result:**
+- Request with mismatched feedlot code is rejected (403)
+- Request with correct feedlot code is accepted
+- Error message indicates feedlot code mismatch
+
+---
+
+#### TC-X-019: API Error Handling
+**Objective:** Verify API handles errors gracefully
+
+**Steps:**
+1. Send API requests with:
+   - Missing required fields
+   - Invalid data types
+   - Malformed JSON
+   - Empty data arrays
+
+**Expected Result:**
+- Appropriate error messages are returned
+- HTTP status codes are correct (400, 401, 403, 500)
+- Error details are included in response
+- Partial success is reported when some records fail
+
+---
+
 ## Test Execution Notes
 
 ### Prerequisites
@@ -1906,4 +2400,5 @@ Before executing test cases, ensure:
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2024-01-XX | Test Team | Initial test case document |
+| 2.0 | 2024-12-XX | Test Team | Added manifest export test cases, API endpoint test cases, profile picture upload test cases, and updated cattle creation test cases with new fields |
 
