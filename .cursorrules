@@ -140,6 +140,20 @@
       - Add comments for complex logic
       - Modular and reusable components
     </code_quality>
+    <testing_attributes>
+      All HTML templates must include data-testid attributes on interactive elements for automated testing:
+      - Use kebab-case naming convention (e.g., "create-pen-button", "feedlot-name-input")
+      - Include context in names to make them unique and descriptive (e.g., "api-key-generate-button" not just "generate-button")
+      - Add data-testid to all buttons, forms, input fields, select dropdowns, links, modals, table rows, and dropdown menus
+      - Use descriptive names that indicate the element's purpose and context (e.g., "edit-feedlot-form", "cancel-create-pen-button")
+      - For dynamic content (like table rows), include identifiers in the testid (e.g., "feedlot-user-row-{{ user._id }}")
+      - Modal elements should have testids for the modal container, close buttons, form inputs, and action buttons
+      - Dropdown menus should have testids for the dropdown button, menu container, and individual menu items
+      - Forms should have a testid on the form element itself, plus all inputs, selects, textareas, and submit/cancel buttons
+      - Search inputs should use testids like "search-{entity}-input" (e.g., "search-feedlots-input", "search-cattle-input")
+      - Action buttons in dropdowns should use testids like "{action}-{entity}-action" (e.g., "create-pen-action", "edit-feedlot-action")
+      - Widgets and sections should have testids for easy identification (e.g., "widget-feedlots", "widget-pens")
+    </testing_attributes>
   </technical_guidelines>
 
   <development_priorities>
@@ -167,6 +181,7 @@
     - Ensure responsive design patterns are applied
     - Include proper error handling and user feedback
     - Write self-documenting code with clear variable and function names
+    - ALWAYS add data-testid attributes to all interactive HTML elements (buttons, forms, inputs, links, modals, dropdowns, tables) following the testing_attributes guidelines
   </coding_instructions>
 
   <ui_components>
