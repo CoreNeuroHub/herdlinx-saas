@@ -41,13 +41,29 @@ def dashboard():
     total_cattle = 0
     total_batches = 0
     total_users = 0
-    
+
     if feedlots:
+        from app.adapters import get_office_adapter
+
         feedlot_ids = [ObjectId(str(f['_id'])) for f in feedlots]
+        feedlot_codes = [f.get('feedlot_code') for f in feedlots if f.get('feedlot_code')]
+
+        # Count native SAAS data
         total_pens = db.pens.count_documents({'feedlot_id': {'$in': feedlot_ids}})
-        total_cattle = db.cattle.count_documents({'feedlot_id': {'$in': feedlot_ids}})
-        total_batches = db.batches.count_documents({'feedlot_id': {'$in': feedlot_ids}})
-        
+        native_cattle = db.cattle.count_documents({'feedlot_id': {'$in': feedlot_ids}})
+        native_batches = db.batches.count_documents({'feedlot_id': {'$in': feedlot_ids}})
+
+        # Count office synced data by feedlot_code
+        office_cattle = 0
+        office_batches = 0
+        if feedlot_codes:
+            office_cattle = db.livestock.count_documents({'feedlot_code': {'$in': feedlot_codes}})
+            office_batches = db.batches.count_documents({'feedlot_code': {'$in': feedlot_codes}})
+
+        # Combine native + office counts
+        total_cattle = native_cattle + office_cattle
+        total_batches = native_batches + office_batches
+
         # Count users associated with these feedlots
         user_query = {'$or': [
             {'feedlot_id': {'$in': feedlot_ids}},

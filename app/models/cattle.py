@@ -73,30 +73,23 @@ class Cattle:
             # Get native SAAS cattle
             native_cattle = list(db.cattle.find({'feedlot_id': feedlot_oid}))
 
-            # Get office synced livestock from all batches in this feedlot
-            from app.models.batch import Batch
-            office_adapter = get_office_adapter(db)
+            # Get feedlot_code for this feedlot
+            feedlot = db.feedlots.find_one({'_id': feedlot_oid})
+            feedlot_code = feedlot.get('feedlot_code') if feedlot else None
 
-            batches = Batch.find_by_feedlot(feedlot_id)
+            # Get office synced livestock filtered by feedlot_code
+            office_cattle = []
+            if feedlot_code:
+                office_adapter = get_office_adapter(db)
+                office_cattle = office_adapter.get_office_livestock_by_feedlot_code(feedlot_code)
+
+            # Combine, preferring native cattle if duplicate
             all_cattle = native_cattle.copy()
             native_cattle_ids = {str(c.get('_id')) for c in native_cattle if '_id' in c}
 
-            # Get livestock for each batch (including office batches)
-            for batch in batches:
-                batch_id = batch.get('_id')
-                if batch_id:
-                    # Try as integer (office batch ID)
-                    if isinstance(batch_id, int):
-                        livestock = office_adapter.get_office_livestock_by_batch(batch_id)
-                        for item in livestock:
-                            if str(item.get('_id')) not in native_cattle_ids:
-                                all_cattle.append(item)
-                    # Try as ObjectId (native SAAS batch ID)
-                    elif isinstance(batch_id, ObjectId):
-                        batch_cattle = list(db.cattle.find({'batch_id': batch_id}))
-                        for item in batch_cattle:
-                            if str(item.get('_id')) not in native_cattle_ids:
-                                all_cattle.append(item)
+            for office_item in office_cattle:
+                if str(office_item.get('_id')) not in native_cattle_ids:
+                    all_cattle.append(office_item)
 
             return all_cattle
         except Exception as e:

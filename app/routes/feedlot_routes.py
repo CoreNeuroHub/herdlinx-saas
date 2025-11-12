@@ -249,7 +249,7 @@ def view_batch(feedlot_id, batch_id):
 def list_cattle(feedlot_id):
     """List all cattle for a feedlot with search, filter, and sort"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    
+
     # Get filter parameters
     search = request.args.get('search', '').strip()
     health_status_filter = request.args.get('health_status', '')
@@ -257,31 +257,43 @@ def list_cattle(feedlot_id):
     pen_filter = request.args.get('pen_id', '')
     sort_by = request.args.get('sort_by', 'cattle_id')
     sort_order = request.args.get('sort_order', 'asc')
-    
-    # Get filtered cattle
-    cattle = Cattle.find_by_feedlot_with_filters(
-        feedlot_id,
-        search=search if search else None,
-        health_status=health_status_filter if health_status_filter else None,
-        sex=sex_filter if sex_filter else None,
-        pen_id=pen_filter if pen_filter else None,
-        sort_by=sort_by,
-        sort_order=sort_order
-    )
-    
+
+    # Check if any filters are active
+    has_filters = bool(search or health_status_filter or sex_filter or pen_filter)
+
+    # Get cattle - use basic find if no filters (includes office synced data)
+    if has_filters:
+        # Use filtered search (native cattle only for now)
+        cattle = Cattle.find_by_feedlot_with_filters(
+            feedlot_id,
+            search=search if search else None,
+            health_status=health_status_filter if health_status_filter else None,
+            sex=sex_filter if sex_filter else None,
+            pen_id=pen_filter if pen_filter else None,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+    else:
+        # No filters - get all cattle including office synced
+        cattle = Cattle.find_by_feedlot(feedlot_id)
+        # Sort by cattle_id if requested
+        if sort_by == 'cattle_id':
+            cattle = sorted(cattle, key=lambda x: str(x.get('cattle_id', '')),
+                          reverse=(sort_order == 'desc'))
+
     # Get all pens for filter dropdown
     pens = Pen.find_by_feedlot(feedlot_id)
-    
+
     # Create pen lookup dictionary for efficient template access
     pen_map = {str(pen['_id']): pen for pen in pens}
-    
+
     # Get unique values for filter dropdowns
     all_cattle = Cattle.find_by_feedlot(feedlot_id)
     unique_health_statuses = list(set(c.get('health_status', '') for c in all_cattle if c.get('health_status')))
     unique_sexes = list(set(c.get('sex', '') for c in all_cattle if c.get('sex')))
-    
-    return render_template('feedlot/cattle/list.html', 
-                         feedlot=feedlot, 
+
+    return render_template('feedlot/cattle/list.html',
+                         feedlot=feedlot,
                          cattle=cattle,
                          pens=pens,
                          pen_map=pen_map,

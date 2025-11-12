@@ -83,18 +83,21 @@ class Feedlot:
             native_cattle = db.cattle.count_documents({'feedlot_id': feedlot_id_obj})
             native_batches = db.batches.count_documents({'feedlot_id': feedlot_id_obj})
 
-            # Office synced statistics
-            office_adapter = get_office_adapter(db)
-            office_batches = office_adapter.get_office_batches_all()
-            total_office_batches = len(office_batches)
+            # Get feedlot_code for this feedlot
+            feedlot = db.feedlots.find_one({'_id': feedlot_id_obj})
+            feedlot_code = feedlot.get('feedlot_code') if feedlot else None
 
-            # Count office livestock
-            total_office_cattle = 0
-            for batch in office_batches:
-                batch_id = batch.get('_id')
-                if isinstance(batch_id, int):
-                    livestock = office_adapter.get_office_livestock_by_batch(batch_id)
-                    total_office_cattle += len(livestock)
+            # Office synced statistics filtered by feedlot_code
+            office_adapter = get_office_adapter(db)
+            office_batches = []
+            office_cattle = []
+
+            if feedlot_code:
+                office_batches = office_adapter.get_office_batches_by_feedlot_code(feedlot_code)
+                office_cattle = office_adapter.get_office_livestock_by_feedlot_code(feedlot_code)
+
+            total_office_batches = len(office_batches)
+            total_office_cattle = len(office_cattle)
 
             # Get cattle in each pen (native only)
             pipeline = [

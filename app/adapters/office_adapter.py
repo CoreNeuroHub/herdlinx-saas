@@ -209,6 +209,44 @@ class OfficeAdapter:
             log.error(f"Error getting all office batches: {e}")
             return []
 
+    def get_office_batches_by_feedlot_code(self, feedlot_code: str) -> List[Dict[str, Any]]:
+        """
+        Get batches from office data filtered by feedlot_code
+
+        Args:
+            feedlot_code: Feedlot code to filter by (e.g., "ULETH_LRS")
+
+        Returns:
+            List of transformed batch dicts
+        """
+        try:
+            collection = self.db[self.mapping.OFFICE_BATCHES]
+            office_records = list(collection.find({'feedlot_code': feedlot_code}))
+
+            return [self._transform_batch(record) for record in office_records]
+        except Exception as e:
+            log.error(f"Error getting office batches for feedlot {feedlot_code}: {e}")
+            return []
+
+    def get_office_livestock_by_feedlot_code(self, feedlot_code: str) -> List[Dict[str, Any]]:
+        """
+        Get all livestock from office data filtered by feedlot_code
+
+        Args:
+            feedlot_code: Feedlot code to filter by (e.g., "ULETH_LRS")
+
+        Returns:
+            List of transformed livestock dicts
+        """
+        try:
+            collection = self.db[self.mapping.OFFICE_LIVESTOCK]
+            office_records = list(collection.find({'feedlot_code': feedlot_code}))
+
+            return [self._transform_livestock(record) for record in office_records]
+        except Exception as e:
+            log.error(f"Error getting office livestock for feedlot {feedlot_code}: {e}")
+            return []
+
     def get_office_events_for_livestock(self, livestock_id: int) -> List[Dict[str, Any]]:
         """
         Get all events for a livestock from audit trail
@@ -318,15 +356,14 @@ class OfficeAdapter:
         if 'feedlot_id' not in transformed:
             transformed['feedlot_id'] = None
 
-        # Ensure batch_number exists (mapped from batch_name)
-        if 'batch_number' not in transformed and 'batch_name' in transformed:
+        # Use first_event_id as batch_number (shows barn event that created the batch)
+        if 'first_event_id' in office_record and office_record['first_event_id']:
+            transformed['batch_number'] = office_record['first_event_id'].upper()
+        elif 'batch_number' not in transformed and 'batch_name' in transformed:
             transformed['batch_number'] = transformed['batch_name']
         elif 'batch_number' not in transformed:
-            # Generate from first_event_id if available
-            if 'first_event_id' in office_record:
-                transformed['batch_number'] = office_record['first_event_id']
-            else:
-                transformed['batch_number'] = 'BATCH_' + str(office_record.get('id', ''))
+            # Fallback to batch ID
+            transformed['batch_number'] = 'BATCH_' + str(office_record.get('id', ''))
 
         # Add updated_at if not present
         if 'updated_at' not in transformed:

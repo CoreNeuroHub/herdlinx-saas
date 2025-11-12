@@ -61,9 +61,15 @@ class Batch:
             # Get native SAAS batches
             native_batches = list(db.batches.find({'feedlot_id': feedlot_oid}))
 
-            # Get office synced batches (all of them if feedlot_id not set)
-            office_adapter = get_office_adapter(db)
-            office_batches = office_adapter.get_office_batches_all()
+            # Get feedlot_code for this feedlot
+            feedlot = db.feedlots.find_one({'_id': feedlot_oid})
+            feedlot_code = feedlot.get('feedlot_code') if feedlot else None
+
+            # Get office synced batches filtered by feedlot_code
+            office_batches = []
+            if feedlot_code:
+                office_adapter = get_office_adapter(db)
+                office_batches = office_adapter.get_office_batches_by_feedlot_code(feedlot_code)
 
             # Combine, preferring native batches if duplicate
             all_batches = native_batches.copy()
