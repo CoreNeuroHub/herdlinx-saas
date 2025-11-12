@@ -148,6 +148,77 @@
         </div>
     </div>
 
+    <!-- Additional Widgets Row -->
+    <div id="widgets-container-3" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
+        <!-- Date and Time Widget -->
+        <div id="widget-datetime" data-widget-id="datetime" data-testid="widget-datetime" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Date & Time</p>
+                </div>
+                <div class="bg-teal bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div id="datetime-content">
+                <p id="widget-date" class="text-lg font-semibold text-gray-800 mb-2"></p>
+                <p id="widget-time" class="text-2xl font-bold text-teal"></p>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Weather Widget -->
+        <div id="widget-weather" data-widget-id="weather" data-testid="widget-weather" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Weather</p>
+                    <p id="weather-location" class="text-xs text-gray-500">Loading...</p>
+                </div>
+                <div class="bg-gold bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div id="weather-content">
+                <div class="flex items-center space-x-4">
+                    <div id="weather-icon" class="flex items-center justify-center w-16 h-16">
+                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p id="weather-temp" class="text-3xl font-bold text-gray-800">--</p>
+                        <p id="weather-desc" class="text-sm text-gray-600">Loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+
+        <!-- Alberta Cattle Price Widget -->
+        <div id="widget-cattle-price" data-widget-id="cattle-price" data-testid="widget-cattle-price" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Alberta Cattle Price</p>
+                    <p class="text-xs text-gray-500">Live Weight</p>
+                </div>
+                <div class="bg-navy bg-opacity-10 rounded-full p-3">
+                    <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div id="cattle-price-content">
+                <p id="cattle-price-value" class="text-3xl font-bold text-gray-800 mb-2">--</p>
+                <p id="cattle-price-date" class="text-sm text-gray-600">Loading...</p>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+        </div>
+    </div>
+
     <!-- Recent Feedlots Section -->
     {% if dashboard_stats.recent_feedlots %}
     <div class="bg-white rounded-lg shadow-md p-6">
@@ -215,6 +286,18 @@
                 <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
                     <input type="checkbox" id="widget-check-quick-actions" data-widget-id="quick-actions" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
                     <span class="text-sm font-medium text-gray-700">Quick Actions</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-datetime" data-widget-id="datetime" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Date & Time</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-weather" data-widget-id="weather" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Weather</span>
+                </label>
+                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                    <input type="checkbox" id="widget-check-cattle-price" data-widget-id="cattle-price" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Alberta Cattle Price</span>
                 </label>
             </div>
             
@@ -685,7 +768,7 @@
         
         // Load current visibility state
         const visibility = dashboardPreferences.widget_visibility || {};
-        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions'];
+        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions', 'datetime', 'weather', 'cattle-price'];
         allWidgets.forEach(widgetId => {
             const checkbox = document.getElementById(`widget-check-${widgetId}`);
             if (checkbox) {
@@ -793,7 +876,7 @@
         }
         
         // Reset visibility: all widgets visible
-        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions'];
+        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions', 'datetime', 'weather', 'cattle-price'];
         const visibility = {};
         allWidgets.forEach(widgetId => {
             visibility[widgetId] = true;
@@ -837,6 +920,7 @@
     function restoreDefaultWidgetOrder() {
         const container1 = document.getElementById('widgets-container');
         const container2 = document.getElementById('widgets-container-2');
+        const container3 = document.getElementById('widgets-container-3');
         
         // Default order for container 1: feedlots, pens, cattle, batches
         const container1Order = ['feedlots', 'pens', 'cattle', 'batches'];
@@ -855,6 +939,15 @@
                 container2.appendChild(widget);
             }
         });
+        
+        // Default order for container 3: datetime, weather, cattle-price
+        const container3Order = ['datetime', 'weather', 'cattle-price'];
+        container3Order.forEach(widgetId => {
+            const widget = document.getElementById(`widget-${widgetId}`);
+            if (widget && container3) {
+                container3.appendChild(widget);
+            }
+        });
     }
     
     // Load preferences on page load
@@ -870,7 +963,8 @@
         if (dashboardPreferences.widget_order && dashboardPreferences.widget_order.length > 0) {
             const container1 = document.getElementById('widgets-container');
             const container2 = document.getElementById('widgets-container-2');
-            const allContainers = [container1, container2].filter(c => c);
+            const container3 = document.getElementById('widgets-container-3');
+            const allContainers = [container1, container2, container3].filter(c => c);
             
             dashboardPreferences.widget_order.forEach(widgetId => {
                 const widget = document.getElementById(`widget-${widgetId}`);
@@ -908,7 +1002,8 @@
         const widgets = document.querySelectorAll('.widget-item');
         const containers = [
             document.getElementById('widgets-container'),
-            document.getElementById('widgets-container-2')
+            document.getElementById('widgets-container-2'),
+            document.getElementById('widgets-container-3')
         ].filter(c => c);
         
         widgets.forEach(widget => {
@@ -1027,6 +1122,197 @@
                 }
             }
         });
+        
+        // Initialize widget functionality
+        initializeWidgets();
     });
+    
+    // Date and Time Widget
+    function updateDateTimeWidget() {
+        const dateElement = document.getElementById('widget-date');
+        const timeElement = document.getElementById('widget-time');
+        
+        if (dateElement && timeElement) {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
+            
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+            timeElement.textContent = now.toLocaleTimeString('en-US', timeOptions);
+        }
+    }
+    
+    // Weather Widget
+    async function fetchWeather() {
+        const locationElement = document.getElementById('weather-location');
+        const tempElement = document.getElementById('weather-temp');
+        const descElement = document.getElementById('weather-desc');
+        const iconElement = document.getElementById('weather-icon');
+        
+        if (!locationElement || !tempElement || !descElement || !iconElement) {
+            return;
+        }
+        
+        try {
+            // Try to get location from feedlot if available
+            let location = 'Calgary, AB'; // Default location
+            {% if dashboard_stats.recent_feedlots and dashboard_stats.recent_feedlots|length > 0 %}
+            // Use location from first recent feedlot
+            const feedlotLocation = {{ dashboard_stats.recent_feedlots[0].location|tojson|safe }};
+            if (feedlotLocation) {
+                // Extract city and province if format is "City, Province"
+                const parts = feedlotLocation.split(',').map(s => s.trim());
+                if (parts.length >= 2) {
+                    location = `${parts[0]}, ${parts[parts.length - 1]}`;
+                } else {
+                    location = feedlotLocation;
+                }
+            }
+            {% endif %}
+            
+            // Use OpenWeatherMap API (free tier)
+            // Note: In production, you should use a backend endpoint to hide the API key
+            // For now, using a public API that doesn't require a key
+            const apiKey = ''; // Add your OpenWeatherMap API key here if needed
+            const url = apiKey 
+                ? `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${apiKey}&units=metric`
+                : `https://wttr.in/${encodeURIComponent(location)}?format=j1`;
+            
+            if (apiKey) {
+                // Using OpenWeatherMap
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.cod === 200) {
+                    locationElement.textContent = `${data.name}, ${data.sys.country}`;
+                    tempElement.textContent = `${Math.round(data.main.temp)}°C`;
+                    descElement.textContent = data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1);
+                    
+                    // Weather icon mapping
+                    const iconCode = data.weather[0].icon;
+                    iconElement.innerHTML = getWeatherIcon(iconCode);
+                } else {
+                    throw new Error('Weather data not available');
+                }
+            } else {
+                // Using wttr.in (no API key required)
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.current_condition && data.current_condition[0]) {
+                    const current = data.current_condition[0];
+                    const area = data.nearest_area[0];
+                    locationElement.textContent = `${area.areaName[0].value}, ${area.region[0].value}`;
+                    tempElement.textContent = `${current.temp_C}°C`;
+                    descElement.textContent = current.weatherDesc[0].value;
+                    iconElement.innerHTML = getWeatherIconFromCode(current.weatherCode);
+                } else {
+                    throw new Error('Weather data not available');
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching weather:', error);
+            locationElement.textContent = 'Calgary, AB';
+            tempElement.textContent = '--';
+            descElement.textContent = 'Unable to load weather';
+            iconElement.innerHTML = '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>';
+        }
+    }
+    
+    function getWeatherIcon(iconCode) {
+        // Return SVG icons based on OpenWeatherMap icon codes
+        const iconMap = {
+            '01d': '<svg class="w-12 h-12 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>',
+            '01n': '<svg class="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>',
+            '02d': '<svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '02n': '<svg class="w-12 h-12 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '03d': '<svg class="w-12 h-12 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '03n': '<svg class="w-12 h-12 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '04d': '<svg class="w-12 h-12 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '04n': '<svg class="w-12 h-12 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '09d': '<svg class="w-12 h-12 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '09n': '<svg class="w-12 h-12 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '10d': '<svg class="w-12 h-12 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '10n': '<svg class="w-12 h-12 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '11d': '<svg class="w-12 h-12 text-gray-700" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '11n': '<svg class="w-12 h-12 text-gray-700" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '13d': '<svg class="w-12 h-12 text-blue-200" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '13n': '<svg class="w-12 h-12 text-blue-200" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '50d': '<svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>',
+            '50n': '<svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>'
+        };
+        return iconMap[iconCode] || '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>';
+    }
+    
+    function getWeatherIconFromCode(code) {
+        // wttr.in weather code mapping - return SVG icons
+        if (code >= 113 && code <= 116) return '<svg class="w-12 h-12 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>';
+        if (code >= 119 && code <= 122) return '<svg class="w-12 h-12 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>';
+        if (code >= 143 && code <= 248) return '<svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>';
+        if (code >= 260 && code <= 263) return '<svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>';
+        if (code >= 266 && code <= 299) return '<svg class="w-12 h-12 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>';
+        if (code >= 300 && code <= 329) return '<svg class="w-12 h-12 text-blue-200" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>';
+        if (code >= 350 && code <= 365) return '<svg class="w-12 h-12 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>';
+        if (code >= 371 && code <= 395) return '<svg class="w-12 h-12 text-blue-200" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>';
+        return '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>';
+    }
+    
+    // Alberta Cattle Price Widget
+    async function fetchCattlePrice() {
+        const priceElement = document.getElementById('cattle-price-value');
+        const dateElement = document.getElementById('cattle-price-date');
+        
+        if (!priceElement || !dateElement) {
+            return;
+        }
+        
+        try {
+            // Note: In production, you should fetch real cattle price data from an API
+            // For now, using placeholder data
+            // You can integrate with Alberta Agriculture API or similar service
+            
+            // Placeholder: Simulating price data
+            // In production, replace this with actual API call
+            const mockPrice = 185.50; // CAD per cwt (hundredweight)
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            priceElement.textContent = `$${mockPrice.toFixed(2)}/cwt`;
+            dateElement.textContent = `Updated: ${dateStr}`;
+            
+            // Example of how to fetch from an API (uncomment and configure when API is available):
+            /*
+            const response = await fetch('/api/cattle-price/alberta');
+            const data = await response.json();
+            if (data.success) {
+                priceElement.textContent = `$${data.price.toFixed(2)}/cwt`;
+                dateElement.textContent = `Updated: ${data.date}`;
+            } else {
+                throw new Error('Price data not available');
+            }
+            */
+        } catch (error) {
+            console.error('Error fetching cattle price:', error);
+            priceElement.textContent = '--';
+            dateElement.textContent = 'Unable to load price';
+        }
+    }
+    
+    // Initialize all widgets
+    function initializeWidgets() {
+        // Initialize date/time widget
+        updateDateTimeWidget();
+        setInterval(updateDateTimeWidget, 1000);
+        
+        // Initialize weather widget
+        fetchWeather();
+        // Refresh weather every 30 minutes
+        setInterval(fetchWeather, 30 * 60 * 1000);
+        
+        // Initialize cattle price widget
+        fetchCattlePrice();
+        // Refresh price every hour
+        setInterval(fetchCattlePrice, 60 * 60 * 1000);
+    }
 </script>
 {% endblock %}
