@@ -163,6 +163,36 @@
         </div>
     </nav>
     
+    <!-- Breadcrumbs -->
+    {% if breadcrumbs and breadcrumbs|length > 1 %}
+    <div class="bg-white border-b border-gray-200 shadow-sm" data-testid="breadcrumbs-container">
+        <div class="container mx-auto px-4 py-3">
+            <nav class="flex" aria-label="Breadcrumb" data-testid="breadcrumbs-nav">
+                <ol class="flex items-center space-x-2 overflow-x-auto">
+                    {% for crumb in breadcrumbs %}
+                    <li class="flex items-center">
+                        {% if not loop.first %}
+                        <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        </svg>
+                        {% endif %}
+                        {% if crumb.url and not loop.last %}
+                        <a href="{{ crumb.url }}" data-testid="breadcrumb-link-{{ loop.index }}" class="text-sm font-medium text-teal hover:text-teal hover:opacity-80 transition-colors whitespace-nowrap">
+                            {{ crumb.label }}
+                        </a>
+                        {% else %}
+                        <span data-testid="breadcrumb-current-{{ loop.index }}" class="text-sm font-medium text-gray-500 whitespace-nowrap {% if loop.last %}text-gray-900{% endif %}">
+                            {{ crumb.label }}
+                        </span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ol>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+    
     <script>
         function toggleMenu() {
             const menuPanel = document.getElementById('menu-panel');
