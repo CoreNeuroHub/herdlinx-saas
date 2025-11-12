@@ -52,6 +52,11 @@
     <nav class="bg-navy text-white shadow-lg relative">
         <div class="container mx-auto px-4 py-3">
             <div class="flex items-center justify-between relative">
+                <!-- Date and Time - Left Side -->
+                <div id="datetime-display" data-testid="datetime-display" class="text-white text-sm font-medium hidden sm:block">
+                    <div id="current-date" class="text-xs opacity-75"></div>
+                    <div id="current-time" class="text-base"></div>
+                </div>
                 <!-- Logo and Label - Center -->
                 <div class="absolute left-1/2 transform -translate-x-1/2">
                     <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
@@ -329,6 +334,32 @@
             document.addEventListener('DOMContentLoaded', initProfileDropdown);
         } else {
             initProfileDropdown();
+        }
+        
+        // Date and Time Display
+        function updateDateTime() {
+            const now = new Date();
+            const dateElement = document.getElementById('current-date');
+            const timeElement = document.getElementById('current-time');
+            
+            if (dateElement && timeElement) {
+                // Format date: Day, Month DD, YYYY
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
+                
+                // Format time: HH:MM:SS AM/PM
+                const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+                timeElement.textContent = now.toLocaleTimeString('en-US', timeOptions);
+            }
+        }
+        
+        // Update date and time immediately and then every second
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
+        // Initialize on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateDateTime);
         }
     </script>
 
