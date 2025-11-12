@@ -24,6 +24,7 @@
                     {% block actions_items %}
                     <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="view-feedlot-hub-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" role="menuitem">View Feedlot Hub</a>
                     <button onclick="openWidgetSettingsModal()" data-testid="show-hide-widgets-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Show/Hide Widgets</button>
+                    <button onclick="resetWidgets()" data-testid="reset-widgets-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Reset Widgets</button>
                     {% if user_type in ['super_owner', 'super_admin'] %}
                     <button onclick="openAddFeedlotModal()" data-testid="add-feedlot-action-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Add New Feedlot</button>
                     {% endif %}
@@ -773,6 +774,87 @@
         } catch (error) {
             console.error('Error saving preferences:', error);
         }
+    }
+    
+    // Reset Widgets Function
+    function resetWidgets() {
+        const dropdown = document.getElementById('actions-dropdown-menu');
+        const dropdownBtn = document.getElementById('actions-dropdown-btn');
+        
+        // Close dropdown if open
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+            dropdownBtn.setAttribute('aria-expanded', 'false');
+        }
+        
+        // Show confirmation dialog
+        if (!confirm('Are you sure you want to reset all widgets to their default settings?')) {
+            return;
+        }
+        
+        // Reset visibility: all widgets visible
+        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions'];
+        const visibility = {};
+        allWidgets.forEach(widgetId => {
+            visibility[widgetId] = true;
+            const widget = document.getElementById(`widget-${widgetId}`);
+            if (widget) {
+                widget.style.display = '';
+            }
+        });
+        
+        // Reset order: restore widgets to original containers and order
+        restoreDefaultWidgetOrder();
+        
+        // Reset sizes: remove all custom width/height styles
+        allWidgets.forEach(widgetId => {
+            const widget = document.getElementById(`widget-${widgetId}`);
+            if (widget) {
+                widget.style.width = '';
+                widget.style.height = '';
+            }
+        });
+        
+        // Save default preferences
+        const defaultPreferences = {
+            widget_visibility: visibility,
+            widget_order: getWidgetOrder(),
+            widget_sizes: {}
+        };
+        
+        saveDashboardPreferences(defaultPreferences);
+        
+        // Show success toast
+        showToast('Widgets reset to default settings', 'success');
+        
+        // Reload page after a short delay to ensure preferences are saved
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    }
+    
+    // Helper function to restore default widget order
+    function restoreDefaultWidgetOrder() {
+        const container1 = document.getElementById('widgets-container');
+        const container2 = document.getElementById('widgets-container-2');
+        
+        // Default order for container 1: feedlots, pens, cattle, batches
+        const container1Order = ['feedlots', 'pens', 'cattle', 'batches'];
+        container1Order.forEach(widgetId => {
+            const widget = document.getElementById(`widget-${widgetId}`);
+            if (widget && container1) {
+                container1.appendChild(widget);
+            }
+        });
+        
+        // Default order for container 2: users, quick-actions
+        const container2Order = ['users', 'quick-actions'];
+        container2Order.forEach(widgetId => {
+            const widget = document.getElementById(`widget-${widgetId}`);
+            if (widget && container2) {
+                container2.appendChild(widget);
+            }
+        });
     }
     
     // Load preferences on page load
