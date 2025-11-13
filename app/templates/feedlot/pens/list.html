@@ -143,7 +143,7 @@ if (document.readyState === 'loading') {
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="pens-list-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Actions</h3>
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
         <div class="space-y-1">
             {% block actions_items %}
             <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" data-testid="create-pen-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Create Pen</a>

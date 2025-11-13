@@ -186,13 +186,13 @@
 
   <ui_components>
     <actions_sidebar>
-      The "Actions" sidebar must always follow this exact pattern:
+      The "Management" sidebar must always follow this exact pattern:
       - Layout: Use a flex container with "flex flex-col md:flex-row gap-6" wrapping both main content and sidebar
       - Main content: Place in a div with class "flex-1" (comes first in the flex container)
       - Sidebar container: Use block "actions_sidebar" with ID "actions-sidebar" and data-testid="{page}-actions-sidebar"
       - Sidebar styling: "bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0"
       - Sidebar CSS: Includes "align-self: flex-start" to prevent stretching to match content height (defined in base.html)
-      - Sidebar header: "Actions" heading with class "text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider"
+      - Sidebar header: "Management" heading with class "text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider"
       - Action items container: div with class "space-y-1" containing all action items
       - Action items: Each link/button should have classes "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded"
       - Action items for buttons: Add "w-full text-left cursor-pointer" classes
