@@ -3,46 +3,21 @@
 {% block title %}Cattle {{ cattle.cattle_id }} - {{ feedlot.name }}{% endblock %}
 
 {% block content %}
+<div class="flex flex-col md:flex-row gap-6">
+    <div class="flex-1">
 <!-- Hero Section -->
 <div class="relative rounded-2xl p-8 mb-8 text-white overflow-hidden" style="background: linear-gradient(to right, #0A2540, #2D8B8B);">
     <div class="absolute inset-0 bg-black opacity-10"></div>
     <div class="relative z-10">
-        <div class="flex items-center justify-between">
-            <div>
-                <div class="flex items-center space-x-3 mb-3">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 2L3 7v11h14V7l-7-5zM8 15v-3h4v3H8z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-4xl font-bold mb-1 text-white">Cattle {{ cattle.cattle_id }}</h1>
-                        <p class="text-white text-opacity-80 text-lg">{{ feedlot.name }}</p>
-                    </div>
-                </div>
+        <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2L3 7v11h14V7l-7-5zM8 15v-3h4v3H8z"/>
+                </svg>
             </div>
-            <div class="flex space-x-3">
-                <a href="{{ url_for('feedlot.add_weight_record', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" 
-                   class="bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    <span>Add Weight</span>
-                </a>
-                <a href="{{ url_for('feedlot.move_cattle', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" 
-                   class="bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                    </svg>
-                    <span>Move Pen</span>
-                </a>
-                <a href="{{ url_for('feedlot.update_tags', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" 
-                   class="bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                    </svg>
-                    <span>Update Tags</span>
-                </a>
+            <div>
+                <h1 class="text-4xl font-bold mb-1 text-white">Cattle {{ cattle.cattle_id }}</h1>
+                <p class="text-white text-opacity-80 text-lg">{{ feedlot.name }}</p>
             </div>
         </div>
     </div>
@@ -354,6 +329,20 @@
         </div>
     </div>
     {% endif %}
+</div>
+    </div>
+    {% block actions_sidebar %}
+    <div id="actions-sidebar" data-testid="cattle-view-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
+        <div class="space-y-1">
+            {% block actions_items %}
+            <a href="{{ url_for('feedlot.add_weight_record', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="add-weight-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Add Weight</a>
+            <a href="{{ url_for('feedlot.move_cattle', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="move-pen-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Move Pen</a>
+            <a href="{{ url_for('feedlot.update_tags', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="update-tags-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Update Tags</a>
+            {% endblock %}
+        </div>
+    </div>
+    {% endblock %}
 </div>
 {% endblock %}
 
