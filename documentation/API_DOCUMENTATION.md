@@ -184,7 +184,54 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 2. Sync Livestock (Current State)
+### 2. Sync Pens
+
+**Endpoint**: `POST /api/v1/feedlot/pens`
+
+**Description**: Syncs pen data from the office app to the SaaS system. Pens are physical locations where cattle are housed.
+
+**Request Body**:
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "pen_number": "PEN01",
+      "description": "North Section - Pen 1",
+      "capacity": 100
+    }
+  ]
+}
+```
+
+**Field Mapping**:
+- `pen_number` or `pen` → `pen_number` (required)
+- `description` or `pen_location` → `description`
+- `capacity` → `capacity` (defaults to 100 if not provided or invalid)
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Processed 1 pen records",
+  "records_processed": 1,
+  "records_created": 1,
+  "records_updated": 0,
+  "records_skipped": 0,
+  "errors": []
+}
+```
+
+**Notes**:
+- Pens are matched by `pen_number` within the same feedlot
+- If a pen with the same number exists, it will be updated
+- `capacity` defaults to 100 if not provided, invalid, or less than or equal to 0
+- Both `pen_number` and `pen` fields are accepted for the pen identifier
+- Both `description` and `pen_location` fields are accepted for the pen description
+
+---
+
+### 3. Sync Livestock (Current State)
 
 **Endpoint**: `POST /api/v1/feedlot/livestock`
 
@@ -234,7 +281,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 3. Sync Induction Events
+### 4. Sync Induction Events
 
 **Endpoint**: `POST /api/v1/feedlot/induction-events`
 
@@ -285,7 +332,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 4. Sync Pairing Events
+### 5. Sync Pairing Events
 
 **Endpoint**: `POST /api/v1/feedlot/pairing-events`
 
@@ -334,7 +381,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 5. Sync Check-in Events
+### 6. Sync Check-in Events
 
 **Endpoint**: `POST /api/v1/feedlot/checkin-events`
 
@@ -382,7 +429,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 6. Sync Repair Events
+### 7. Sync Repair Events
 
 **Endpoint**: `POST /api/v1/feedlot/repair-events`
 
@@ -511,16 +558,18 @@ Individual record errors are included in the `errors` array:
 
 ### Recommended Sync Order
 
-1. **Batches**: Sync batches first to establish batch references
-2. **Induction Events**: Create cattle records when animals are inducted
-3. **Pairing Events**: Pair tags and set initial weights
-4. **Livestock**: Update current state (optional, for reconciliation)
-5. **Check-in Events**: Add weight measurements over time
-6. **Repair Events**: Handle tag replacements as needed
+1. **Pens**: Sync pens first to establish pen infrastructure (optional, pens can also be created automatically via batch sync)
+2. **Batches**: Sync batches to establish batch references
+3. **Induction Events**: Create cattle records when animals are inducted
+4. **Pairing Events**: Pair tags and set initial weights
+5. **Livestock**: Update current state (optional, for reconciliation)
+6. **Check-in Events**: Add weight measurements over time
+7. **Repair Events**: Handle tag replacements as needed
 
 ### Idempotency
 
 All endpoints are designed to be idempotent:
+- **Pens**: Matched by pen_number, updates existing if found
 - **Batches**: Matched by name, updates existing if found
 - **Induction Events**: Checks if cattle exists before creating
 - **Pairing/Repair Events**: Updates existing cattle records
@@ -650,6 +699,7 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 ## Changelog
 
 ### Version 1.1 (Current)
+- Added pens sync endpoint (`POST /api/v1/feedlot/pens`)
 - Added web UI for API key management (Settings → API Keys)
 - Enhanced API key management with visual interface
 - Added key status tracking (Active/Inactive)
@@ -657,7 +707,7 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 - Improved key generation workflow with one-time display
 
 ### Version 1.0 (Initial Release)
-- All 6 sync endpoints implemented
+- All 6 sync endpoints implemented (batches, livestock, induction-events, pairing-events, checkin-events, repair-events)
 - API key authentication
 - Bulk operation support
 - Comprehensive error handling

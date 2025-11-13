@@ -56,4 +56,14 @@ class Pen:
         
         current_count = Pen.get_current_cattle_count(pen_id)
         return (current_count + additional_cattle) <= pen['capacity']
+    
+    @staticmethod
+    def find_by_pen_number(feedlot_id, pen_number):
+        """Find pen by pen_number within a feedlot"""
+        if not pen_number:
+            return None
+        return db.pens.find_one({
+            'feedlot_id': ObjectId(feedlot_id),
+            'pen_number': pen_number.strip()
+        })
 
