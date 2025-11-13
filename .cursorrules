@@ -140,6 +140,20 @@
       - Add comments for complex logic
       - Modular and reusable components
     </code_quality>
+    <testing_attributes>
+      All HTML templates must include data-testid attributes on interactive elements for automated testing:
+      - Use kebab-case naming convention (e.g., "create-pen-button", "feedlot-name-input")
+      - Include context in names to make them unique and descriptive (e.g., "api-key-generate-button" not just "generate-button")
+      - Add data-testid to all buttons, forms, input fields, select dropdowns, links, modals, table rows, and dropdown menus
+      - Use descriptive names that indicate the element's purpose and context (e.g., "edit-feedlot-form", "cancel-create-pen-button")
+      - For dynamic content (like table rows), include identifiers in the testid (e.g., "feedlot-user-row-{{ user._id }}")
+      - Modal elements should have testids for the modal container, close buttons, form inputs, and action buttons
+      - Dropdown menus should have testids for the dropdown button, menu container, and individual menu items
+      - Forms should have a testid on the form element itself, plus all inputs, selects, textareas, and submit/cancel buttons
+      - Search inputs should use testids like "search-{entity}-input" (e.g., "search-feedlots-input", "search-cattle-input")
+      - Action items in sidebars should use testids like "{action}-{entity}-action" (e.g., "create-pen-action", "edit-feedlot-action")
+      - Widgets and sections should have testids for easy identification (e.g., "widget-feedlots", "widget-pens")
+    </testing_attributes>
   </technical_guidelines>
 
   <development_priorities>
@@ -167,20 +181,28 @@
     - Ensure responsive design patterns are applied
     - Include proper error handling and user feedback
     - Write self-documenting code with clear variable and function names
+    - ALWAYS add data-testid attributes to all interactive HTML elements (buttons, forms, inputs, links, modals, dropdowns, tables) following the testing_attributes guidelines
   </coding_instructions>
 
   <ui_components>
-    <actions_button>
-      The "Actions" dropdown button must always follow this exact pattern:
-      - Button styling: "inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal transition duration-200"
-      - Button ID: "actions-dropdown-btn" with type="button" and aria-expanded="false" aria-haspopup="true"
-      - Icon: SVG chevron with class "-mr-1 ml-2 h-5 w-5" using the path: "M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-      - Dropdown container: "relative inline-block text-left"
-      - Dropdown menu ID: "actions-dropdown-menu" with classes: "hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" and role="menu"
-      - Menu items: Inside a div with class "py-1" role="none", each item should have: "block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem"
-      - JavaScript: Use toggleActionsDropdown() function that manages both classList and style.display properties
-      - Always include proper event handling with preventDefault and stopPropagation
-    </actions_button>
+    <actions_sidebar>
+      The "Management" sidebar must always follow this exact pattern:
+      - Layout: Use a flex container with "flex flex-col md:flex-row gap-6" wrapping both main content and sidebar
+      - Main content: Place in a div with class "flex-1" (comes first in the flex container)
+      - Sidebar container: Use block "actions_sidebar" with ID "actions-sidebar" and data-testid="{page}-actions-sidebar"
+      - Sidebar styling: "bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0"
+      - Sidebar CSS: Includes "align-self: flex-start" to prevent stretching to match content height (defined in base.html)
+      - Sidebar header: "Management" heading with class "text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider"
+      - Action items container: div with class "space-y-1" containing all action items
+      - Action items: Each link/button should have classes "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded"
+      - Action items for buttons: Add "w-full text-left cursor-pointer" classes
+      - Action items for links: Standard anchor tags with the same styling classes
+      - Responsive: On mobile (max-width: 768px), sidebar stacks above content and uses full width
+      - Position: Sidebar appears on the RIGHT side of the page (after main content in flex order)
+      - Height: Sidebar only takes up height needed for its content (does not stretch to match main content)
+      - No JavaScript required: Sidebar is always visible, no dropdown functionality needed
+      - Test IDs: Use pattern "{action}-{entity}-action" for action items (e.g., "create-pen-action", "edit-feedlot-action")
+    </actions_sidebar>
   </ui_components>
 </cursor_rule>
 

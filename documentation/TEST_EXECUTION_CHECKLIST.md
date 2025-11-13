@@ -68,6 +68,7 @@ Quick reference checklist for executing test cases. Use this alongside the detai
 ### Access Control
 - [ ] TC-SO-032: Access Any Feedlot
 - [ ] TC-SO-033: Access Feedlot Routes
+- [ ] TC-SO-035: Access Settings Page
 
 ### Logout
 - [ ] TC-SO-034: Logout
@@ -111,6 +112,10 @@ Quick reference checklist for executing test cases. Use this alongside the detai
 ### Profile Management
 - [ ] TC-BO-021: Update Own Profile
 - [ ] TC-BO-022: Change Own Password
+- [ ] TC-BO-024: Upload Profile Picture
+
+### Manifest Export
+- [ ] TC-BO-025: Access Manifest Export
 
 ### Dashboard Customization
 - [ ] TC-BO-023: Customize Dashboard
@@ -157,10 +162,21 @@ Quick reference checklist for executing test cases. Use this alongside the detai
 - [ ] TC-U-029: View Own Profile
 - [ ] TC-U-030: Update Own Profile
 - [ ] TC-U-031: Change Own Password
+- [ ] TC-U-035: Upload Profile Picture
+- [ ] TC-U-036: Upload Invalid Profile Picture
 
 ### Feedlot Management Restrictions
 - [ ] TC-U-032: Cannot View Feedlot Hub
 - [ ] TC-U-033: Cannot Edit Feedlot
+
+### Manifest Export
+- [ ] TC-U-037: Access Manifest Export Page
+- [ ] TC-U-038: Export Manifest Using Template
+- [ ] TC-U-039: Export Manifest with Manual Entry
+- [ ] TC-U-040: View Manifest Templates
+- [ ] TC-U-041: Create Manifest Template
+- [ ] TC-U-042: Edit Manifest Template
+- [ ] TC-U-043: Delete Manifest Template
 
 ### Logout
 - [ ] TC-U-034: Logout
@@ -187,40 +203,51 @@ Quick reference checklist for executing test cases. Use this alongside the detai
 - [ ] TC-X-009: Responsive Design
 - [ ] TC-X-010: Navigation Consistency
 
+### API Endpoints
+- [ ] TC-X-011: API Key Authentication
+- [ ] TC-X-012: Sync Batches API Endpoint
+- [ ] TC-X-013: Sync Livestock API Endpoint
+- [ ] TC-X-014: Sync Induction Events API Endpoint
+- [ ] TC-X-015: Sync Pairing Events API Endpoint
+- [ ] TC-X-016: Sync Checkin Events API Endpoint
+- [ ] TC-X-017: Sync Repair Events API Endpoint
+- [ ] TC-X-018: API Feedlot Code Validation
+- [ ] TC-X-019: API Error Handling
+
 ---
 
 ## Test Results Summary
 
 ### Super Owner/Admin
-- Total Test Cases: 34
+- Total Test Cases: 35
 - Passed: ___
 - Failed: ___
 - Blocked: ___
 - Pass Rate: ___%
 
 ### Business Owner/Admin
-- Total Test Cases: 23
+- Total Test Cases: 25
 - Passed: ___
 - Failed: ___
 - Blocked: ___
 - Pass Rate: ___%
 
 ### User
-- Total Test Cases: 34
+- Total Test Cases: 43
 - Passed: ___
 - Failed: ___
 - Blocked: ___
 - Pass Rate: ___%
 
 ### Cross-User Type
-- Total Test Cases: 10
+- Total Test Cases: 19
 - Passed: ___
 - Failed: ___
 - Blocked: ___
 - Pass Rate: ___%
 
 ### Overall
-- Total Test Cases: 101
+- Total Test Cases: 122
 - Passed: ___
 - Failed: ___
 - Blocked: ___

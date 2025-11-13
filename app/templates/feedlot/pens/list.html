@@ -3,31 +3,12 @@
 {% block title %}Pens - {{ feedlot.name }}{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-    <div class="flex items-start justify-between mb-4">
-        <div>
+<div class="flex flex-col md:flex-row gap-6 mb-6">
+    <div class="flex-1">
+        <div class="mb-4">
             <h1 class="text-3xl font-bold text-gray-800 mb-2">Pens</h1>
             <p class="text-gray-600">{{ feedlot.name }}</p>
         </div>
-        {% block actions_dropdown %}
-        <div class="relative inline-block text-left">
-            <button id="actions-dropdown-btn" type="button" data-testid="pens-list-actions-dropdown-button" class="inline-flex items-center justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal transition duration-200" aria-expanded="false" aria-haspopup="true">
-                <span>Actions</span>
-                <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-            </button>
-            <div id="actions-dropdown-menu" data-testid="pens-list-actions-dropdown-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" role="menu" aria-orientation="vertical" aria-labelledby="actions-dropdown-btn">
-                <div class="py-1" role="none">
-                    {% block actions_items %}
-                    <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" data-testid="create-pen-action" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Create Pen</a>
-                    <a href="{{ url_for('feedlot.map_pens', feedlot_id=feedlot._id) }}" data-testid="map-pens-action" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors" role="menuitem">Map Pens</a>
-                    {% endblock %}
-                </div>
-            </div>
-        </div>
-        {% endblock %}
-    </div>
 
 {% if pen_map %}
 <!-- Display Pen Map -->
@@ -159,5 +140,18 @@ if (document.readyState === 'loading') {
 }
 </script>
 {% endif %}
+    </div>
+    {% block actions_sidebar %}
+    <div id="actions-sidebar" data-testid="pens-list-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
+        <div class="space-y-1">
+            {% block actions_items %}
+            <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" data-testid="create-pen-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Create Pen</a>
+            <a href="{{ url_for('feedlot.map_pens', feedlot_id=feedlot._id) }}" data-testid="map-pens-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Map Pens</a>
+            {% endblock %}
+        </div>
+    </div>
+    {% endblock %}
+</div>
 {% endblock %}
 

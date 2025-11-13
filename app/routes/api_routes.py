@@ -5,6 +5,7 @@ from app.models.api_key import APIKey
 from app.models.feedlot import Feedlot
 from app.models.batch import Batch
 from app.models.cattle import Cattle
+from app.models.pen import Pen
 from app.routes.auth_routes import login_required, admin_access_required
 from app import db
 from bson import ObjectId
@@ -123,6 +124,31 @@ def sync_batches():
                 funder = batch_item.get('funder', '') or ''
                 notes = batch_item.get('notes', '') or ''
                 
+                # Handle pen creation/update from batch data
+                pen_number = (batch_item.get('pen') or '').strip()
+                pen_location = (batch_item.get('pen_location') or '').strip()
+                
+                pen_id = None
+                if pen_number:
+                    # Find or create pen
+                    existing_pens = Pen.find_by_feedlot(feedlot_id)
+                    existing_pen = None
+                    for p in existing_pens:
+                        if p.get('pen_number', '').strip() == pen_number:
+                            existing_pen = p
+                            break
+                    
+                    if existing_pen:
+                        # Update pen description if pen_location is provided
+                        if pen_location:
+                            Pen.update_pen(str(existing_pen['_id']), {'description': pen_location})
+                        pen_id = str(existing_pen['_id'])
+                    else:
+                        # Create new pen with default capacity (can be updated later via UI)
+                        # Use pen_location as description if provided
+                        pen_description = pen_location if pen_location else f'Pen {pen_number}'
+                        pen_id = Pen.create_pen(feedlot_id, pen_number, capacity=100, description=pen_description)
+                
                 if existing_batch:
                     # Update existing batch
                     update_data = {
@@ -131,11 +157,17 @@ def sync_batches():
                         'funder': funder,
                         'notes': notes
                     }
+                    # Add pen_id if pen was found/created
+                    if pen_id:
+                        update_data['pen_id'] = ObjectId(pen_id)
                     Batch.update_batch(str(existing_batch['_id']), update_data)
                     records_updated += 1
                 else:
                     # Create new batch
-                    Batch.create_batch(feedlot_id, batch_number, induction_date, funder, notes)
+                    batch_id = Batch.create_batch(feedlot_id, batch_number, induction_date, funder, notes)
+                    # Update batch with pen_id if pen was found/created
+                    if pen_id:
+                        Batch.update_batch(batch_id, {'pen_id': ObjectId(pen_id)})
                     records_created += 1
                     
             except Exception as e:
@@ -219,8 +251,7 @@ def sync_livestock():
                 existing_cattle = None
                 
                 # First, try to find by office_livestock_id stored in cattle_id
-                # We'll use a pattern like "OFFICE_{id}" to store office livestock ID
-                office_id_str = f"OFFICE_{office_livestock_id}"
+                office_id_str = str(office_livestock_id)
                 all_cattle = Cattle.find_by_feedlot(feedlot_id)
                 for cattle in all_cattle:
                     if cattle.get('cattle_id') == office_id_str:
@@ -350,12 +381,20 @@ def sync_induction_events():
                 
                 saas_batch_id = str(saas_batch['_id'])
                 
+                # Get pen_id from batch if available
+                batch_pen_id = saas_batch.get('pen_id')
+                # Convert to string (works for both ObjectId and string) or keep None
+                pen_id_for_cattle = str(batch_pen_id) if batch_pen_id else None
+                
                 # Check if cattle already exists
-                office_id_str = f"OFFICE_{livestock_id}"
+                office_id_str = str(livestock_id)
                 existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
                 
                 if existing_cattle:
                     # Update existing cattle (induction already happened)
+                    # If batch has a pen and cattle doesn't, assign it
+                    if pen_id_for_cattle and not existing_cattle.get('pen_id'):
+                        Cattle.update_cattle(str(existing_cattle['_id']), {'pen_id': ObjectId(pen_id_for_cattle)})
                     records_updated += 1
                 else:
                     # Create new cattle record
@@ -388,7 +427,7 @@ def sync_induction_events():
                         health_status=health_status,
                         lf_tag=None,
                         uhf_tag=None,
-                        pen_id=None,
+                        pen_id=pen_id_for_cattle,
                         notes=f'Imported from office app, livestock_id: {livestock_id}'
                     )
                     
@@ -472,7 +511,7 @@ def sync_pairing_events():
                     continue
                 
                 # Find cattle by office livestock_id
-                office_id_str = f"OFFICE_{livestock_id}"
+                office_id_str = str(livestock_id)
                 existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
                 
                 if not existing_cattle:
@@ -586,7 +625,7 @@ def sync_checkin_events():
                     continue
                 
                 # Find cattle by office livestock_id
-                office_id_str = f"OFFICE_{livestock_id}"
+                office_id_str = str(livestock_id)
                 existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
                 
                 if not existing_cattle:
@@ -666,11 +705,11 @@ def sync_repair_events():
                 records_processed += 1
                 
                 livestock_id = event_item.get('livestock_id')
-                old_lf_id = event_item.get('old_lf_id', '').strip() or None
-                new_lf_id = event_item.get('new_lf_id', '').strip() or None
-                old_epc = event_item.get('old_epc', '').strip() or None
-                new_epc = event_item.get('new_epc', '').strip() or None
-                reason = event_item.get('reason', '').strip() or ''
+                old_lf_id = (event_item.get('old_lf_id') or '').strip() or None
+                new_lf_id = (event_item.get('new_lf_id') or '').strip() or None
+                old_epc = (event_item.get('old_epc') or '').strip() or None
+                new_epc = (event_item.get('new_epc') or '').strip() or None
+                reason = (event_item.get('reason') or '').strip() or ''
                 
                 if not livestock_id:
                     errors.append(f'Record {records_processed}: livestock_id is required')
@@ -684,7 +723,7 @@ def sync_repair_events():
                     continue
                 
                 # Find cattle by office livestock_id
-                office_id_str = f"OFFICE_{livestock_id}"
+                office_id_str = str(livestock_id)
                 existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
                 
                 if not existing_cattle:

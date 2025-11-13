@@ -163,6 +163,17 @@ All endpoints return JSON responses with the following structure:
 - `funder` → `source`
 - `notes` → `notes`
 - `created_at` → `induction_date`
+- `pen` → Creates/updates pen with `pen_number` (optional)
+- `pen_location` → Pen `description` (optional)
+
+**Pen Mapping**:
+When `pen` is provided in the batch data:
+- If a pen with the same `pen_number` exists for the feedlot, it will be updated (description updated if `pen_location` is provided)
+- If no pen exists, a new pen will be created with:
+  - `pen_number`: Value from `pen` field
+  - `description`: Value from `pen_location` field (or default "Pen {pen_number}" if not provided)
+  - `capacity`: Default capacity of 100 (can be updated later via web UI)
+- The batch will be linked to the pen via `pen_id`
 
 **Response**:
 ```json
@@ -181,6 +192,9 @@ All endpoints return JSON responses with the following structure:
 - Batches are matched by name within the same feedlot
 - If a batch with the same name exists, it will be updated
 - `created_at` is parsed as ISO format or `YYYY-MM-DD` format
+- Pens are automatically created or updated when `pen` field is provided in batch data
+- If `pen` is provided, the batch will be linked to the pen (created if it doesn't exist)
+- Pen capacity defaults to 100 and can be updated later via the web UI
 
 ---
 
@@ -209,7 +223,7 @@ All endpoints return JSON responses with the following structure:
 ```
 
 **Field Mapping**:
-- `id` → Used to find existing cattle (stored as `OFFICE_{id}` in `cattle_id`)
+- `id` → Used to find existing cattle (stored as `cattle_id`)
 - `current_lf_id` → `lf_tag`
 - `current_epc` → `uhf_tag`
 
@@ -257,7 +271,7 @@ All endpoints return JSON responses with the following structure:
 ```
 
 **Field Mapping**:
-- `livestock_id` → Used to create cattle record (stored as `OFFICE_{livestock_id}` in `cattle_id`)
+- `livestock_id` → Used to create cattle record (stored as `cattle_id`)
 - `batch_name` → Used to find SaaS batch (required for mapping)
 - `timestamp` → `induction_date`
 
@@ -280,6 +294,9 @@ All endpoints return JSON responses with the following structure:
   - `sex`: "Unknown"
   - `weight`: 0.0
   - `health_status`: "Healthy"
+- **Pen Assignment**: Cattle are automatically assigned to the pen associated with the batch (if the batch has a `pen_id`). This happens when:
+  - A new cattle record is created via induction events
+  - An existing cattle record is updated and doesn't already have a pen assignment
 - If cattle already exists, the record is marked as updated
 - Default values should be updated via other endpoints as data becomes available
 

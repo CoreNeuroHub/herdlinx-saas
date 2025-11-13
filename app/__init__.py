@@ -123,6 +123,7 @@ def create_app(config_class=Config):
         """Inject navigation context into all templates"""
         from flask import request, session, url_for
         from .models.feedlot import Feedlot
+        from .utils.breadcrumbs import generate_breadcrumbs
         from bson import ObjectId
         import re
         
@@ -132,6 +133,7 @@ def create_app(config_class=Config):
             'show_top_level_nav': False,
             'show_feedlot_nav': False,
             'user_type': session.get('user_type'),
+            'breadcrumbs': [],
         }
         
         # Check if user is logged in
@@ -145,6 +147,7 @@ def create_app(config_class=Config):
         feedlot_pattern = r'/feedlot/([^/]+)'
         match = re.search(feedlot_pattern, path)
         
+        current_feedlot = None
         if match:
             feedlot_id = match.group(1)
             nav_context['current_feedlot_id'] = feedlot_id
@@ -155,6 +158,7 @@ def create_app(config_class=Config):
                 if feedlot:
                     nav_context['current_feedlot'] = feedlot
                     nav_context['show_feedlot_nav'] = True
+                    current_feedlot = feedlot
             except Exception:
                 # If feedlot not found or error, don't show feedlot nav
                 pass
@@ -166,6 +170,13 @@ def create_app(config_class=Config):
         # Business owner/admin users also see top-level nav (dashboard, feedlot hub, settings)
         elif user_type in ['business_owner', 'business_admin']:
             nav_context['show_top_level_nav'] = True
+        
+        # Generate breadcrumbs
+        try:
+            nav_context['breadcrumbs'] = generate_breadcrumbs(current_feedlot=current_feedlot, request_obj=request)
+        except Exception as e:
+            # If breadcrumb generation fails, just use empty list
+            nav_context['breadcrumbs'] = []
         
         return nav_context
     
