@@ -54,15 +54,21 @@
                     {{ user.created_at | strftime if user.created_at else 'N/A' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {% if not user.is_active %}
-                    <form method="POST" action="{{ url_for('top_level.activate_user', user_id=user._id) }}" class="inline">
-                        <button type="submit" data-testid="activate-feedlot-user-button-{{ user._id }}" class="text-green-600 hover:text-green-900">Activate</button>
-                    </form>
-                    {% else %}
-                    <form method="POST" action="{{ url_for('top_level.deactivate_user', user_id=user._id) }}" class="inline">
-                        <button type="submit" data-testid="deactivate-feedlot-user-button-{{ user._id }}" class="text-red-600 hover:text-red-900">Deactivate</button>
-                    </form>
-                    {% endif %}
+                    <div class="flex space-x-2">
+                        {% if user_type in ['super_owner', 'super_admin'] %}
+                        <button onclick="openEditFeedlotUserModal('{{ user._id }}')" data-testid="edit-feedlot-user-button-{{ user._id }}" class="text-teal-600 hover:text-teal-900">Edit</button>
+                        <span class="text-gray-300">|</span>
+                        {% endif %}
+                        {% if not user.is_active %}
+                        <form method="POST" action="{{ url_for('top_level.activate_user', user_id=user._id) }}" class="inline">
+                            <button type="submit" data-testid="activate-feedlot-user-button-{{ user._id }}" class="text-green-600 hover:text-green-900">Activate</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="{{ url_for('top_level.deactivate_user', user_id=user._id) }}" class="inline">
+                            <button type="submit" data-testid="deactivate-feedlot-user-button-{{ user._id }}" class="text-red-600 hover:text-red-900">Deactivate</button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% endfor %}
@@ -124,6 +130,153 @@
                     Create User
                 </button>
                 <button type="button" onclick="closeAddFeedlotUserModal()" data-testid="cancel-feedlot-user-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Feedlot User Modal -->
+<div id="edit-feedlot-user-modal" data-testid="edit-feedlot-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Edit User</h2>
+                <button onclick="closeEditFeedlotUserModal()" data-testid="close-edit-feedlot-user-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <form id="edit-feedlot-user-form" method="POST" data-testid="edit-feedlot-user-form" class="p-6 space-y-4">
+            <input type="hidden" id="edit_feedlot_user_id" name="user_id" value="">
+            
+            <div>
+                <label for="edit_feedlot_username" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                <input type="text" id="edit_feedlot_username" name="username" required
+                       data-testid="edit-feedlot-user-username-input"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_feedlot_email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                <input type="email" id="edit_feedlot_email" name="email" required
+                       data-testid="edit-feedlot-user-email-input"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_feedlot_first_name" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                <input type="text" id="edit_feedlot_first_name" name="first_name"
+                       data-testid="edit-feedlot-user-first-name-input"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_feedlot_last_name" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                <input type="text" id="edit_feedlot_last_name" name="last_name"
+                       data-testid="edit-feedlot-user-last-name-input"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_feedlot_contact_number" class="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
+                <input type="text" id="edit_feedlot_contact_number" name="contact_number"
+                       data-testid="edit-feedlot-user-contact-number-input"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div>
+                <label for="edit_feedlot_user_type" class="block text-sm font-medium text-gray-700 mb-2">User Type *</label>
+                <select id="edit_feedlot_user_type" name="user_type" required
+                        data-testid="edit-feedlot-user-type-select"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    <option value="super_owner">Super Owner</option>
+                    <option value="super_admin">Super Admin</option>
+                    <option value="business_owner">Business Owner</option>
+                    <option value="business_admin">Business Admin</option>
+                    <option value="user">User</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" id="edit_feedlot_is_active" name="is_active" value="1"
+                           data-testid="edit-feedlot-user-is-active-checkbox"
+                           class="rounded border-gray-300 text-teal focus:ring-teal">
+                    <span class="text-sm text-gray-700">Active</span>
+                </label>
+            </div>
+            
+            <div id="edit-feedlot-user-feedlot-field" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <span id="edit-feedlot-user-feedlot-label">Feedlot</span> *
+                </label>
+                <div class="relative">
+                    <!-- Selected Feedlots Chips -->
+                    <div id="edit-feedlot-user-feedlot-chips" class="flex flex-wrap gap-2 mb-2 min-h-[2rem]"></div>
+                    
+                    <!-- Searchable Dropdown -->
+                    <div class="relative">
+                        <input type="text" 
+                               id="edit-feedlot-user-feedlot-search" 
+                               placeholder="Search feedlots..."
+                               data-testid="edit-feedlot-user-feedlot-search-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               autocomplete="off">
+                        <svg class="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                        
+                        <!-- Dropdown Options -->
+                        <div id="edit-feedlot-user-feedlot-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            <div id="edit-feedlot-user-feedlot-options" class="p-2">
+                                {% if feedlots %}
+                                    {% for feedlot_option in feedlots %}
+                                    <div class="edit-feedlot-user-feedlot-option px-3 py-2 hover:bg-gray-50 cursor-pointer rounded text-sm text-gray-700" 
+                                         data-feedlot-id="{{ feedlot_option._id }}" 
+                                         data-feedlot-name="{{ feedlot_option.name }}"
+                                         data-feedlot-location="{{ feedlot_option.location }}">
+                                        {{ feedlot_option.name }} - {{ feedlot_option.location }}
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden inputs for form submission -->
+                    <input type="hidden" id="edit-feedlot-user-feedlot-id" name="feedlot_id" value="">
+                    <div id="edit-feedlot-user-feedlot-ids-container"></div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200 pt-4">
+                <p class="text-sm text-gray-600 mb-2">Change Password (leave blank to keep current password)</p>
+                <div class="space-y-4">
+                    <div>
+                        <label for="edit_feedlot_new_password" class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+                        <input type="password" id="edit_feedlot_new_password" name="new_password"
+                               data-testid="edit-feedlot-user-new-password-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    </div>
+                    <div>
+                        <label for="edit_feedlot_confirm_password" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                        <input type="password" id="edit_feedlot_confirm_password" name="confirm_password"
+                               data-testid="edit-feedlot-user-confirm-password-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex space-x-4 pt-4">
+                <button type="submit" id="submit-edit-feedlot-user-btn" data-testid="submit-edit-feedlot-user-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Update User
+                </button>
+                <button type="button" onclick="closeEditFeedlotUserModal()" data-testid="cancel-edit-feedlot-user-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Cancel
                 </button>
             </div>
@@ -221,7 +374,386 @@
                 }
             });
         }
+        
+        // Edit Feedlot User Modal Functions
+        const editFeedlotUserModal = document.getElementById('edit-feedlot-user-modal');
+        if (editFeedlotUserModal) {
+            editFeedlotUserModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeEditFeedlotUserModal();
+                }
+            });
+        }
+        
+        // Handle edit feedlot user form submission via AJAX
+        const editFeedlotUserForm = document.getElementById('edit-feedlot-user-form');
+        if (editFeedlotUserForm) {
+            editFeedlotUserForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const form = e.target;
+                const submitBtn = document.getElementById('submit-edit-feedlot-user-btn');
+                const userId = document.getElementById('edit_feedlot_user_id').value;
+                const formData = new FormData(form);
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating...';
+                
+                try {
+                    const response = await fetch(`/user/${userId}/edit`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showToast(data.message || 'User updated successfully.', 'success');
+                        closeEditFeedlotUserModal();
+                        // Reload the page to reflect changes
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } else {
+                        showToast(data.message || 'Failed to update user. Please try again.', 'error');
+                        
+                        // Re-enable submit button
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Update User';
+                        
+                        // Highlight error fields if provided
+                        if (data.errors) {
+                            Object.keys(data.errors).forEach(field => {
+                                const input = form.querySelector(`[name="${field}"]`);
+                                if (input) {
+                                    input.classList.add('border-red-500');
+                                }
+                            });
+                        }
+                    }
+                } catch (error) {
+                    showToast('An error occurred while updating the user. Please try again.', 'error');
+                    
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Update User';
+                }
+            });
+        }
+        
+        // Handle edit feedlot user type change
+        const editFeedlotUserTypeSelect = document.getElementById('edit_feedlot_user_type');
+        if (editFeedlotUserTypeSelect) {
+            editFeedlotUserTypeSelect.addEventListener('change', updateEditFeedlotUserFeedlotField);
+        }
+        
+        // Feedlot selection handlers for edit modal
+        const editFeedlotUserFeedlotSearch = document.getElementById('edit-feedlot-user-feedlot-search');
+        const editFeedlotUserFeedlotDropdown = document.getElementById('edit-feedlot-user-feedlot-dropdown');
+        
+        if (editFeedlotUserFeedlotSearch) {
+            editFeedlotUserFeedlotSearch.addEventListener('focus', function() {
+                if (editFeedlotUserFeedlotSearch.value) {
+                    filterFeedlotUserOptions(editFeedlotUserFeedlotSearch.value);
+                } else {
+                    filterFeedlotUserOptions('');
+                }
+                editFeedlotUserFeedlotDropdown.classList.remove('hidden');
+            });
+            
+            editFeedlotUserFeedlotSearch.addEventListener('input', function(e) {
+                filterFeedlotUserOptions(e.target.value);
+                editFeedlotUserFeedlotDropdown.classList.remove('hidden');
+            });
+        }
+        
+        // Handle option clicks for edit feedlot user modal
+        document.addEventListener('click', function(e) {
+            const feedlotOption = e.target.closest('.edit-feedlot-user-feedlot-option');
+            if (feedlotOption) {
+                const feedlotId = feedlotOption.getAttribute('data-feedlot-id');
+                const feedlotName = feedlotOption.getAttribute('data-feedlot-name');
+                const feedlotLocation = feedlotOption.getAttribute('data-feedlot-location');
+                addFeedlotUserSelection(feedlotId, feedlotName, feedlotLocation);
+                if (editFeedlotUserFeedlotSearch) {
+                    editFeedlotUserFeedlotSearch.value = '';
+                    filterFeedlotUserOptions('');
+                }
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const editFeedlotUserFeedlotChips = document.getElementById('edit-feedlot-user-feedlot-chips');
+            
+            if (editFeedlotUserFeedlotDropdown && editFeedlotUserFeedlotSearch && editFeedlotUserFeedlotChips &&
+                !editFeedlotUserFeedlotSearch.contains(e.target) && 
+                !editFeedlotUserFeedlotDropdown.contains(e.target) && 
+                !editFeedlotUserFeedlotChips.contains(e.target)) {
+                editFeedlotUserFeedlotDropdown.classList.add('hidden');
+            }
+        });
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const addFeedlotUserModal = document.getElementById('add-feedlot-user-modal');
+                const editFeedlotUserModal = document.getElementById('edit-feedlot-user-modal');
+                if (addFeedlotUserModal && !addFeedlotUserModal.classList.contains('hidden')) {
+                    closeAddFeedlotUserModal();
+                } else if (editFeedlotUserModal && !editFeedlotUserModal.classList.contains('hidden')) {
+                    closeEditFeedlotUserModal();
+                }
+            }
+        });
     });
+    
+    // Feedlot selection state for edit feedlot user modal
+    let editFeedlotUserFeedlotSelections = [];
+    let editFeedlotUserFeedlotMultipleMode = false;
+    
+    // Edit Feedlot User Modal Functions
+    async function openEditFeedlotUserModal(userId) {
+        const modal = document.getElementById('edit-feedlot-user-modal');
+        const form = document.getElementById('edit-feedlot-user-form');
+        
+        // Show loading state
+        form.style.opacity = '0.5';
+        form.style.pointerEvents = 'none';
+        
+        try {
+            // Fetch user data
+            const response = await fetch(`/user/${userId}/edit`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.user) {
+                const user = data.user;
+                
+                // Populate form fields
+                document.getElementById('edit_feedlot_user_id').value = userId;
+                document.getElementById('edit_feedlot_username').value = user.username || '';
+                document.getElementById('edit_feedlot_email').value = user.email || '';
+                document.getElementById('edit_feedlot_first_name').value = user.first_name || '';
+                document.getElementById('edit_feedlot_last_name').value = user.last_name || '';
+                document.getElementById('edit_feedlot_contact_number').value = user.contact_number || '';
+                document.getElementById('edit_feedlot_user_type').value = user.user_type || 'user';
+                document.getElementById('edit_feedlot_is_active').checked = user.is_active !== false;
+                
+                // Update feedlot field visibility first
+                updateEditFeedlotUserFeedlotField();
+                
+                // Load feedlot selections
+                editFeedlotUserFeedlotSelections = [];
+                if (user.feedlot_ids && Array.isArray(user.feedlot_ids) && user.feedlot_ids.length > 0) {
+                    // Multiple feedlots
+                    user.feedlot_ids.forEach(feedlotId => {
+                        const option = document.querySelector(`.edit-feedlot-user-feedlot-option[data-feedlot-id="${feedlotId}"]`);
+                        if (option) {
+                            const name = option.getAttribute('data-feedlot-name');
+                            const location = option.getAttribute('data-feedlot-location');
+                            editFeedlotUserFeedlotSelections.push({ id: feedlotId, name: name, location: location });
+                        }
+                    });
+                } else if (user.feedlot_id) {
+                    // Single feedlot
+                    const option = document.querySelector(`.edit-feedlot-user-feedlot-option[data-feedlot-id="${user.feedlot_id}"]`);
+                    if (option) {
+                        const name = option.getAttribute('data-feedlot-name');
+                        const location = option.getAttribute('data-feedlot-location');
+                        editFeedlotUserFeedlotSelections.push({ id: user.feedlot_id, name: name, location: location });
+                    }
+                }
+                
+                updateFeedlotUserChips();
+                updateFeedlotUserHiddenInputs();
+                
+                // Show modal
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                showToast(data.message || 'Failed to load user data.', 'error');
+            }
+        } catch (error) {
+            showToast('An error occurred while loading user data. Please try again.', 'error');
+        } finally {
+            // Remove loading state
+            form.style.opacity = '1';
+            form.style.pointerEvents = 'auto';
+        }
+    }
+    
+    function closeEditFeedlotUserModal() {
+        const modal = document.getElementById('edit-feedlot-user-modal');
+        const form = document.getElementById('edit-feedlot-user-form');
+        
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        form.reset();
+        
+        // Reset feedlot selections
+        editFeedlotUserFeedlotSelections = [];
+        updateFeedlotUserChips();
+        updateFeedlotUserHiddenInputs();
+        
+        // Remove any error states
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.classList.remove('border-red-500');
+        });
+    }
+    
+    function updateEditFeedlotUserFeedlotField() {
+        const userTypeSelect = document.getElementById('edit_feedlot_user_type');
+        const feedlotField = document.getElementById('edit-feedlot-user-feedlot-field');
+        const feedlotLabel = document.getElementById('edit-feedlot-user-feedlot-label');
+        
+        if (userTypeSelect && feedlotField) {
+            if (userTypeSelect.value === 'business_admin' || userTypeSelect.value === 'business_owner') {
+                // Show multiple feedlot selection
+                feedlotField.style.display = 'block';
+                feedlotLabel.textContent = 'Feedlots';
+                editFeedlotUserFeedlotMultipleMode = true;
+                clearFeedlotUserSelection();
+            } else if (userTypeSelect.value === 'user') {
+                // Show single feedlot selection
+                feedlotField.style.display = 'block';
+                feedlotLabel.textContent = 'Feedlot';
+                editFeedlotUserFeedlotMultipleMode = false;
+                clearFeedlotUserSelection();
+            } else {
+                // Super owner or super admin - no feedlot required
+                feedlotField.style.display = 'none';
+                clearFeedlotUserSelection();
+            }
+        }
+    }
+    
+    function clearFeedlotUserSelection() {
+        editFeedlotUserFeedlotSelections = [];
+        const chipsContainer = document.getElementById('edit-feedlot-user-feedlot-chips');
+        const searchInput = document.getElementById('edit-feedlot-user-feedlot-search');
+        const hiddenInput = document.getElementById('edit-feedlot-user-feedlot-id');
+        const container = document.getElementById('edit-feedlot-user-feedlot-ids-container');
+        const dropdown = document.getElementById('edit-feedlot-user-feedlot-dropdown');
+        
+        if (chipsContainer) chipsContainer.innerHTML = '';
+        if (searchInput) searchInput.value = '';
+        if (hiddenInput) hiddenInput.value = '';
+        if (container) container.innerHTML = '';
+        if (dropdown) dropdown.classList.add('hidden');
+    }
+    
+    function addFeedlotUserSelection(feedlotId, feedlotName, feedlotLocation) {
+        const selection = { id: feedlotId, name: feedlotName, location: feedlotLocation };
+        
+        if (editFeedlotUserFeedlotMultipleMode) {
+            // Multiple selection mode
+            if (!editFeedlotUserFeedlotSelections.find(s => s.id === feedlotId)) {
+                editFeedlotUserFeedlotSelections.push(selection);
+                updateFeedlotUserChips();
+                updateFeedlotUserHiddenInputs();
+            }
+        } else {
+            // Single selection mode
+            editFeedlotUserFeedlotSelections = [selection];
+            updateFeedlotUserChips();
+            updateFeedlotUserHiddenInputs();
+            const dropdown = document.getElementById('edit-feedlot-user-feedlot-dropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+        }
+    }
+    
+    function removeFeedlotUserSelection(feedlotId) {
+        editFeedlotUserFeedlotSelections = editFeedlotUserFeedlotSelections.filter(s => s.id !== feedlotId);
+        updateFeedlotUserChips();
+        updateFeedlotUserHiddenInputs();
+    }
+    
+    function updateFeedlotUserChips() {
+        const chipsContainer = document.getElementById('edit-feedlot-user-feedlot-chips');
+        if (!chipsContainer) return;
+        
+        chipsContainer.innerHTML = '';
+        
+        editFeedlotUserFeedlotSelections.forEach(selection => {
+            const chip = document.createElement('span');
+            chip.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800';
+            chip.innerHTML = `
+                ${selection.name} - ${selection.location}
+                <button type="button" 
+                        onclick="removeFeedlotUserSelection('${selection.id}'); event.stopPropagation();" 
+                        class="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-teal-200 focus:outline-none">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            chipsContainer.appendChild(chip);
+        });
+    }
+    
+    function updateFeedlotUserHiddenInputs() {
+        const container = document.getElementById('edit-feedlot-user-feedlot-ids-container');
+        const hiddenInput = document.getElementById('edit-feedlot-user-feedlot-id');
+        
+        if (editFeedlotUserFeedlotMultipleMode) {
+            // Multiple mode - use feedlot_ids
+            if (container) {
+                container.innerHTML = '';
+                
+                editFeedlotUserFeedlotSelections.forEach(selection => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'edit_feedlot_ids';
+                    input.value = selection.id;
+                    container.appendChild(input);
+                });
+            }
+            
+            // Clear single feedlot_id
+            if (hiddenInput) hiddenInput.value = '';
+        } else {
+            // Single mode - use feedlot_id
+            if (hiddenInput) {
+                hiddenInput.value = editFeedlotUserFeedlotSelections.length > 0 ? editFeedlotUserFeedlotSelections[0].id : '';
+            }
+            
+            // Clear multiple feedlot_ids
+            if (container) container.innerHTML = '';
+        }
+    }
+    
+    function filterFeedlotUserOptions(searchTerm) {
+        const options = document.querySelectorAll('.edit-feedlot-user-feedlot-option');
+        const searchLower = (searchTerm || '').toLowerCase();
+        
+        options.forEach(option => {
+            const feedlotName = option.getAttribute('data-feedlot-name') || '';
+            const feedlotLocation = option.getAttribute('data-feedlot-location') || '';
+            const feedlotId = option.getAttribute('data-feedlot-id') || '';
+            const text = `${feedlotName} - ${feedlotLocation}`.toLowerCase();
+            
+            // Check if already selected
+            const isSelected = editFeedlotUserFeedlotSelections.find(s => s.id === feedlotId);
+            
+            // Show if matches search and not already selected
+            if ((!searchLower || text.includes(searchLower)) && !isSelected) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
 </script>
 {% endblock %}
 

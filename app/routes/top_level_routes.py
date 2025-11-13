@@ -7,6 +7,7 @@ from app.models.api_key import APIKey
 from app.routes.auth_routes import login_required, super_admin_required, admin_access_required
 from app import db
 import bcrypt
+import re
 
 top_level_bp = Blueprint('top_level', __name__)
 
@@ -283,7 +284,14 @@ def feedlot_users(feedlot_id):
     
     users = User.find_by_feedlot(feedlot_id)
     user_type = session.get('user_type')
-    return render_template('top_level/feedlot_users.html', feedlot=feedlot, users=users, user_type=user_type)
+    
+    # Get feedlots for the edit modal (only for top-level users)
+    if user_type in ['super_owner', 'super_admin']:
+        feedlots = Feedlot.find_all()
+    else:
+        feedlots = []
+    
+    return render_template('top_level/feedlot_users.html', feedlot=feedlot, users=users, user_type=user_type, feedlots=feedlots)
 
 @top_level_bp.route('/user/<user_id>/activate', methods=['POST'])
 @login_required
@@ -516,6 +524,16 @@ def edit_user(user_id):
         if is_ajax:
             return jsonify({'success': True, 'message': success_msg}), 200
         flash(success_msg, 'success')
+        
+        # Redirect back to feedlot users page if coming from there
+        referer = request.headers.get('Referer')
+        if referer and '/feedlot/' in referer and '/users' in referer:
+            # Extract feedlot_id from referer URL
+            match = re.search(r'/feedlot/([^/]+)/users', referer)
+            if match:
+                feedlot_id = match.group(1)
+                return redirect(url_for('top_level.feedlot_users', feedlot_id=feedlot_id))
+        
         return redirect(url_for('top_level.manage_users'))
     
     except Exception as e:
@@ -523,6 +541,15 @@ def edit_user(user_id):
         if is_ajax:
             return jsonify({'success': False, 'message': error_msg}), 500
         flash(error_msg, 'error')
+        
+        # Redirect back to feedlot users page if coming from there
+        referer = request.headers.get('Referer')
+        if referer and '/feedlot/' in referer and '/users' in referer:
+            match = re.search(r'/feedlot/([^/]+)/users', referer)
+            if match:
+                feedlot_id = match.group(1)
+                return redirect(url_for('top_level.feedlot_users', feedlot_id=feedlot_id))
+        
         return redirect(url_for('top_level.manage_users'))
 
 @top_level_bp.route('/dashboard/preferences', methods=['POST'])
