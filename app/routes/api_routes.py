@@ -124,20 +124,30 @@ def sync_batches():
                 funder = batch_item.get('funder', '') or ''
                 notes = batch_item.get('notes', '') or ''
                 
-                # Handle pen fields - create/find pen if pen number is provided
-                pen_number = batch_item.get('pen', '').strip()
-                pen_location = batch_item.get('pen_location', '').strip() or ''
+                # Handle pen creation/update from batch data
+                pen_number = (batch_item.get('pen') or '').strip()
+                pen_location = (batch_item.get('pen_location') or '').strip()
                 
+                pen_id = None
                 if pen_number:
-                    # Try to find existing pen
-                    existing_pen = Pen.find_by_pen_number(feedlot_id, pen_number)
-                    if not existing_pen:
-                        # Create pen if it doesn't exist (with default capacity)
-                        pen_id = Pen.create_pen(feedlot_id, pen_number, 100, pen_location)
-                    else:
-                        # Update pen description if pen_location is provided and different
-                        if pen_location and existing_pen.get('description') != pen_location:
+                    # Find or create pen
+                    existing_pens = Pen.find_by_feedlot(feedlot_id)
+                    existing_pen = None
+                    for p in existing_pens:
+                        if p.get('pen_number', '').strip() == pen_number:
+                            existing_pen = p
+                            break
+                    
+                    if existing_pen:
+                        # Update pen description if pen_location is provided
+                        if pen_location:
                             Pen.update_pen(str(existing_pen['_id']), {'description': pen_location})
+                        pen_id = str(existing_pen['_id'])
+                    else:
+                        # Create new pen with default capacity (can be updated later via UI)
+                        # Use pen_location as description if provided
+                        pen_description = pen_location if pen_location else f'Pen {pen_number}'
+                        pen_id = Pen.create_pen(feedlot_id, pen_number, capacity=100, description=pen_description)
                 
                 if existing_batch:
                     # Update existing batch
@@ -147,11 +157,17 @@ def sync_batches():
                         'funder': funder,
                         'notes': notes
                     }
+                    # Add pen_id if pen was found/created
+                    if pen_id:
+                        update_data['pen_id'] = ObjectId(pen_id)
                     Batch.update_batch(str(existing_batch['_id']), update_data)
                     records_updated += 1
                 else:
                     # Create new batch
-                    Batch.create_batch(feedlot_id, batch_number, induction_date, funder, notes)
+                    batch_id = Batch.create_batch(feedlot_id, batch_number, induction_date, funder, notes)
+                    # Update batch with pen_id if pen was found/created
+                    if pen_id:
+                        Batch.update_batch(batch_id, {'pen_id': ObjectId(pen_id)})
                     records_created += 1
                     
             except Exception as e:
@@ -161,110 +177,6 @@ def sync_batches():
         return jsonify({
             'success': True,
             'message': f'Processed {records_processed} batch records',
-            'records_processed': records_processed,
-            'records_created': records_created,
-            'records_updated': records_updated,
-            'records_skipped': records_skipped,
-            'errors': errors
-        }), 200
-    
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Error processing request: {str(e)}'
-        }), 500
-
-@api_bp.route('/v1/feedlot/pens', methods=['POST'])
-@api_key_required
-def sync_pens():
-    """Sync pen data from office app"""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({
-                'success': False,
-                'message': 'Request body must be JSON'
-            }), 400
-        
-        feedlot_code = data.get('feedlot_code')
-        if not feedlot_code:
-            return jsonify({
-                'success': False,
-                'message': 'feedlot_code is required in request body'
-            }), 400
-        
-        # Validate feedlot_code matches the API key's feedlot
-        feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
-            return jsonify({
-                'success': False,
-                'message': 'feedlot_code does not match the API key\'s feedlot'
-            }), 403
-        
-        pens_data = data.get('data', [])
-        if not isinstance(pens_data, list):
-            return jsonify({
-                'success': False,
-                'message': 'data must be an array'
-            }), 400
-        
-        feedlot_id = request.feedlot_id
-        records_processed = 0
-        records_created = 0
-        records_updated = 0
-        records_skipped = 0
-        errors = []
-        
-        for pen_item in pens_data:
-            try:
-                records_processed += 1
-                
-                # Extract pen data from office app format
-                pen_number = pen_item.get('pen_number') or pen_item.get('pen', '').strip()
-                if not pen_number:
-                    errors.append(f'Record {records_processed}: pen_number is required')
-                    records_skipped += 1
-                    continue
-                
-                pen_number = pen_number.strip()
-                description = pen_item.get('description') or pen_item.get('pen_location', '').strip() or ''
-                capacity = pen_item.get('capacity')
-                
-                # Default capacity if not provided
-                if capacity is None:
-                    capacity = 100  # Default capacity
-                else:
-                    try:
-                        capacity = int(capacity)
-                        if capacity <= 0:
-                            capacity = 100  # Default if invalid
-                    except (ValueError, TypeError):
-                        capacity = 100  # Default if invalid
-                
-                # Check if pen already exists (by pen_number and feedlot_id)
-                existing_pen = Pen.find_by_pen_number(feedlot_id, pen_number)
-                
-                if existing_pen:
-                    # Update existing pen
-                    update_data = {
-                        'pen_number': pen_number,
-                        'description': description,
-                        'capacity': capacity
-                    }
-                    Pen.update_pen(str(existing_pen['_id']), update_data)
-                    records_updated += 1
-                else:
-                    # Create new pen
-                    Pen.create_pen(feedlot_id, pen_number, capacity, description)
-                    records_created += 1
-                    
-            except Exception as e:
-                errors.append(f'Record {records_processed}: {str(e)}')
-                records_skipped += 1
-        
-        return jsonify({
-            'success': True,
-            'message': f'Processed {records_processed} pen records',
             'records_processed': records_processed,
             'records_created': records_created,
             'records_updated': records_updated,
@@ -339,35 +251,25 @@ def sync_livestock():
                 existing_cattle = None
                 
                 # First, try to find by office_livestock_id stored in cattle_id
-                office_id_str = f"{office_livestock_id}"
-                existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
-                
-                # If not found by cattle_id, try to find by tags
-                if not existing_cattle:
-                    all_cattle = Cattle.find_by_feedlot(feedlot_id)
-                    for cattle in all_cattle:
-                        if current_lf_id and cattle.get('lf_tag') == current_lf_id:
-                            existing_cattle = cattle
-                            break
-                        if current_epc and cattle.get('uhf_tag') == current_epc:
-                            existing_cattle = cattle
-                            break
+                office_id_str = str(office_livestock_id)
+                all_cattle = Cattle.find_by_feedlot(feedlot_id)
+                for cattle in all_cattle:
+                    if cattle.get('cattle_id') == office_id_str:
+                        existing_cattle = cattle
+                        break
+                    # Also check by tags
+                    if current_lf_id and cattle.get('lf_tag') == current_lf_id:
+                        existing_cattle = cattle
+                        break
+                    if current_epc and cattle.get('uhf_tag') == current_epc:
+                        existing_cattle = cattle
+                        break
                 
                 if existing_cattle:
                     # Update tags if they've changed
                     cattle_record_id = str(existing_cattle['_id'])
                     if current_lf_id != existing_cattle.get('lf_tag') or current_epc != existing_cattle.get('uhf_tag'):
                         Cattle.update_tag_pair(cattle_record_id, current_lf_id, current_epc, updated_by='api')
-                    
-                    # Update pen if provided
-                    pen_number = livestock_item.get('pen', '').strip() or livestock_item.get('pen_number', '').strip()
-                    if pen_number:
-                        pen = Pen.find_by_pen_number(feedlot_id, pen_number)
-                        if pen:
-                            current_pen_id = existing_cattle.get('pen_id')
-                            if not current_pen_id or str(current_pen_id) != str(pen['_id']):
-                                Cattle.move_cattle(cattle_record_id, str(pen['_id']))
-                    
                     records_updated += 1
                 else:
                     # Cattle not found - this should be created via induction_events first
@@ -479,12 +381,20 @@ def sync_induction_events():
                 
                 saas_batch_id = str(saas_batch['_id'])
                 
+                # Get pen_id from batch if available
+                batch_pen_id = saas_batch.get('pen_id')
+                # Convert to string (works for both ObjectId and string) or keep None
+                pen_id_for_cattle = str(batch_pen_id) if batch_pen_id else None
+                
                 # Check if cattle already exists
-                office_id_str = f"{livestock_id}"
+                office_id_str = str(livestock_id)
                 existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
                 
                 if existing_cattle:
                     # Update existing cattle (induction already happened)
+                    # If batch has a pen and cattle doesn't, assign it
+                    if pen_id_for_cattle and not existing_cattle.get('pen_id'):
+                        Cattle.update_cattle(str(existing_cattle['_id']), {'pen_id': ObjectId(pen_id_for_cattle)})
                     records_updated += 1
                 else:
                     # Create new cattle record
@@ -500,19 +410,6 @@ def sync_induction_events():
                             induction_date = datetime.utcnow()
                     else:
                         induction_date = datetime.utcnow()
-                    
-                    # Try to find pen from event data or batch
-                    pen_id = None
-                    pen_number = event_item.get('pen', '').strip()
-                    if not pen_number:
-                        # Try to get pen from batch if available
-                        # For now, we'll rely on pen being in the event
-                        pass
-                    
-                    if pen_number:
-                        pen = Pen.find_by_pen_number(feedlot_id, pen_number)
-                        if pen:
-                            pen_id = str(pen['_id'])
                     
                     # Create cattle with default values
                     # Required fields: cattle_id, sex, weight, health_status
@@ -530,7 +427,7 @@ def sync_induction_events():
                         health_status=health_status,
                         lf_tag=None,
                         uhf_tag=None,
-                        pen_id=pen_id,
+                        pen_id=pen_id_for_cattle,
                         notes=f'Imported from office app, livestock_id: {livestock_id}'
                     )
                     
@@ -614,7 +511,7 @@ def sync_pairing_events():
                     continue
                 
                 # Find cattle by office livestock_id
-                office_id_str = f"{livestock_id}"
+                office_id_str = str(livestock_id)
                 existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
                 
                 if not existing_cattle:
@@ -626,15 +523,6 @@ def sync_pairing_events():
                 
                 # Update tags
                 Cattle.update_tag_pair(cattle_record_id, lf_id, epc, updated_by='api')
-                
-                # Update pen if provided
-                pen_number = event_item.get('pen', '').strip() or event_item.get('pen_number', '').strip()
-                if pen_number:
-                    pen = Pen.find_by_pen_number(feedlot_id, pen_number)
-                    if pen:
-                        current_pen_id = existing_cattle.get('pen_id')
-                        if not current_pen_id or str(current_pen_id) != str(pen['_id']):
-                            Cattle.move_cattle(cattle_record_id, str(pen['_id']))
                 
                 # Update weight if provided
                 if weight_kg is not None:
@@ -737,7 +625,7 @@ def sync_checkin_events():
                     continue
                 
                 # Find cattle by office livestock_id
-                office_id_str = f"{livestock_id}"
+                office_id_str = str(livestock_id)
                 existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
                 
                 if not existing_cattle:
@@ -746,15 +634,6 @@ def sync_checkin_events():
                     continue
                 
                 cattle_record_id = str(existing_cattle['_id'])
-                
-                # Update pen if provided
-                pen_number = event_item.get('pen', '').strip() or event_item.get('pen_number', '').strip()
-                if pen_number:
-                    pen = Pen.find_by_pen_number(feedlot_id, pen_number)
-                    if pen:
-                        current_pen_id = existing_cattle.get('pen_id')
-                        if not current_pen_id or str(current_pen_id) != str(pen['_id']):
-                            Cattle.move_cattle(cattle_record_id, str(pen['_id']))
                 
                 # Add weight record
                 Cattle.add_weight_record(cattle_record_id, weight_float, recorded_by='api')
@@ -844,7 +723,7 @@ def sync_repair_events():
                     continue
                 
                 # Find cattle by office livestock_id
-                office_id_str = f"{livestock_id}"
+                office_id_str = str(livestock_id)
                 existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
                 
                 if not existing_cattle:
@@ -862,15 +741,6 @@ def sync_repair_events():
                 
                 # Update tags
                 Cattle.update_tag_pair(cattle_record_id, final_lf_id, final_epc, updated_by='api')
-                
-                # Update pen if provided
-                pen_number = event_item.get('pen', '').strip() or event_item.get('pen_number', '').strip()
-                if pen_number:
-                    pen = Pen.find_by_pen_number(feedlot_id, pen_number)
-                    if pen:
-                        current_pen_id = existing_cattle.get('pen_id')
-                        if not current_pen_id or str(current_pen_id) != str(pen['_id']):
-                            Cattle.move_cattle(cattle_record_id, str(pen['_id']))
                 
                 # Update notes with repair reason if provided
                 if reason:

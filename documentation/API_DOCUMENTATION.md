@@ -163,6 +163,17 @@ All endpoints return JSON responses with the following structure:
 - `funder` → `source`
 - `notes` → `notes`
 - `created_at` → `induction_date`
+- `pen` → Creates/updates pen with `pen_number` (optional)
+- `pen_location` → Pen `description` (optional)
+
+**Pen Mapping**:
+When `pen` is provided in the batch data:
+- If a pen with the same `pen_number` exists for the feedlot, it will be updated (description updated if `pen_location` is provided)
+- If no pen exists, a new pen will be created with:
+  - `pen_number`: Value from `pen` field
+  - `description`: Value from `pen_location` field (or default "Pen {pen_number}" if not provided)
+  - `capacity`: Default capacity of 100 (can be updated later via web UI)
+- The batch will be linked to the pen via `pen_id`
 
 **Response**:
 ```json
@@ -181,57 +192,13 @@ All endpoints return JSON responses with the following structure:
 - Batches are matched by name within the same feedlot
 - If a batch with the same name exists, it will be updated
 - `created_at` is parsed as ISO format or `YYYY-MM-DD` format
+- Pens are automatically created or updated when `pen` field is provided in batch data
+- If `pen` is provided, the batch will be linked to the pen (created if it doesn't exist)
+- Pen capacity defaults to 100 and can be updated later via the web UI
 
 ---
 
-### 2. Sync Pens
-
-**Endpoint**: `POST /api/v1/feedlot/pens`
-
-**Description**: Syncs pen data from the office app to the SaaS system. Pens are physical locations where cattle are housed.
-
-**Request Body**:
-```json
-{
-  "feedlot_code": "FEEDLOT001",
-  "data": [
-    {
-      "pen_number": "PEN01",
-      "description": "North Section - Pen 1",
-      "capacity": 100
-    }
-  ]
-}
-```
-
-**Field Mapping**:
-- `pen_number` or `pen` → `pen_number` (required)
-- `description` or `pen_location` → `description`
-- `capacity` → `capacity` (defaults to 100 if not provided or invalid)
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Processed 1 pen records",
-  "records_processed": 1,
-  "records_created": 1,
-  "records_updated": 0,
-  "records_skipped": 0,
-  "errors": []
-}
-```
-
-**Notes**:
-- Pens are matched by `pen_number` within the same feedlot
-- If a pen with the same number exists, it will be updated
-- `capacity` defaults to 100 if not provided, invalid, or less than or equal to 0
-- Both `pen_number` and `pen` fields are accepted for the pen identifier
-- Both `description` and `pen_location` fields are accepted for the pen description
-
----
-
-### 3. Sync Livestock (Current State)
+### 2. Sync Livestock (Current State)
 
 **Endpoint**: `POST /api/v1/feedlot/livestock`
 
@@ -256,7 +223,7 @@ All endpoints return JSON responses with the following structure:
 ```
 
 **Field Mapping**:
-- `id` → Used to find existing cattle (stored as `OFFICE_{id}` in `cattle_id`)
+- `id` → Used to find existing cattle (stored as `cattle_id`)
 - `current_lf_id` → `lf_tag`
 - `current_epc` → `uhf_tag`
 
@@ -281,7 +248,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 4. Sync Induction Events
+### 3. Sync Induction Events
 
 **Endpoint**: `POST /api/v1/feedlot/induction-events`
 
@@ -304,7 +271,7 @@ All endpoints return JSON responses with the following structure:
 ```
 
 **Field Mapping**:
-- `livestock_id` → Used to create cattle record (stored as `OFFICE_{livestock_id}` in `cattle_id`)
+- `livestock_id` → Used to create cattle record (stored as `cattle_id`)
 - `batch_name` → Used to find SaaS batch (required for mapping)
 - `timestamp` → `induction_date`
 
@@ -327,12 +294,15 @@ All endpoints return JSON responses with the following structure:
   - `sex`: "Unknown"
   - `weight`: 0.0
   - `health_status`: "Healthy"
+- **Pen Assignment**: Cattle are automatically assigned to the pen associated with the batch (if the batch has a `pen_id`). This happens when:
+  - A new cattle record is created via induction events
+  - An existing cattle record is updated and doesn't already have a pen assignment
 - If cattle already exists, the record is marked as updated
 - Default values should be updated via other endpoints as data becomes available
 
 ---
 
-### 5. Sync Pairing Events
+### 4. Sync Pairing Events
 
 **Endpoint**: `POST /api/v1/feedlot/pairing-events`
 
@@ -381,7 +351,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 6. Sync Check-in Events
+### 5. Sync Check-in Events
 
 **Endpoint**: `POST /api/v1/feedlot/checkin-events`
 
@@ -429,7 +399,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 7. Sync Repair Events
+### 6. Sync Repair Events
 
 **Endpoint**: `POST /api/v1/feedlot/repair-events`
 
@@ -558,18 +528,16 @@ Individual record errors are included in the `errors` array:
 
 ### Recommended Sync Order
 
-1. **Pens**: Sync pens first to establish pen infrastructure (optional, pens can also be created automatically via batch sync)
-2. **Batches**: Sync batches to establish batch references
-3. **Induction Events**: Create cattle records when animals are inducted
-4. **Pairing Events**: Pair tags and set initial weights
-5. **Livestock**: Update current state (optional, for reconciliation)
-6. **Check-in Events**: Add weight measurements over time
-7. **Repair Events**: Handle tag replacements as needed
+1. **Batches**: Sync batches first to establish batch references
+2. **Induction Events**: Create cattle records when animals are inducted
+3. **Pairing Events**: Pair tags and set initial weights
+4. **Livestock**: Update current state (optional, for reconciliation)
+5. **Check-in Events**: Add weight measurements over time
+6. **Repair Events**: Handle tag replacements as needed
 
 ### Idempotency
 
 All endpoints are designed to be idempotent:
-- **Pens**: Matched by pen_number, updates existing if found
 - **Batches**: Matched by name, updates existing if found
 - **Induction Events**: Checks if cattle exists before creating
 - **Pairing/Repair Events**: Updates existing cattle records
@@ -699,7 +667,6 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 ## Changelog
 
 ### Version 1.1 (Current)
-- Added pens sync endpoint (`POST /api/v1/feedlot/pens`)
 - Added web UI for API key management (Settings → API Keys)
 - Enhanced API key management with visual interface
 - Added key status tracking (Active/Inactive)
@@ -707,7 +674,7 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 - Improved key generation workflow with one-time display
 
 ### Version 1.0 (Initial Release)
-- All 6 sync endpoints implemented (batches, livestock, induction-events, pairing-events, checkin-events, repair-events)
+- All 6 sync endpoints implemented
 - API key authentication
 - Bulk operation support
 - Comprehensive error handling
