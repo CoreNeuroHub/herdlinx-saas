@@ -4,7 +4,7 @@ from app import db
 
 class Feedlot:
     @staticmethod
-    def create_feedlot(name, location, feedlot_code, contact_info=None, owner_id=None):
+    def create_feedlot(name, location, feedlot_code, contact_info=None, owner_id=None, land_description=None, premises_id=None):
         """Create a new feedlot
         
         Args:
@@ -13,6 +13,8 @@ class Feedlot:
             feedlot_code: Unique feedlot code for office app integration (required, unique, case-insensitive)
             contact_info: Contact information dictionary
             owner_id: Optional owner user ID (must be business_owner type)
+            land_description: Land description
+            premises_id: Premises Identification (PID) number
         """
         # Validate feedlot_code uniqueness (case-insensitive)
         if feedlot_code:
@@ -25,6 +27,8 @@ class Feedlot:
             'location': location,
             'feedlot_code': feedlot_code.upper().strip() if feedlot_code else None,
             'contact_info': contact_info or {},
+            'land_description': land_description or None,
+            'premises_id': premises_id or None,
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow()
         }

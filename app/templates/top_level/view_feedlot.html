@@ -8,6 +8,9 @@
         <div class="mb-4">
             <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ feedlot.name }}</h1>
             <p class="text-gray-600">{{ feedlot.location }}</p>
+            {% if feedlot.get('premises_id') %}
+            <p class="text-sm text-gray-500 mt-1">PID: {{ feedlot.premises_id }}</p>
+            {% endif %}
         </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -26,6 +29,27 @@
         <p class="text-3xl font-bold text-purple-600">{{ statistics.total_batches }}</p>
     </div>
 </div>
+
+{% if feedlot.get('land_description') or feedlot.get('premises_id') %}
+<div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">Feedlot Information</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% if feedlot.get('premises_id') %}
+        <div>
+            <p class="text-sm text-gray-600">Premises Identification (PID)</p>
+            <p class="font-semibold">{{ feedlot.premises_id }}</p>
+        </div>
+        {% endif %}
+        
+        {% if feedlot.get('land_description') %}
+        <div class="md:col-span-2">
+            <p class="text-sm text-gray-600">Land Description</p>
+            <p class="font-semibold">{{ feedlot.land_description }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
 {% if feedlot.contact_info %}
 <div class="bg-white rounded-lg shadow-md p-6 mb-6">

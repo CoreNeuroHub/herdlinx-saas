@@ -31,6 +31,20 @@
                 <p class="mt-1 text-sm text-gray-500">Unique identifier for office app integration. Alphanumeric only, will be converted to uppercase.</p>
             </div>
             
+            <div>
+                <label for="land_description" class="block text-sm font-medium text-gray-700 mb-2">Land Description</label>
+                <textarea id="land_description" name="land_description" rows="3"
+                       data-testid="land-description-input"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">{{ feedlot.get('land_description', '') }}</textarea>
+            </div>
+            
+            <div>
+                <label for="premises_id" class="block text-sm font-medium text-gray-700 mb-2">Premises Identification (PID) Number</label>
+                <input type="text" id="premises_id" name="premises_id" value="{{ feedlot.get('premises_id', '') }}"
+                       data-testid="premises-id-input"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
             <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-4">Contact Information</h3>
             
             <div>

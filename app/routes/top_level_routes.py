@@ -138,6 +138,8 @@ def create_feedlot():
             name = request.form.get('name')
             location = request.form.get('location')
             feedlot_code = request.form.get('feedlot_code', '').strip()
+            land_description = request.form.get('land_description', '').strip() or None
+            premises_id = request.form.get('premises_id', '').strip() or None
             contact_info = {
                 'phone': request.form.get('phone') or None,
                 'email': request.form.get('email') or None,
@@ -154,7 +156,7 @@ def create_feedlot():
                     return redirect(url_for('top_level.dashboard'))
                 return jsonify({'success': False, 'message': error_msg}), 400
             
-            feedlot_id = Feedlot.create_feedlot(name, location, feedlot_code, contact_info)
+            feedlot_id = Feedlot.create_feedlot(name, location, feedlot_code, contact_info, None, land_description, premises_id)
             
             success_msg = 'Feedlot created successfully.'
             if is_ajax:
@@ -226,6 +228,8 @@ def edit_feedlot(feedlot_id):
             'name': request.form.get('name'),
             'location': request.form.get('location'),
             'feedlot_code': feedlot_code.upper().strip() if feedlot_code else None,
+            'land_description': request.form.get('land_description', '').strip() or None,
+            'premises_id': request.form.get('premises_id', '').strip() or None,
             'contact_info': {
                 'phone': request.form.get('phone'),
                 'email': request.form.get('email'),
