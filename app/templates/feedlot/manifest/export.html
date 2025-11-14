@@ -5,254 +5,265 @@
 {% block home_url %}{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}{% endblock %}
 
 {% block content %}
-<div class="mb-8">
-    <div class="flex items-start justify-between mb-4">
-        <div>
+<div class="flex flex-col md:flex-row gap-6 mb-6">
+    <div class="flex-1">
+        <div class="mb-8">
             <h1 class="text-4xl font-bold text-gray-800 mb-2">Export Alberta Livestock Manifest</h1>
             <p class="text-gray-600">{{ feedlot.name }}</p>
         </div>
-        <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" 
-           class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
-            Back to Dashboard
-        </a>
-    </div>
-</div>
 
-<form method="POST" class="space-y-8">
-    <input type="hidden" name="selection_method" id="selection_method" value="pen">
-    
-    <!-- Selection Method Tabs -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Select Cattle</h2>
-        
-        <div class="border-b border-gray-200 mb-6">
-            <nav class="-mb-px flex space-x-8">
-                <button type="button" onclick="switchTab('pen')" id="tab-pen" 
-                        class="py-4 px-1 border-b-2 font-medium text-sm tab-button active">
-                    Select by Pen
-                </button>
-                <button type="button" onclick="switchTab('manual')" id="tab-manual"
-                        class="py-4 px-1 border-b-2 font-medium text-sm tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                    Select Individual Cattle
-                </button>
-            </nav>
-        </div>
-        
-        <!-- Pen Selection Tab -->
-        <div id="pen-selection" class="tab-content">
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Select Pen(s)</label>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
-                    {% for pen in pens %}
-                    <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input type="checkbox" name="pen_ids" value="{{ pen._id }}" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
-                        <div class="flex-1">
-                            <div class="font-semibold text-gray-900">Pen {{ pen.pen_number }}</div>
-                            <div class="text-sm text-gray-500">{{ pen.cattle_count }} cattle</div>
-                        </div>
-                    </label>
-                    {% endfor %}
-                    {% if not pens %}
-                    <p class="text-gray-500 col-span-full">No pens available. Create pens first.</p>
-                    {% endif %}
+        <form method="POST" class="space-y-8">
+            <input type="hidden" name="selection_method" id="selection_method" value="pen">
+            
+            <!-- Selection Method Tabs -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Select Cattle</h2>
+                
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="-mb-px flex space-x-8">
+                        <button type="button" onclick="switchTab('pen')" id="tab-pen" 
+                                class="py-4 px-1 border-b-2 font-medium text-sm tab-button active">
+                            Select by Pen
+                        </button>
+                        <button type="button" onclick="switchTab('manual')" id="tab-manual"
+                                class="py-4 px-1 border-b-2 font-medium text-sm tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Select Individual Cattle
+                        </button>
+                    </nav>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Manual Selection Tab -->
-        <div id="manual-selection" class="tab-content hidden">
-            <div class="mb-4">
-                <input type="text" id="cattle-search" placeholder="Search cattle by ID..." 
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
-                       onkeyup="filterCattle()">
-                <div class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                    <input type="checkbox" id="select-all" onclick="toggleAllCattle()" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
-                                </th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cattle ID</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">LF Tag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pen</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="cattle-list">
-                            {% for c in cattle %}
-                            <tr class="cattle-row" data-cattle-id="{{ c.cattle_id|lower }}">
-                                <td class="px-4 py-3">
-                                    <input type="checkbox" name="cattle_ids" value="{{ c._id }}" class="cattle-checkbox rounded border-gray-300 text-teal-600 focus:ring-teal-500">
-                                </td>
-                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ c.cattle_id }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-500">{{ c.lf_tag or '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-500">
-                                    {% if c.pen_id %}
-                                    Pen {{ c.pen_id }}
-                                    {% else %}
-                                    -
-                                    {% endif %}
-                                </td>
-                            </tr>
+                
+                <!-- Pen Selection Tab -->
+                <div id="pen-selection" class="tab-content">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Pen(s)</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                            {% for pen in pens %}
+                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="pen_ids" value="{{ pen._id }}" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900">Pen {{ pen.pen_number }}</div>
+                                    <div class="text-sm text-gray-500">{{ pen.cattle_count }} cattle</div>
+                                </div>
+                            </label>
                             {% endfor %}
-                            {% if not cattle %}
-                            <tr>
-                                <td colspan="4" class="px-4 py-3 text-center text-gray-500">No cattle available.</td>
-                            </tr>
+                            {% if not pens %}
+                            <p class="text-gray-500 col-span-full">No pens available. Create pens first.</p>
                             {% endif %}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Manual Selection Tab -->
+                <div id="manual-selection" class="tab-content hidden">
+                    <div class="mb-4">
+                        <input type="text" id="cattle-search" placeholder="Search cattle by ID..." 
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
+                               onkeyup="filterCattle()">
+                        <div class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <input type="checkbox" id="select-all" onclick="toggleAllCattle()" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                        </th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cattle ID</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">LF Tag</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pen</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="cattle-list">
+                                    {% for c in cattle %}
+                                    <tr class="cattle-row" data-cattle-id="{{ c.cattle_id|lower }}">
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" name="cattle_ids" value="{{ c._id }}" class="cattle-checkbox rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                        </td>
+                                        <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ c.cattle_id }}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">{{ c.lf_tag or '-' }}</td>
+                                        <td class="px-4 py-3 text-sm text-gray-500">
+                                            {% if c.pen_id %}
+                                            Pen {{ c.pen_id }}
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if not cattle %}
+                                    <tr>
+                                        <td colspan="4" class="px-4 py-3 text-center text-gray-500">No cattle available.</td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Template Selection -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Manifest Information</h2>
-        
-        <div class="mb-6">
-            <label for="template_id" class="block text-sm font-medium text-gray-700 mb-2">
-                Use Template (Optional)
-            </label>
-            <select id="template_id" name="template_id" onchange="toggleManualFields()"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                <option value="none">No Template - Enter Manually</option>
-                {% for template in templates %}
-                <option value="{{ template._id }}">{{ template.name }}{% if template.is_default %} (Default){% endif %}</option>
-                {% endfor %}
-            </select>
-            <div class="mt-2">
-                <a href="{{ url_for('feedlot.list_manifest_templates', feedlot_id=feedlot._id) }}" 
-                   class="text-sm text-teal-600 hover:text-teal-800">Manage Templates</a>
-            </div>
-        </div>
-        
-        <!-- Manual Entry Fields (shown when no template selected) -->
-        <div id="manual-fields">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                    <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                    <input type="date" id="date" name="date"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                </div>
-                <div>
-                    <label for="purpose" class="block text-sm font-medium text-gray-700 mb-2">Purpose</label>
-                    <select id="purpose" name="purpose"
+            
+            <!-- Template Selection -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Manifest Information</h2>
+                
+                <div class="mb-6">
+                    <label for="template_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        Use Template (Optional)
+                    </label>
+                    <select id="template_id" name="template_id" onchange="toggleManualFields()"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                        <option value="transport_only">Transport Only</option>
-                        <option value="transport_for_sale_owner">Transport for Sale - By Owner</option>
-                        <option value="transport_for_sale_dealer">Transport for Sale - By Dealer</option>
-                        <option value="inspection_only">Inspection Only</option>
+                        <option value="none">No Template - Enter Manually</option>
+                        {% for template in templates %}
+                        <option value="{{ template._id }}">{{ template.name }}{% if template.is_default %} (Default){% endif %}</option>
+                        {% endfor %}
                     </select>
+                    <div class="mt-2">
+                        <a href="{{ url_for('feedlot.list_manifest_templates', feedlot_id=feedlot._id) }}" 
+                           class="text-sm text-teal-600 hover:text-teal-800">Manage Templates</a>
+                    </div>
+                </div>
+                
+                <!-- Manual Entry Fields (shown when no template selected) -->
+                <div id="manual-fields">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                            <input type="date" id="date" name="date"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="purpose" class="block text-sm font-medium text-gray-700 mb-2">Purpose</label>
+                            <select id="purpose" name="purpose"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                <option value="transport_only">Transport Only</option>
+                                <option value="transport_for_sale_owner">Transport for Sale - By Owner</option>
+                                <option value="transport_for_sale_dealer">Transport for Sale - By Dealer</option>
+                                <option value="inspection_only">Inspection Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Owner/Dealer Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="owner_name" class="block text-sm font-medium text-gray-700 mb-2">Owner Name</label>
+                                <input type="text" id="owner_name" name="owner_name"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="owner_phone" class="block text-sm font-medium text-gray-700 mb-2">Owner Phone</label>
+                                <input type="text" id="owner_phone" name="owner_phone"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="owner_address" class="block text-sm font-medium text-gray-700 mb-2">Owner Address</label>
+                                <textarea id="owner_address" name="owner_address" rows="2"
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Transportation Details</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="location_before" class="block text-sm font-medium text-gray-700 mb-2">Location Before Transport</label>
+                                <input type="text" id="location_before" name="location_before" value="{{ feedlot.name }}"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="premises_id_before" class="block text-sm font-medium text-gray-700 mb-2">Premises ID (Before)</label>
+                                <input type="text" id="premises_id_before" name="premises_id_before"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="destination_name" class="block text-sm font-medium text-gray-700 mb-2">Destination Name</label>
+                                <input type="text" id="destination_name" name="destination_name"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="destination_address" class="block text-sm font-medium text-gray-700 mb-2">Destination Address</label>
+                                <input type="text" id="destination_address" name="destination_address"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="premises_id_destination" class="block text-sm font-medium text-gray-700 mb-2">Premises ID (Destination)</label>
+                                <input type="text" id="premises_id_destination" name="premises_id_destination"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Transporter Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="transporter_name" class="block text-sm font-medium text-gray-700 mb-2">Transporter Name</label>
+                                <input type="text" id="transporter_name" name="transporter_name"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="transporter_phone" class="block text-sm font-medium text-gray-700 mb-2">Transporter Phone</label>
+                                <input type="text" id="transporter_phone" name="transporter_phone"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label for="transporter_trailer" class="block text-sm font-medium text-gray-700 mb-2">Trailer/Conveyance Number</label>
+                                <input type="text" id="transporter_trailer" name="transporter_trailer"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Owner/Dealer Information</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="owner_name" class="block text-sm font-medium text-gray-700 mb-2">Owner Name</label>
-                        <input type="text" id="owner_name" name="owner_name"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label for="owner_phone" class="block text-sm font-medium text-gray-700 mb-2">Owner Phone</label>
-                        <input type="text" id="owner_phone" name="owner_phone"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="owner_address" class="block text-sm font-medium text-gray-700 mb-2">Owner Address</label>
-                        <textarea id="owner_address" name="owner_address" rows="2"
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"></textarea>
-                    </div>
+            <!-- Export Format -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Export Format</h2>
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="export_format" value="pdf" checked class="mr-2">
+                        <span>PDF</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="export_format" value="html" class="mr-2">
+                        <span>HTML (Printable)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="export_format" value="both" class="mr-2">
+                        <span>Both</span>
+                    </label>
                 </div>
             </div>
             
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Transportation Details</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="location_before" class="block text-sm font-medium text-gray-700 mb-2">Location Before Transport</label>
-                        <input type="text" id="location_before" name="location_before" value="{{ feedlot.name }}"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label for="premises_id_before" class="block text-sm font-medium text-gray-700 mb-2">Premises ID (Before)</label>
-                        <input type="text" id="premises_id_before" name="premises_id_before"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label for="destination_name" class="block text-sm font-medium text-gray-700 mb-2">Destination Name</label>
-                        <input type="text" id="destination_name" name="destination_name"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label for="destination_address" class="block text-sm font-medium text-gray-700 mb-2">Destination Address</label>
-                        <input type="text" id="destination_address" name="destination_address"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label for="premises_id_destination" class="block text-sm font-medium text-gray-700 mb-2">Premises ID (Destination)</label>
-                        <input type="text" id="premises_id_destination" name="premises_id_destination"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                </div>
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-4">
+                <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" 
+                   class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </a>
+                <button type="submit" style="background-color: #2D8B8B;" 
+                        class="hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Generate Manifest
+                </button>
             </div>
-            
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Transporter Information</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="transporter_name" class="block text-sm font-medium text-gray-700 mb-2">Transporter Name</label>
-                        <input type="text" id="transporter_name" name="transporter_name"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label for="transporter_phone" class="block text-sm font-medium text-gray-700 mb-2">Transporter Phone</label>
-                        <input type="text" id="transporter_phone" name="transporter_phone"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                    <div>
-                        <label for="transporter_trailer" class="block text-sm font-medium text-gray-700 mb-2">Trailer/Conveyance Number</label>
-                        <input type="text" id="transporter_trailer" name="transporter_trailer"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-                </div>
-            </div>
+        </form>
+    </div>
+    {% block actions_sidebar %}
+    <div id="actions-sidebar" data-testid="export-manifest-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
+        <div class="space-y-1">
+            {% block actions_items %}
+            <a href="{{ url_for('feedlot.list_manifest_history', feedlot_id=feedlot._id) }}" 
+               data-testid="manifest-history-action" 
+               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manifest History</a>
+            <a href="{{ url_for('feedlot.list_manifest_templates', feedlot_id=feedlot._id) }}" 
+               data-testid="manage-templates-action" 
+               class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Templates</a>
+            {% endblock %}
         </div>
     </div>
-    
-    <!-- Export Format -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">Export Format</h2>
-        <div class="space-y-2">
-            <label class="flex items-center">
-                <input type="radio" name="export_format" value="pdf" checked class="mr-2">
-                <span>PDF</span>
-            </label>
-            <label class="flex items-center">
-                <input type="radio" name="export_format" value="html" class="mr-2">
-                <span>HTML (Printable)</span>
-            </label>
-            <label class="flex items-center">
-                <input type="radio" name="export_format" value="both" class="mr-2">
-                <span>Both</span>
-            </label>
-        </div>
-    </div>
-    
-    <!-- Submit Button -->
-    <div class="flex justify-end space-x-4">
-        <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" 
-           class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
-            Cancel
-        </a>
-        <button type="submit" style="background-color: #2D8B8B;" 
-                class="hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
-            Generate Manifest
-        </button>
-    </div>
-</form>
+    {% endblock %}
+</div>
 
 <script>
 function switchTab(tab) {
