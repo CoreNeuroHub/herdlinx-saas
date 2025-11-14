@@ -216,6 +216,10 @@ def generate_breadcrumbs(current_feedlot=None, request_obj=None):
             
             if 'export' in path:
                 breadcrumbs.append({'label': 'Export', 'url': None})
+            elif 'history' in path:
+                breadcrumbs.append({'label': 'History', 'url': url_for('feedlot.list_manifest_history', feedlot_id=feedlot_id)})
+                if 'view' in path:
+                    breadcrumbs.append({'label': 'View', 'url': None})
             elif 'templates' in path:
                 breadcrumbs.append({'label': 'Templates', 'url': url_for('feedlot.list_manifest_templates', feedlot_id=feedlot_id)})
                 if 'create' in path:
