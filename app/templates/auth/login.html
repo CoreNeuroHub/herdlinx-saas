@@ -4,6 +4,17 @@
 
 {% block nav_items %}{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* Hide navigation slider elements on login page */
+    #menu-overlay,
+    #menu-arrow-btn,
+    #menu-panel {
+        display: none !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-md mx-auto mt-12">
     <div class="bg-white rounded-lg shadow-lg p-8">
