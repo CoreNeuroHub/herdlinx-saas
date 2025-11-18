@@ -226,7 +226,6 @@
 
 <!-- Weight History and Notes History Side by Side -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-    {% if cattle.get('weight_history') and cattle.weight_history|length > 1 %}
     <!-- Weight History Card -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
@@ -237,6 +236,7 @@
                 Weight History
             </h2>
         </div>
+        {% if cattle.get('weight_history') and cattle.weight_history|length > 1 %}
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
@@ -262,8 +262,12 @@
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="p-6 text-center text-gray-500">
+            <p>No weight history recorded yet.</p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 
     {% if cattle.get('notes_history') and cattle.notes_history|length > 0 %}
     <!-- Notes Card -->
@@ -317,57 +321,60 @@
         </div>
     </div>
     {% endif %}
+</div>
 
+<!-- Tag Pair History Card -->
+<div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+    <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+        <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+            <svg class="w-7 h-7 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            Tag Pair History
+        </h2>
+    </div>
     {% if cattle.get('tag_pair_history') and cattle.tag_pair_history|length > 0 %}
-    <!-- Tag Pair History Card -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
-        <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-            <h2 class="text-2xl font-bold text-gray-900 flex items-center">
-                <svg class="w-7 h-7 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                </svg>
-                Tag Pair History
-            </h2>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">LF Tag</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">UHF Tag</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Paired At</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Unpaired At</th>
-                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Updated By</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for record in cattle.tag_pair_history|reverse %}
-                    <tr class="hover:bg-gray-50 transition-colors duration-150">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-medium text-gray-900">{{ record.lf_tag or '-' }}</span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-medium text-gray-900">{{ record.uhf_tag or '-' }}</span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {{ record.paired_at | strftime('%Y-%m-%d %H:%M') if record.paired_at else '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {{ record.unpaired_at | strftime('%Y-%m-%d %H:%M') if record.unpaired_at else '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {{ record.updated_by or 'system' }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">LF Tag</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">UHF Tag</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Paired At</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Unpaired At</th>
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Updated By</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for record in cattle.tag_pair_history|reverse %}
+                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-medium text-gray-900">{{ record.lf_tag or '-' }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-medium text-gray-900">{{ record.uhf_tag or '-' }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {{ record.paired_at | strftime('%Y-%m-%d %H:%M') if record.paired_at else '-' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {{ record.unpaired_at | strftime('%Y-%m-%d %H:%M') if record.unpaired_at else '-' }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {{ record.updated_by or 'system' }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="p-6 text-center text-gray-500">
+        <p>No tag pair history recorded yet.</p>
     </div>
     {% endif %}
 </div>
 
-    {% if cattle.get('audit_log') and cattle.audit_log|length > 0 %}
     <!-- Audit Log Card - Full Width -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8 w-full">
         <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
@@ -378,6 +385,7 @@
                 Audit Log
             </h2>
         </div>
+        {% if cattle.get('audit_log') and cattle.audit_log|length > 0 %}
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200" data-testid="cattle-audit-log-table">
                 <thead class="bg-gray-50">
@@ -420,8 +428,12 @@
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="p-6 text-center text-gray-500">
+            <p>No audit log entries recorded yet.</p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="cattle-view-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
