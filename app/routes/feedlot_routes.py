@@ -333,9 +333,10 @@ def create_cattle(feedlot_id):
                                  batches=batches, 
                                  pens=pens)
         
+        created_by = session.get('username', 'user')
         cattle_record_id = Cattle.create_cattle(feedlot_id, batch_id, cattle_id, sex, 
                                                weight, health_status, lf_tag, uhf_tag, pen_id, notes,
-                                               color, breed, brand_drawings, brand_locations, other_marks)
+                                               color, breed, brand_drawings, brand_locations, other_marks, created_by=created_by)
         flash('Cattle record created successfully.', 'success')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
@@ -379,6 +380,7 @@ def move_cattle(feedlot_id, cattle_id):
     
     if request.method == 'POST':
         new_pen_id = request.form.get('pen_id')
+        moved_by = session.get('username', 'user')
         
         if new_pen_id and not Pen.is_capacity_available(new_pen_id):
             flash('Selected pen is at full capacity.', 'error')
@@ -388,7 +390,7 @@ def move_cattle(feedlot_id, cattle_id):
                                  cattle=cattle, 
                                  pens=pens)
         
-        Cattle.move_cattle(cattle_id, new_pen_id)
+        Cattle.move_cattle(cattle_id, new_pen_id, moved_by)
         flash('Cattle moved successfully.', 'success')
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     

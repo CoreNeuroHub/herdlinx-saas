@@ -224,7 +224,7 @@
     </div>
 </div>
 
-<!-- Weight History and Notes Side by Side -->
+<!-- Weight History and Tag Pair History Side by Side -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
     {% if cattle.get('weight_history') and cattle.weight_history|length > 1 %}
     <!-- Weight History Card -->
@@ -313,19 +313,56 @@
     </div>
     {% endif %}
 
-    {% if cattle.notes %}
-    <!-- Notes Card -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+    {% if cattle.get('audit_log') and cattle.audit_log|length > 0 %}
+    <!-- Audit Log Card -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
         <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
             <h2 class="text-2xl font-bold text-gray-900 flex items-center">
                 <svg class="w-7 h-7 mr-3" style="color: #2D8B8B;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
-                Notes
+                Audit Log
             </h2>
         </div>
-        <div class="p-6">
-            <p class="text-gray-700 text-lg leading-relaxed">{{ cattle.notes }}</p>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200" data-testid="cattle-audit-log-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Activity</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Description</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Performed By</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-900">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for entry in cattle.audit_log|reverse %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150" data-testid="audit-log-entry-{{ loop.index }}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold 
+                                {% if entry.activity_type == 'created' %}bg-blue-100 text-blue-800
+                                {% elif entry.activity_type == 'imported' %}bg-green-100 text-green-800
+                                {% elif entry.activity_type == 'tag_repair' or entry.activity_type == 'tag_pairing' %}bg-purple-100 text-purple-800
+                                {% elif entry.activity_type == 'weight_recorded' %}bg-yellow-100 text-yellow-800
+                                {% elif entry.activity_type == 'pen_moved' %}bg-indigo-100 text-indigo-800
+                                {% elif entry.activity_type == 'information_updated' %}bg-orange-100 text-orange-800
+                                {% elif entry.activity_type == 'removed' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ entry.activity_type|replace('_', ' ')|title }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {{ entry.description }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ entry.performed_by }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ entry.timestamp | strftime('%Y-%m-%d %H:%M') }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
     {% endif %}

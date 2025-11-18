@@ -394,7 +394,7 @@ def sync_induction_events():
                     # Update existing cattle (induction already happened)
                     # If batch has a pen and cattle doesn't, assign it
                     if pen_id_for_cattle and not existing_cattle.get('pen_id'):
-                        Cattle.update_cattle(str(existing_cattle['_id']), {'pen_id': ObjectId(pen_id_for_cattle)})
+                        Cattle.update_cattle(str(existing_cattle['_id']), {'pen_id': ObjectId(pen_id_for_cattle)}, updated_by='api')
                     records_updated += 1
                 else:
                     # Create new cattle record
@@ -428,11 +428,21 @@ def sync_induction_events():
                         lf_tag=None,
                         uhf_tag=None,
                         pen_id=pen_id_for_cattle,
-                        notes=f'Imported from office app, livestock_id: {livestock_id}'
+                        notes=None
                     )
                     
                     # Update induction_date
-                    Cattle.update_cattle(cattle_record_id, {'induction_date': induction_date})
+                    Cattle.update_cattle(cattle_record_id, {'induction_date': induction_date}, updated_by='api')
+                    
+                    # Add audit log entry for import
+                    Cattle.add_audit_log_entry(
+                        cattle_record_id,
+                        'imported',
+                        f'Imported from office app (livestock_id: {livestock_id})',
+                        'api',
+                        {'livestock_id': livestock_id, 'induction_date': induction_date.isoformat() if isinstance(induction_date, datetime) else str(induction_date)}
+                    )
+                    
                     records_created += 1
                     
             except Exception as e:
@@ -521,7 +531,7 @@ def sync_pairing_events():
                 
                 cattle_record_id = str(existing_cattle['_id'])
                 
-                # Update tags
+                # Update tags (this will add audit log entry automatically)
                 Cattle.update_tag_pair(cattle_record_id, lf_id, epc, updated_by='api')
                 
                 # Update weight if provided
@@ -739,18 +749,8 @@ def sync_repair_events():
                 # If new_epc is provided, use it; otherwise keep current
                 final_epc = new_epc if new_epc else existing_cattle.get('uhf_tag')
                 
-                # Update tags
-                Cattle.update_tag_pair(cattle_record_id, final_lf_id, final_epc, updated_by='api')
-                
-                # Update notes with repair reason if provided
-                if reason:
-                    current_notes = existing_cattle.get('notes', '') or ''
-                    repair_note = f'Tag repair: {reason}'
-                    if current_notes:
-                        new_notes = f'{current_notes}\n{repair_note}'
-                    else:
-                        new_notes = repair_note
-                    Cattle.update_cattle(cattle_record_id, {'notes': new_notes})
+                # Update tags (this will add audit log entry automatically)
+                Cattle.update_tag_pair(cattle_record_id, final_lf_id, final_epc, updated_by='api', reason=reason)
                 
                 records_updated += 1
                     

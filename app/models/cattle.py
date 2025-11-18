@@ -1,12 +1,13 @@
 from datetime import datetime
 from bson import ObjectId
 from app import db
+from app.models.pen import Pen
 
 class Cattle:
     @staticmethod
     def create_cattle(feedlot_id, batch_id, cattle_id, sex, weight, 
                      health_status, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
-                     color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None):
+                     color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None, created_by='system'):
         """Create a new cattle record"""
         cattle_data = {
             'feedlot_id': ObjectId(feedlot_id),
@@ -31,13 +32,19 @@ class Cattle:
             'weight_history': [{
                 'weight': weight,
                 'recorded_at': datetime.utcnow(),
-                'recorded_by': 'system'  # This could be enhanced to track who recorded the weight
+                'recorded_by': created_by
             }],
-            'tag_pair_history': []  # Track previous LF/UHF tag pairs
+            'tag_pair_history': [],  # Track previous LF/UHF tag pairs
+            'audit_log': []  # Track all cattle activities
         }
         
         result = db.cattle.insert_one(cattle_data)
-        return str(result.inserted_id)
+        cattle_record_id = str(result.inserted_id)
+        
+        # Add initial audit log entry for creation
+        Cattle.add_audit_log_entry(cattle_record_id, 'created', f'Cattle record created (ID: {cattle_id})', created_by)
+        
+        return cattle_record_id
     
     @staticmethod
     def find_by_id(cattle_record_id):
@@ -68,27 +75,97 @@ class Cattle:
         return list(db.cattle.find({'pen_id': ObjectId(pen_id), 'status': 'active'}))
     
     @staticmethod
-    def update_cattle(cattle_record_id, update_data):
+    def update_cattle(cattle_record_id, update_data, updated_by='system'):
         """Update cattle information"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        if not cattle:
+            return
+        
+        # Track changes for audit log
+        changes = []
+        old_values = {}
+        new_values = {}
+        
+        # Fields to track (excluding internal fields)
+        trackable_fields = ['sex', 'health_status', 'color', 'breed', 'brand_drawings', 
+                          'brand_locations', 'other_marks', 'notes', 'induction_date', 'pen_id']
+        
+        for field in trackable_fields:
+            if field in update_data:
+                old_value = cattle.get(field)
+                new_value = update_data[field]
+                
+                # Skip if value hasn't actually changed
+                if old_value != new_value:
+                    old_values[field] = old_value
+                    new_values[field] = new_value
+                    
+                    # Format change description
+                    if field == 'pen_id':
+                        old_pen = Pen.find_by_id(old_value) if old_value else None
+                        new_pen = Pen.find_by_id(new_value) if new_value else None
+                        old_name = old_pen.get('pen_number', str(old_value)) if old_pen else None
+                        new_name = new_pen.get('pen_number', str(new_value)) if new_pen else None
+                        changes.append(f"{field}: {old_name or 'none'} → {new_name or 'none'}")
+                    elif field == 'induction_date':
+                        old_str = old_value.strftime('%Y-%m-%d') if isinstance(old_value, datetime) else str(old_value)
+                        new_str = new_value.strftime('%Y-%m-%d') if isinstance(new_value, datetime) else str(new_value)
+                        changes.append(f"{field}: {old_str} → {new_str}")
+                    else:
+                        changes.append(f"{field}: {old_value or 'none'} → {new_value or 'none'}")
+        
         update_data['updated_at'] = datetime.utcnow()
         db.cattle.update_one(
             {'_id': ObjectId(cattle_record_id)},
             {'$set': update_data}
         )
+        
+        # Add audit log entry if there were changes
+        if changes:
+            description = f'Cattle information updated: {", ".join(changes)}'
+            Cattle.add_audit_log_entry(
+                cattle_record_id,
+                'information_updated',
+                description,
+                updated_by,
+                {'old_values': old_values, 'new_values': new_values}
+            )
     
     @staticmethod
-    def move_cattle(cattle_record_id, new_pen_id):
+    def move_cattle(cattle_record_id, new_pen_id, moved_by='system'):
         """Move cattle to a different pen"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        old_pen_id = cattle.get('pen_id') if cattle else None
+        
+        # Get pen names for audit log
+        old_pen = Pen.find_by_id(old_pen_id) if old_pen_id else None
+        new_pen = Pen.find_by_id(new_pen_id) if new_pen_id else None
+        
+        old_pen_name = old_pen.get('pen_number', str(old_pen_id)) if old_pen else None
+        new_pen_name = new_pen.get('pen_number', str(new_pen_id)) if new_pen else None
+        
         db.cattle.update_one(
             {'_id': ObjectId(cattle_record_id)},
             {'$set': {
-                'pen_id': ObjectId(new_pen_id),
+                'pen_id': ObjectId(new_pen_id) if new_pen_id else None,
                 'updated_at': datetime.utcnow()
             }}
         )
+        
+        # Add audit log entry for pen movement
+        description = f'Moved to pen {new_pen_name}' if new_pen_name else 'Removed from pen'
+        if old_pen_name:
+            description = f'Moved from pen {old_pen_name} to pen {new_pen_name}' if new_pen_name else f'Removed from pen {old_pen_name}'
+        Cattle.add_audit_log_entry(
+            cattle_record_id, 
+            'pen_moved', 
+            description, 
+            moved_by,
+            {'old_pen_id': str(old_pen_id) if old_pen_id else None, 'new_pen_id': str(new_pen_id) if new_pen_id else None, 'old_pen_name': old_pen_name, 'new_pen_name': new_pen_name}
+        )
     
     @staticmethod
-    def remove_cattle(cattle_record_id):
+    def remove_cattle(cattle_record_id, removed_by='system'):
         """Remove cattle (mark as inactive)"""
         db.cattle.update_one(
             {'_id': ObjectId(cattle_record_id)},
@@ -97,10 +174,22 @@ class Cattle:
                 'updated_at': datetime.utcnow()
             }}
         )
+        
+        # Add audit log entry for removal
+        Cattle.add_audit_log_entry(
+            cattle_record_id,
+            'removed',
+            'Cattle record marked as removed',
+            removed_by,
+            {'status': 'removed'}
+        )
     
     @staticmethod
     def add_weight_record(cattle_record_id, weight, recorded_by='system'):
         """Add a new weight record to the cattle's weight history"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        previous_weight = cattle.get('weight') if cattle else None
+        
         weight_record = {
             'weight': weight,
             'recorded_at': datetime.utcnow(),
@@ -116,6 +205,18 @@ class Cattle:
                 },
                 '$push': {'weight_history': weight_record}
             }
+        )
+        
+        # Add audit log entry for weight addition
+        description = f'Weight recorded: {weight} kg'
+        if previous_weight:
+            description += f' (previous: {previous_weight} kg)'
+        Cattle.add_audit_log_entry(
+            cattle_record_id, 
+            'weight_recorded', 
+            description, 
+            recorded_by,
+            {'weight': weight, 'previous_weight': previous_weight}
         )
     
     @staticmethod
@@ -187,7 +288,7 @@ class Cattle:
         return list(db.cattle.find(query).sort(sort_criteria))
     
     @staticmethod
-    def update_tag_pair(cattle_record_id, new_lf_tag, new_uhf_tag, updated_by='system'):
+    def update_tag_pair(cattle_record_id, new_lf_tag, new_uhf_tag, updated_by='system', reason=None):
         """Update LF and UHF tag pair, saving previous pair to history"""
         cattle = Cattle.find_by_id(cattle_record_id)
         if not cattle:
@@ -234,6 +335,18 @@ class Cattle:
                         '$push': {'tag_pair_history': tag_pair_record}
                     }
                 )
+                
+                # Add audit log entry for tag re-pairing
+                description = f'Tags re-paired: LF {current_lf_tag or "none"} → {new_lf_tag or "none"}, UHF {current_uhf_tag or "none"} → {new_uhf_tag or "none"}'
+                if reason:
+                    description += f' (Reason: {reason})'
+                Cattle.add_audit_log_entry(
+                    cattle_record_id, 
+                    'tag_repair', 
+                    description, 
+                    updated_by,
+                    {'old_lf_tag': current_lf_tag, 'new_lf_tag': new_lf_tag, 'old_uhf_tag': current_uhf_tag, 'new_uhf_tag': new_uhf_tag, 'reason': reason}
+                )
             else:
                 # No previous tags, just update (this is initial pairing)
                 db.cattle.update_one(
@@ -246,6 +359,16 @@ class Cattle:
                         }
                     }
                 )
+                
+                # Add audit log entry for initial pairing
+                description = f'Tags paired: LF {new_lf_tag or "none"}, UHF {new_uhf_tag or "none"}'
+                Cattle.add_audit_log_entry(
+                    cattle_record_id, 
+                    'tag_pairing', 
+                    description, 
+                    updated_by,
+                    {'lf_tag': new_lf_tag, 'uhf_tag': new_uhf_tag}
+                )
         
         return True
     
@@ -257,4 +380,29 @@ class Cattle:
             return []
         
         return cattle.get('tag_pair_history', [])
+    
+    @staticmethod
+    def add_audit_log_entry(cattle_record_id, activity_type, description, performed_by='system', details=None):
+        """Add an entry to the cattle audit log"""
+        audit_entry = {
+            'activity_type': activity_type,
+            'description': description,
+            'performed_by': performed_by,
+            'timestamp': datetime.utcnow(),
+            'details': details or {}
+        }
+        
+        db.cattle.update_one(
+            {'_id': ObjectId(cattle_record_id)},
+            {'$push': {'audit_log': audit_entry}}
+        )
+    
+    @staticmethod
+    def get_audit_log(cattle_record_id):
+        """Get the complete audit log for a cattle record"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        if not cattle:
+            return []
+        
+        return cattle.get('audit_log', [])
 
