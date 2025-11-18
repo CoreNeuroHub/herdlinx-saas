@@ -38,10 +38,13 @@ def dashboard(feedlot_id):
     # Get recent batches
     recent_batches = Batch.find_by_feedlot(feedlot_id)[-5:]
     
+    user_type = session.get('user_type')
+    
     return render_template('feedlot/dashboard.html', 
                          feedlot=feedlot, 
                          statistics=statistics,
-                         recent_batches=recent_batches)
+                         recent_batches=recent_batches,
+                         user_type=user_type)
 
 # Pen Management Routes
 @feedlot_bp.route('/feedlot/<feedlot_id>/pens')

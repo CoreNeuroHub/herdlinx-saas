@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
 from bson import ObjectId
 from datetime import datetime
 from app.models.feedlot import Feedlot
@@ -8,8 +8,37 @@ from app.routes.auth_routes import login_required, super_admin_required, admin_a
 from app import db
 import bcrypt
 import re
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 top_level_bp = Blueprint('top_level', __name__)
+
+def allowed_file(filename):
+    """Check if file extension is allowed for branding files"""
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def can_edit_feedlot(feedlot_id, user_type, user_feedlot_ids):
+    """Check if user can edit a feedlot
+    
+    Args:
+        feedlot_id: Feedlot ID to check
+        user_type: User type from session
+        user_feedlot_ids: List of feedlot IDs user has access to
+    
+    Returns:
+        bool: True if user can edit, False otherwise
+    """
+    # Super Owner and Super Admin can edit any feedlot
+    if user_type in ['super_owner', 'super_admin']:
+        return True
+    
+    # Business Owner can only edit their assigned feedlots
+    if user_type == 'business_owner':
+        return str(feedlot_id) in [str(fid) for fid in user_feedlot_ids]
+    
+    return False
 
 @top_level_bp.route('/')
 @top_level_bp.route('/dashboard')
@@ -217,7 +246,7 @@ def view_feedlot(feedlot_id):
 
 @top_level_bp.route('/feedlot/<feedlot_id>/edit', methods=['GET', 'POST'])
 @login_required
-@super_admin_required
+@admin_access_required
 def edit_feedlot(feedlot_id):
     """Edit feedlot details"""
     feedlot = Feedlot.find_by_id(feedlot_id)
@@ -225,9 +254,18 @@ def edit_feedlot(feedlot_id):
         flash('Feedlot not found.', 'error')
         return redirect(url_for('top_level.dashboard'))
     
-    # Get all business owners for the dropdown
-    business_owners = User.find_business_owners()
+    # Check access control
     user_type = session.get('user_type')
+    user_feedlot_ids = session.get('feedlot_ids', [])
+    
+    if not can_edit_feedlot(feedlot_id, user_type, user_feedlot_ids):
+        flash('Access denied. You do not have permission to edit this feedlot.', 'error')
+        return redirect(url_for('top_level.dashboard'))
+    
+    # Get all business owners for the dropdown (only for super admin/owner)
+    business_owners = []
+    if user_type in ['super_owner', 'super_admin']:
+        business_owners = User.find_business_owners()
     
     if request.method == 'POST':
         feedlot_code = request.form.get('feedlot_code', '').strip()
@@ -253,31 +291,169 @@ def edit_feedlot(feedlot_id):
             }
         }
         
-        # Handle owner assignment
-        owner_id = request.form.get('owner_id', '').strip()
-        if owner_id:
-            # Validate that the selected user is a business owner
-            owner = User.find_by_id(owner_id)
-            if owner and owner.get('user_type') == 'business_owner':
-                update_data['owner_id'] = ObjectId(owner_id)
+        # Handle owner assignment (only for super admin/owner)
+        if user_type in ['super_owner', 'super_admin']:
+            owner_id = request.form.get('owner_id', '').strip()
+            if owner_id:
+                # Validate that the selected user is a business owner
+                owner = User.find_by_id(owner_id)
+                if owner and owner.get('user_type') == 'business_owner':
+                    update_data['owner_id'] = ObjectId(owner_id)
+                else:
+                    flash('Selected user must be a business owner.', 'error')
+                    return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners, user_type=user_type)
             else:
-                flash('Selected user must be a business owner.', 'error')
-                return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners, user_type=user_type)
+                # If owner_id was cleared (empty), remove the field from database
+                db.feedlots.update_one(
+                    {'_id': ObjectId(feedlot_id)},
+                    {'$unset': {'owner_id': ''}}
+                )
         
         # Update feedlot with all fields
         Feedlot.update_feedlot(feedlot_id, update_data)
-        
-        # If owner_id was cleared (empty), remove the field from database
-        if not owner_id:
-            db.feedlots.update_one(
-                {'_id': ObjectId(feedlot_id)},
-                {'$unset': {'owner_id': ''}}
-            )
         
         flash('Feedlot updated successfully.', 'success')
         return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
     
     return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners, user_type=user_type)
+
+@top_level_bp.route('/feedlot/<feedlot_id>/branding', methods=['GET', 'POST'])
+@login_required
+@admin_access_required
+def feedlot_branding(feedlot_id):
+    """Manage feedlot branding"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('top_level.dashboard'))
+    
+    # Check access control
+    user_type = session.get('user_type')
+    user_feedlot_ids = session.get('feedlot_ids', [])
+    
+    if not can_edit_feedlot(feedlot_id, user_type, user_feedlot_ids):
+        flash('Access denied. You do not have permission to edit this feedlot.', 'error')
+        return redirect(url_for('top_level.dashboard'))
+    
+    # Get existing branding
+    existing_branding = Feedlot.get_branding(feedlot_id) or {}
+    
+    if request.method == 'POST':
+        branding_data = {}
+        
+        # Handle logo upload
+        if 'logo' in request.files:
+            logo_file = request.files['logo']
+            if logo_file and logo_file.filename:
+                if not allowed_file(logo_file.filename):
+                    flash('Invalid logo file type. Please upload PNG, JPG, JPEG, GIF, WEBP, or SVG.', 'error')
+                    return render_template('top_level/feedlot_branding.html', feedlot=feedlot, branding=existing_branding, user_type=user_type)
+                
+                # Validate file size (max 5MB)
+                logo_file.seek(0, os.SEEK_END)
+                file_size = logo_file.tell()
+                logo_file.seek(0)
+                if file_size > 5 * 1024 * 1024:  # 5MB
+                    flash('Logo file size too large. Please upload an image smaller than 5MB.', 'error')
+                    return render_template('top_level/feedlot_branding.html', feedlot=feedlot, branding=existing_branding, user_type=user_type)
+                
+                # Delete old logo if exists
+                Feedlot.delete_branding_assets(feedlot_id, 'logo')
+                
+                # Generate unique filename
+                file_ext = logo_file.filename.rsplit('.', 1)[1].lower()
+                filename = f"{feedlot_id}_{uuid.uuid4().hex[:8]}.{file_ext}"
+                filename = secure_filename(filename)
+                
+                # Create logos directory if it doesn't exist
+                logos_dir = os.path.join(current_app.static_folder, 'feedlot_branding', 'logos')
+                os.makedirs(logos_dir, exist_ok=True)
+                
+                # Save logo file
+                logo_path = os.path.join(logos_dir, filename)
+                logo_file.save(logo_path)
+                
+                # Store relative path
+                branding_data['logo_path'] = f'feedlot_branding/logos/{filename}'
+        
+        # Handle favicon upload
+        if 'favicon' in request.files:
+            favicon_file = request.files['favicon']
+            if favicon_file and favicon_file.filename:
+                if not allowed_file(favicon_file.filename):
+                    flash('Invalid favicon file type. Please upload PNG, JPG, JPEG, GIF, WEBP, or SVG.', 'error')
+                    return render_template('top_level/feedlot_branding.html', feedlot=feedlot, branding=existing_branding, user_type=user_type)
+                
+                # Validate file size (max 5MB)
+                favicon_file.seek(0, os.SEEK_END)
+                file_size = favicon_file.tell()
+                favicon_file.seek(0)
+                if file_size > 5 * 1024 * 1024:  # 5MB
+                    flash('Favicon file size too large. Please upload an image smaller than 5MB.', 'error')
+                    return render_template('top_level/feedlot_branding.html', feedlot=feedlot, branding=existing_branding, user_type=user_type)
+                
+                # Delete old favicon if exists
+                Feedlot.delete_branding_assets(feedlot_id, 'favicon')
+                
+                # Generate unique filename
+                file_ext = favicon_file.filename.rsplit('.', 1)[1].lower()
+                filename = f"{feedlot_id}_{uuid.uuid4().hex[:8]}.{file_ext}"
+                filename = secure_filename(filename)
+                
+                # Create favicons directory if it doesn't exist
+                favicons_dir = os.path.join(current_app.static_folder, 'feedlot_branding', 'favicons')
+                os.makedirs(favicons_dir, exist_ok=True)
+                
+                # Save favicon file
+                favicon_path = os.path.join(favicons_dir, filename)
+                favicon_file.save(favicon_path)
+                
+                # Store relative path
+                branding_data['favicon_path'] = f'feedlot_branding/favicons/{filename}'
+        
+        # Handle color inputs
+        primary_color = request.form.get('primary_color', '').strip()
+        if primary_color:
+            # Validate hex color format
+            if primary_color.startswith('#'):
+                branding_data['primary_color'] = primary_color
+            else:
+                branding_data['primary_color'] = f'#{primary_color}'
+        
+        secondary_color = request.form.get('secondary_color', '').strip()
+        if secondary_color:
+            # Validate hex color format
+            if secondary_color.startswith('#'):
+                branding_data['secondary_color'] = secondary_color
+            else:
+                branding_data['secondary_color'] = f'#{secondary_color}'
+        
+        # Handle company name
+        company_name = request.form.get('company_name', '').strip()
+        if company_name:
+            branding_data['company_name'] = company_name
+        elif 'company_name' in existing_branding:
+            branding_data['company_name'] = existing_branding.get('company_name')
+        
+        # Merge with existing branding to preserve unchanged fields (especially logo/favicon paths if not updated)
+        if existing_branding:
+            for key, value in existing_branding.items():
+                if key not in branding_data:
+                    branding_data[key] = value
+        
+        # Ensure we have default colors if not set (for new branding or if colors weren't provided)
+        if 'primary_color' not in branding_data:
+            branding_data['primary_color'] = '#2D8B8B'  # Default teal
+        if 'secondary_color' not in branding_data:
+            branding_data['secondary_color'] = '#0A2540'  # Default navy
+        
+        # Update branding
+        Feedlot.update_branding(feedlot_id, branding_data)
+        
+        flash('Branding updated successfully.', 'success')
+        return redirect(url_for('top_level.feedlot_branding', feedlot_id=feedlot_id))
+    
+    return render_template('top_level/feedlot_branding.html', feedlot=feedlot, branding=existing_branding, user_type=user_type)
 
 @top_level_bp.route('/feedlot/<feedlot_id>/users')
 @login_required

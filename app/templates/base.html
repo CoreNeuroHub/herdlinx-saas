@@ -4,21 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}HerdLinx SaaS{% endblock %}</title>
+    {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('favicon_path') %}
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=current_feedlot.branding.favicon_path) }}">
+    {% else %}
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
+    {% endif %}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'navy': '#0A2540',
-                        'teal': '#2D8B8B',
+                        'navy': '{{ current_feedlot.branding.secondary_color if current_feedlot and current_feedlot.get("branding") and current_feedlot.branding.get("secondary_color") else "#0A2540" }}',
+                        'teal': '{{ current_feedlot.branding.primary_color if current_feedlot and current_feedlot.get("branding") and current_feedlot.branding.get("primary_color") else "#2D8B8B" }}',
                         'gold': '#F5A623',
                     }
                 }
             }
         }
     </script>
+    {% if current_feedlot and current_feedlot.get('branding') %}
+    <style>
+        :root {
+            --brand-primary: {{ current_feedlot.branding.primary_color if current_feedlot.branding.get('primary_color') else '#2D8B8B' }};
+            --brand-secondary: {{ current_feedlot.branding.secondary_color if current_feedlot.branding.get('secondary_color') else '#0A2540' }};
+        }
+        .bg-navy {
+            background-color: var(--brand-secondary) !important;
+        }
+        .bg-teal {
+            background-color: var(--brand-primary) !important;
+        }
+        .text-teal {
+            color: var(--brand-primary) !important;
+        }
+        .border-teal {
+            border-color: var(--brand-primary) !important;
+        }
+        .focus\:ring-teal:focus {
+            --tw-ring-color: var(--brand-primary) !important;
+        }
+        .hover\:bg-teal:hover {
+            background-color: var(--brand-primary) !important;
+        }
+    </style>
+    {% endif %}
     <style>
         #menu-panel a {
             display: block;
@@ -79,12 +109,31 @@
                 <!-- Logo and Label - Center -->
                 <div class="absolute left-1/2 transform -translate-x-1/2">
                     <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
+                        {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('logo_path') %}
+                        <img src="{{ url_for('static', filename=current_feedlot.branding.logo_path) }}" 
+                             alt="{{ current_feedlot.branding.company_name if current_feedlot.branding.get('company_name') else current_feedlot.name }}" 
+                             class="h-16 w-16 rounded-full object-cover"
+                             onerror="this.style.display='none'; document.getElementById('brand-name').style.display='block';">
+                        {% else %}
                         <img src="{{ url_for('static', filename='img/logo.png') }}" 
                              alt="HerdLinx SaaS" 
                              class="h-16 w-16 rounded-full object-cover"
                              onerror="this.style.display='none'; document.getElementById('brand-name').style.display='block';">
-                        <span class="text-xl font-bold text-white">HERD MANAGEMENT SYSTEM</span>
-                        <span id="brand-name" class="text-2xl font-bold hover:text-teal" style="display:none;">HerdLinx SaaS</span>
+                        {% endif %}
+                        <span class="text-xl font-bold text-white">
+                            {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('company_name') %}
+                                {{ current_feedlot.branding.company_name }}
+                            {% else %}
+                                HERD MANAGEMENT SYSTEM
+                            {% endif %}
+                        </span>
+                        <span id="brand-name" class="text-2xl font-bold hover:text-teal" style="display:none;">
+                            {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('company_name') %}
+                                {{ current_feedlot.branding.company_name }}
+                            {% else %}
+                                HerdLinx SaaS
+                            {% endif %}
+                        </span>
                     </a>
                 </div>
                 <!-- Profile Section - Right Side -->

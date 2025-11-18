@@ -156,6 +156,10 @@ def create_app(config_class=Config):
             try:
                 feedlot = Feedlot.find_by_id(feedlot_id)
                 if feedlot:
+                    # Load branding data
+                    branding = Feedlot.get_branding(feedlot_id)
+                    if branding:
+                        feedlot['branding'] = branding
                     nav_context['current_feedlot'] = feedlot
                     nav_context['show_feedlot_nav'] = True
                     current_feedlot = feedlot
