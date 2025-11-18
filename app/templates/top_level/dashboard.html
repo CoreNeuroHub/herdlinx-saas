@@ -17,7 +17,7 @@
     <!-- Statistics Widgets -->
     <div id="widgets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
         <!-- Combined Statistics Widget -->
-        <div id="widget-combined-stats" data-widget-id="combined-stats" data-testid="widget-combined-stats" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+        <div id="widget-combined-stats" data-widget-id="combined-stats" data-testid="widget-combined-stats" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Statistics</p>
@@ -47,12 +47,9 @@
             </div>
             <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
         </div>
-    </div>
 
-    <!-- Additional Statistics Row -->
-    <div id="widgets-container-2" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
         <!-- Total Users Widget -->
-        <div id="widget-users" data-widget-id="users" data-testid="widget-users" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+        <div id="widget-users" data-widget-id="users" data-testid="widget-users" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Total Users</p>
@@ -88,7 +85,7 @@
     <!-- Additional Widgets Row -->
     <div id="widgets-container-3" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
         <!-- Date and Time Widget -->
-        <div id="widget-datetime" data-widget-id="datetime" data-testid="widget-datetime" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+        <div id="widget-datetime" data-widget-id="datetime" data-testid="widget-datetime" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Date & Time</p>
@@ -107,7 +104,7 @@
         </div>
 
         <!-- Weather Widget -->
-        <div id="widget-weather" data-widget-id="weather" data-testid="widget-weather" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+        <div id="widget-weather" data-widget-id="weather" data-testid="widget-weather" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Weather</p>
@@ -136,7 +133,7 @@
         </div>
 
         <!-- Alberta Cattle Price Widget -->
-        <div id="widget-cattle-price" data-widget-id="cattle-price" data-testid="widget-cattle-price" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+        <div id="widget-cattle-price" data-widget-id="cattle-price" data-testid="widget-cattle-price" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Alberta Cattle Price</p>
@@ -683,7 +680,6 @@
 
     // Dashboard Widget Customization
     const dashboardPreferences = {{ dashboard_preferences|tojson|safe }};
-    let draggedElement = null;
     let resizeElement = null;
     let resizeStartX = 0;
     let resizeStartY = 0;
@@ -728,7 +724,6 @@
         // Save preferences
         saveDashboardPreferences({
             widget_visibility: visibility,
-            widget_order: getWidgetOrder(),
             widget_sizes: getWidgetSizes()
         });
         
@@ -747,11 +742,6 @@
                 }
             }
         });
-    }
-    
-    function getWidgetOrder() {
-        const widgets = Array.from(document.querySelectorAll('.widget-item'));
-        return widgets.map(widget => widget.getAttribute('data-widget-id'));
     }
     
     function getWidgetSizes() {
@@ -813,9 +803,6 @@
             }
         });
         
-        // Reset order: restore widgets to original containers and order
-        restoreDefaultWidgetOrder();
-        
         // Reset sizes: remove all custom width/height styles
         allWidgets.forEach(widgetId => {
             const widget = document.getElementById(`widget-${widgetId}`);
@@ -828,7 +815,6 @@
         // Save default preferences
         const defaultPreferences = {
             widget_visibility: visibility,
-            widget_order: getWidgetOrder(),
             widget_sizes: {}
         };
         
@@ -841,40 +827,6 @@
         setTimeout(() => {
             window.location.reload();
         }, 500);
-    }
-    
-    // Helper function to restore default widget order
-    function restoreDefaultWidgetOrder() {
-        const container1 = document.getElementById('widgets-container');
-        const container2 = document.getElementById('widgets-container-2');
-        const container3 = document.getElementById('widgets-container-3');
-        
-        // Default order for container 1: combined-stats
-        const container1Order = ['combined-stats'];
-        container1Order.forEach(widgetId => {
-            const widget = document.getElementById(`widget-${widgetId}`);
-            if (widget && container1) {
-                container1.appendChild(widget);
-            }
-        });
-        
-        // Default order for container 2: users
-        const container2Order = ['users'];
-        container2Order.forEach(widgetId => {
-            const widget = document.getElementById(`widget-${widgetId}`);
-            if (widget && container2) {
-                container2.appendChild(widget);
-            }
-        });
-        
-        // Default order for container 3: datetime, weather, cattle-price
-        const container3Order = ['datetime', 'weather', 'cattle-price'];
-        container3Order.forEach(widgetId => {
-            const widget = document.getElementById(`widget-${widgetId}`);
-            if (widget && container3) {
-                container3.appendChild(widget);
-            }
-        });
     }
     
     // Load preferences on page load
@@ -902,25 +854,6 @@
                 }
             });
             
-            // Migrate widget order
-            if (dashboardPreferences.widget_order && dashboardPreferences.widget_order.length > 0) {
-                const order = dashboardPreferences.widget_order;
-                const hasOldWidgets = oldWidgetIds.some(oldId => order.includes(oldId));
-                
-                if (hasOldWidgets) {
-                    // Replace old widget IDs with new combined-stats widget
-                    const newOrder = order.map(id => {
-                        if (oldWidgetIds.includes(id)) {
-                            return newWidgetId;
-                        }
-                        return id;
-                    });
-                    // Remove duplicates
-                    dashboardPreferences.widget_order = [...new Set(newOrder)];
-                    needsMigration = true;
-                }
-            }
-            
             // Migrate widget sizes
             if (dashboardPreferences.widget_sizes) {
                 const sizes = dashboardPreferences.widget_sizes;
@@ -944,25 +877,6 @@
             updateWidgetVisibility(visibility);
         }
         
-        // Load widget order
-        if (dashboardPreferences.widget_order && dashboardPreferences.widget_order.length > 0) {
-            const container1 = document.getElementById('widgets-container');
-            const container2 = document.getElementById('widgets-container-2');
-            const container3 = document.getElementById('widgets-container-3');
-            const allContainers = [container1, container2, container3].filter(c => c);
-            
-            dashboardPreferences.widget_order.forEach(widgetId => {
-                const widget = document.getElementById(`widget-${widgetId}`);
-                if (widget) {
-                    // Find which container it should be in
-                    const currentContainer = widget.parentElement;
-                    if (allContainers.includes(currentContainer)) {
-                        currentContainer.appendChild(widget);
-                    }
-                }
-            });
-        }
-        
         // Load widget sizes
         if (dashboardPreferences.widget_sizes) {
             Object.keys(dashboardPreferences.widget_sizes).forEach(widgetId => {
@@ -980,65 +894,9 @@
         }
     }
     
-    // Drag and Drop Functionality
+    // Widget Functionality
     document.addEventListener('DOMContentLoaded', function() {
         loadDashboardPreferences();
-        
-        const widgets = document.querySelectorAll('.widget-item');
-        const containers = [
-            document.getElementById('widgets-container'),
-            document.getElementById('widgets-container-2'),
-            document.getElementById('widgets-container-3')
-        ].filter(c => c);
-        
-        widgets.forEach(widget => {
-            widget.addEventListener('dragstart', function(e) {
-                draggedElement = this;
-                this.style.opacity = '0.5';
-                e.dataTransfer.effectAllowed = 'move';
-            });
-            
-            widget.addEventListener('dragend', function() {
-                this.style.opacity = '';
-                draggedElement = null;
-            });
-            
-            widget.addEventListener('dragover', function(e) {
-                if (e.preventDefault) {
-                    e.preventDefault();
-                }
-                e.dataTransfer.dropEffect = 'move';
-                return false;
-            });
-            
-            widget.addEventListener('drop', function(e) {
-                if (e.stopPropagation) {
-                    e.stopPropagation();
-                }
-                
-                if (draggedElement !== this) {
-                    const container = this.parentElement;
-                    const allWidgets = Array.from(container.querySelectorAll('.widget-item'));
-                    const draggedIndex = allWidgets.indexOf(draggedElement);
-                    const targetIndex = allWidgets.indexOf(this);
-                    
-                    if (draggedIndex < targetIndex) {
-                        container.insertBefore(draggedElement, this.nextSibling);
-                    } else {
-                        container.insertBefore(draggedElement, this);
-                    }
-                    
-                    // Save new order
-                    saveDashboardPreferences({
-                        widget_order: getWidgetOrder(),
-                        widget_visibility: dashboardPreferences.widget_visibility || {},
-                        widget_sizes: getWidgetSizes()
-                    });
-                }
-                
-                return false;
-            });
-        });
         
         // Resize functionality
         const resizeHandles = document.querySelectorAll('.resize-handle');
@@ -1078,7 +936,6 @@
             if (resizeElement) {
                 // Save new sizes
                 saveDashboardPreferences({
-                    widget_order: getWidgetOrder(),
                     widget_visibility: dashboardPreferences.widget_visibility || {},
                     widget_sizes: getWidgetSizes()
                 });
@@ -1119,7 +976,7 @@
         
         if (dateElement && timeElement) {
             const now = new Date();
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
             dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
             
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
@@ -1260,7 +1117,7 @@
             // In production, replace this with actual API call
             const mockPrice = 185.50; // CAD per cwt (hundredweight)
             const today = new Date();
-            const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const dateStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             
             priceElement.textContent = `$${mockPrice.toFixed(2)}/cwt`;
             dateElement.textContent = `Updated: ${dateStr}`;

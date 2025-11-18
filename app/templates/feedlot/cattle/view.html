@@ -9,7 +9,7 @@
 <div class="relative rounded-2xl p-8 mb-8 text-white overflow-hidden" style="background: linear-gradient(to right, #0A2540, #2D8B8B);">
     <div class="absolute inset-0 bg-black opacity-10"></div>
     <div class="relative z-10">
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-3 mb-8">
             <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 2L3 7v11h14V7l-7-5zM8 15v-3h4v3H8z"/>
@@ -20,70 +20,40 @@
                 <p class="text-white text-opacity-80 text-lg">{{ feedlot.name }}</p>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Stats Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-gray-600 mb-1">Weight</p>
-                <p class="text-2xl font-bold text-gray-900">{{ cattle.weight }} kg</p>
-            </div>
-            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="flex items-center space-x-3">
+                <svg class="w-6 h-6 text-white text-opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
+                <div>
+                    <p class="text-sm text-white text-opacity-80">Weight</p>
+                    <p class="text-xl font-bold text-white">{{ cattle.weight }} kg</p>
+                </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-gray-600 mb-1">Sex</p>
-                <p class="text-2xl font-bold text-gray-900">{{ cattle.sex }}</p>
-            </div>
-            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            
+            <div class="flex items-center space-x-3">
+                <svg class="w-6 h-6 text-white text-opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6v10H9V7z"/>
                     <circle cx="7" cy="11" r="1" fill="currentColor"/>
                     <circle cx="17" cy="11" r="1" fill="currentColor"/>
                 </svg>
+                <div>
+                    <p class="text-sm text-white text-opacity-80">Sex</p>
+                    <p class="text-xl font-bold text-white">{{ cattle.sex }}</p>
+                </div>
             </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-gray-600 mb-1">Health</p>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold {% if cattle.health_status == 'healthy' %}bg-green-100 text-green-800{% elif cattle.health_status == 'sick' %}text-white{% else %}bg-yellow-100 text-yellow-800{% endif %}" {% if cattle.health_status == 'sick' %}style="background-color: #F5A623;"{% endif %}>
-                        {{ cattle.health_status|title }}
-                    </span>
-            </div>
-            <div class="w-12 h-12 {% if cattle.health_status == 'healthy' %}bg-green-100{% elif cattle.health_status == 'sick' %}bg-red-100{% else %}bg-yellow-100{% endif %} rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 {% if cattle.health_status == 'healthy' %}text-green-600{% elif cattle.health_status == 'sick' %}text-red-600{% else %}text-yellow-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            
+            <div class="flex items-center space-x-3">
+                <svg class="w-6 h-6 text-white text-opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                 </svg>
-            </div>
-        </div>
-    </div>
-    
-    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-gray-600 mb-1">Status</p>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold {% if cattle.status == 'active' %}text-white{% else %}bg-gray-100 text-gray-800{% endif %}" {% if cattle.status == 'active' %}style="background-color: #2D8B8B;"{% endif %}>
-                    {{ cattle.status|title }}
-                </span>
-            </div>
-            <div class="w-12 h-12 {% if cattle.status == 'active' %}bg-teal-100{% else %}bg-gray-100{% endif %} rounded-xl flex items-center justify-center">
-                <svg class="w-6 h-6 {% if cattle.status == 'active' %}text-teal-600{% else %}text-gray-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+                <div>
+                    <p class="text-sm text-white text-opacity-80">Health</p>
+                    <p class="text-xl font-bold text-white">{{ cattle.health_status|title }}</p>
+                </div>
             </div>
         </div>
     </div>
@@ -217,7 +187,7 @@
                 </div>
                 <div>
                     <p class="text-sm font-medium text-gray-500 mb-2">Created</p>
-                    <p class="text-lg font-semibold text-gray-900">{{ cattle.created_at | strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ cattle.created_at | strftime('%B %d, %Y at %I:%M %p') }}</p>
                 </div>
             </div>
         </div>
@@ -255,7 +225,7 @@
                                 <span class="text-lg font-semibold text-gray-900">{{ record.weight }}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ record.recorded_at | strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ record.recorded_at | strftime('%B %d, %Y at %I:%M %p') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ record.recorded_by }}</td>
                     </tr>
                     {% endfor %}
@@ -292,7 +262,7 @@
                 <p class="text-gray-900 mb-3 whitespace-pre-wrap">{{ record.note }}</p>
                 <div class="flex justify-end">
                     <p class="text-xs text-gray-500">
-                        {{ record.recorded_by }} • {{ record.recorded_at | strftime('%B %d, %Y at %H:%M') }}
+                        {{ record.recorded_by }} • {{ record.recorded_at | strftime('%B %d, %Y at %I:%M %p') }}
                     </p>
                 </div>
             </div>
@@ -355,10 +325,10 @@
                         <span class="text-sm font-medium text-gray-900">{{ record.uhf_tag or '-' }}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {{ record.paired_at | strftime('%Y-%m-%d %H:%M') if record.paired_at else '-' }}
+                        {{ record.paired_at | strftime('%B %d, %Y at %I:%M %p') if record.paired_at else '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {{ record.unpaired_at | strftime('%Y-%m-%d %H:%M') if record.unpaired_at else '-' }}
+                        {{ record.unpaired_at | strftime('%B %d, %Y at %I:%M %p') if record.unpaired_at else '-' }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {{ record.updated_by or 'system' }}
@@ -421,7 +391,7 @@
                             {{ entry.performed_by }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {{ entry.timestamp | strftime('%Y-%m-%d %H:%M') }}
+                            {{ entry.timestamp | strftime('%B %d, %Y at %I:%M %p') }}
                         </td>
                     </tr>
                     {% endfor %}

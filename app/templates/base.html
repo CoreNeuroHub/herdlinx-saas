@@ -377,8 +377,8 @@
             const timeElement = document.getElementById('current-time');
             
             if (dateElement && timeElement) {
-                // Format date: Day, Month DD, YYYY
-                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                // Format date: Month DD, YYYY
+                const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
                 dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
                 
                 // Format time: HH:MM:SS AM/PM
@@ -510,6 +510,109 @@
             <p>&copy; 2025 Herdlinx. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Contrast Utility Script -->
+    <script>
+        /**
+         * Calculate relative luminance of a color (RGB values 0-255)
+         * Formula from WCAG 2.1: https://www.w3.org/WAI/GL/wiki/Relative_luminance
+         */
+        function getLuminance(r, g, b) {
+            const [rs, gs, bs] = [r, g, b].map(val => {
+                val = val / 255;
+                return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+        }
+
+        /**
+         * Parse RGB color from computed style
+         */
+        function parseRGB(rgbString) {
+            const match = rgbString.match(/\d+/g);
+            return match ? match.map(Number) : [255, 255, 255];
+        }
+
+        /**
+         * Calculate contrast ratio between two colors
+         * Formula from WCAG 2.1: (L1 + 0.05) / (L2 + 0.05)
+         */
+        function getContrastRatio(color1, color2) {
+            const lum1 = getLuminance(...color1);
+            const lum2 = getLuminance(...color2);
+            const lighter = Math.max(lum1, lum2);
+            const darker = Math.min(lum1, lum2);
+            return (lighter + 0.05) / (darker + 0.05);
+        }
+
+        /**
+         * Get the effective background color of an element, checking parent elements if transparent
+         */
+        function getEffectiveBackgroundColor(element) {
+            let current = element;
+            while (current && current !== document.body) {
+                const computedStyle = window.getComputedStyle(current);
+                const bgColor = computedStyle.backgroundColor;
+                const bgRGB = parseRGB(bgColor);
+                
+                // Check if background is not transparent (alpha > 0)
+                // If rgba/rgb format, check alpha value
+                const rgbaMatch = computedStyle.backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+                if (rgbaMatch) {
+                    const alpha = rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1;
+                    if (alpha > 0.01) {
+                        return bgRGB;
+                    }
+                } else if (bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
+                    return bgRGB;
+                }
+                
+                current = current.parentElement;
+            }
+            // Default to white if no background found
+            return [255, 255, 255];
+        }
+
+        /**
+         * Automatically adjust text color based on background contrast
+         * Applies 'text-gray-900' (black) or 'text-white' (white) class
+         */
+        function adjustTextColorForContrast(element) {
+            // Get effective background color (checking parent elements if transparent)
+            const bgRGB = getEffectiveBackgroundColor(element);
+            
+            // Calculate contrast with black (0, 0, 0) and white (255, 255, 255)
+            const contrastWithBlack = getContrastRatio(bgRGB, [0, 0, 0]);
+            const contrastWithWhite = getContrastRatio(bgRGB, [255, 255, 255]);
+            
+            // Remove existing text color classes
+            element.classList.remove('text-gray-900', 'text-white', 'text-teal', 'text-teal-700');
+            
+            // Apply the color with better contrast
+            if (contrastWithWhite > contrastWithBlack) {
+                element.classList.add('text-white');
+            } else {
+                element.classList.add('text-gray-900');
+            }
+        }
+
+        /**
+         * Apply automatic contrast adjustment to all elements with data-auto-contrast attribute
+         */
+        function applyAutoContrast() {
+            document.querySelectorAll('[data-auto-contrast]').forEach(element => {
+                adjustTextColorForContrast(element);
+            });
+        }
+
+        // Run on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyAutoContrast);
+        } else {
+            applyAutoContrast();
+        }
+    </script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>
 

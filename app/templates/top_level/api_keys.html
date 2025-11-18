@@ -66,9 +66,9 @@
                             <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {% if api_key.created_at %}
                                     {% if api_key.created_at is string %}
-                                        {{ api_key.created_at[:10] }}
+                                        {{ api_key.created_at }}
                                     {% else %}
-                                        {{ api_key.created_at.strftime('%Y-%m-%d') }}
+                                        {{ api_key.created_at.strftime('%B %d, %Y') }}
                                     {% endif %}
                                 {% else %}
                                     N/A
@@ -77,9 +77,9 @@
                             <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {% if api_key.get('last_used_at') %}
                                     {% if api_key.last_used_at is string %}
-                                        {{ api_key.last_used_at[:10] }}
+                                        {{ api_key.last_used_at }}
                                     {% else %}
-                                        {{ api_key.last_used_at.strftime('%Y-%m-%d') }}
+                                        {{ api_key.last_used_at.strftime('%B %d, %Y') }}
                                     {% endif %}
                                 {% else %}
                                     Never
