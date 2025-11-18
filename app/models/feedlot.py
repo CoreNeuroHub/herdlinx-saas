@@ -129,4 +129,84 @@ class Feedlot:
         if feedlot and feedlot.get('owner_id'):
             return User.find_by_id(str(feedlot['owner_id']))
         return None
+    
+    @staticmethod
+    def update_branding(feedlot_id, branding_data):
+        """Update branding configuration for a feedlot
+        
+        Args:
+            feedlot_id: Feedlot ID
+            branding_data: Dictionary containing branding fields:
+                - logo_path: Path to logo file
+                - favicon_path: Path to favicon file
+                - primary_color: Hex color code
+                - secondary_color: Hex color code
+                - company_name: Custom company name
+        """
+        update_data = {
+            'branding': branding_data,
+            'updated_at': datetime.utcnow()
+        }
+        db.feedlots.update_one(
+            {'_id': ObjectId(feedlot_id)},
+            {'$set': update_data}
+        )
+    
+    @staticmethod
+    def get_branding(feedlot_id):
+        """Retrieve branding configuration for a feedlot"""
+        feedlot = Feedlot.find_by_id(feedlot_id)
+        if feedlot and feedlot.get('branding'):
+            return feedlot['branding']
+        return None
+    
+    @staticmethod
+    def delete_branding_assets(feedlot_id, asset_type=None):
+        """Delete branding asset files
+        
+        Args:
+            feedlot_id: Feedlot ID
+            asset_type: 'logo', 'favicon', or None to delete all
+        """
+        import os
+        from flask import current_app
+        
+        feedlot = Feedlot.find_by_id(feedlot_id)
+        if not feedlot or not feedlot.get('branding'):
+            return
+        
+        branding = feedlot['branding']
+        static_folder = current_app.static_folder
+        
+        if asset_type is None or asset_type == 'logo':
+            logo_path = branding.get('logo_path')
+            if logo_path:
+                # Remove /static/ prefix if present
+                if logo_path.startswith('/static/'):
+                    logo_path = logo_path[8:]
+                elif logo_path.startswith('static/'):
+                    logo_path = logo_path[7:]
+                
+                full_path = os.path.join(static_folder, logo_path)
+                if os.path.exists(full_path):
+                    try:
+                        os.remove(full_path)
+                    except Exception:
+                        pass  # Ignore errors during cleanup
+        
+        if asset_type is None or asset_type == 'favicon':
+            favicon_path = branding.get('favicon_path')
+            if favicon_path:
+                # Remove /static/ prefix if present
+                if favicon_path.startswith('/static/'):
+                    favicon_path = favicon_path[8:]
+                elif favicon_path.startswith('static/'):
+                    favicon_path = favicon_path[7:]
+                
+                full_path = os.path.join(static_folder, favicon_path)
+                if os.path.exists(full_path):
+                    try:
+                        os.remove(full_path)
+                    except Exception:
+                        pass  # Ignore errors during cleanup
 

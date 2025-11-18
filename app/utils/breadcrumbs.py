@@ -80,7 +80,7 @@ def generate_breadcrumbs(current_feedlot=None, request_obj=None):
                     label = feedlot.get('name', 'Feedlot') if feedlot else 'Feedlot'
                 except Exception:
                     label = 'Feedlot'
-                breadcrumbs.append({'label': label, 'url': url_for('top_level.view_feedlot', feedlot_id=feedlot_id)})
+                breadcrumbs.append({'label': label, 'url': url_for('feedlot.dashboard', feedlot_id=feedlot_id)})
                 breadcrumbs.append({'label': 'Edit', 'url': None})
         elif 'feedlot' in path and 'users' in path:
             breadcrumbs.append({'label': 'Feedlot Hub', 'url': url_for('top_level.feedlot_hub')})
@@ -91,7 +91,7 @@ def generate_breadcrumbs(current_feedlot=None, request_obj=None):
                     label = feedlot.get('name', 'Feedlot') if feedlot else 'Feedlot'
                 except Exception:
                     label = 'Feedlot'
-                breadcrumbs.append({'label': label, 'url': url_for('top_level.view_feedlot', feedlot_id=feedlot_id)})
+                breadcrumbs.append({'label': label, 'url': url_for('feedlot.dashboard', feedlot_id=feedlot_id)})
                 breadcrumbs.append({'label': 'Users', 'url': None})
         elif 'users' in path and 'manage' not in path:
             breadcrumbs.append({'label': 'Users', 'url': None})
@@ -216,6 +216,10 @@ def generate_breadcrumbs(current_feedlot=None, request_obj=None):
             
             if 'export' in path:
                 breadcrumbs.append({'label': 'Export', 'url': None})
+            elif 'history' in path:
+                breadcrumbs.append({'label': 'History', 'url': url_for('feedlot.list_manifest_history', feedlot_id=feedlot_id)})
+                if 'view' in path:
+                    breadcrumbs.append({'label': 'View', 'url': None})
             elif 'templates' in path:
                 breadcrumbs.append({'label': 'Templates', 'url': url_for('feedlot.list_manifest_templates', feedlot_id=feedlot_id)})
                 if 'create' in path:

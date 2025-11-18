@@ -4,6 +4,8 @@
 
 {% block home_url %}{{ url_for('top_level.dashboard') }}{% endblock %}
 
+{% block back_button %}{% endblock %}
+
 {% block content %}
 <div class="flex flex-col md:flex-row gap-6 mb-8">
     <div class="flex-1">
@@ -14,17 +16,30 @@
 
     <!-- Statistics Widgets -->
     <div id="widgets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
-        <!-- Total Feedlots Widget -->
-        <div id="widget-feedlots" data-widget-id="feedlots" data-testid="widget-feedlots" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
+        <!-- Combined Statistics Widget -->
+        <div id="widget-combined-stats" data-widget-id="combined-stats" data-testid="widget-combined-stats" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between mb-4">
                 <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Total Feedlots</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_feedlots }}</p>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Statistics</p>
                 </div>
                 <div class="bg-teal bg-opacity-10 rounded-full p-3">
                     <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-600">Total Feedlots</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_stats.total_feedlots }}</p>
+                </div>
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-600">Total Pens</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_stats.total_pens }}</p>
+                </div>
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-600">Total Cattle</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_stats.total_cattle }}</p>
                 </div>
             </div>
             <div class="mt-4">
@@ -33,60 +48,9 @@
             <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
         </div>
 
-        <!-- Total Pens Widget -->
-        <div id="widget-pens" data-widget-id="pens" data-testid="widget-pens" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Total Pens</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_pens }}</p>
-                </div>
-                <div class="bg-navy bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-
-        <!-- Total Cattle Widget -->
-        <div id="widget-cattle" data-widget-id="cattle" data-testid="widget-cattle" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Total Cattle</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_cattle }}</p>
-                </div>
-                <div class="bg-gold bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-
-        <!-- Total Batches Widget -->
-        <div id="widget-batches" data-widget-id="batches" data-testid="widget-batches" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Total Batches</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_batches }}</p>
-                </div>
-                <div class="bg-teal bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-    </div>
-
-    <!-- Additional Statistics Row -->
-    <div id="widgets-container-2" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
         <!-- Total Users Widget -->
-        <div id="widget-users" data-widget-id="users" data-testid="widget-users" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
+        <div id="widget-users" data-widget-id="users" data-testid="widget-users" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Total Users</p>
                     <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_users }}</p>
@@ -97,27 +61,22 @@
                     </svg>
                 </div>
             </div>
+            <div class="mt-4 max-h-48 overflow-y-auto">
+                <div class="space-y-2">
+                    {% if dashboard_stats.users_per_feedlot %}
+                        {% for item in dashboard_stats.users_per_feedlot %}
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-700">{{ item.feedlot_name }}</span>
+                            <span class="font-semibold text-gray-800">{{ item.user_count }} user{% if item.user_count != 1 %}s{% endif %}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-sm text-gray-500">No users found</p>
+                    {% endif %}
+                </div>
+            </div>
             <div class="mt-4">
                 <a href="{{ url_for('top_level.manage_users') }}" data-testid="manage-users-link" class="text-sm text-teal hover:underline font-medium">Manage users →</a>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-
-        <!-- Quick Actions Widget -->
-        <div id="widget-quick-actions" data-widget-id="quick-actions" data-testid="widget-quick-actions" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-            <div class="space-y-3">
-                <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-action-feedlot-hub-link" class="block w-full bg-teal hover:opacity-90 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
-                    View Feedlot Hub
-                </a>
-                {% if user_type in ['super_owner', 'super_admin'] %}
-                <button onclick="openAddFeedlotModal()" data-testid="quick-action-add-feedlot-button" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
-                    Add New Feedlot
-                </button>
-                {% endif %}
-                <button onclick="openAddUserModal()" data-testid="quick-action-add-user-button" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
-                    Add New User
-                </button>
             </div>
             <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
         </div>
@@ -126,7 +85,7 @@
     <!-- Additional Widgets Row -->
     <div id="widgets-container-3" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
         <!-- Date and Time Widget -->
-        <div id="widget-datetime" data-widget-id="datetime" data-testid="widget-datetime" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+        <div id="widget-datetime" data-widget-id="datetime" data-testid="widget-datetime" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Date & Time</p>
@@ -145,7 +104,7 @@
         </div>
 
         <!-- Weather Widget -->
-        <div id="widget-weather" data-widget-id="weather" data-testid="widget-weather" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+        <div id="widget-weather" data-widget-id="weather" data-testid="widget-weather" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Weather</p>
@@ -174,7 +133,7 @@
         </div>
 
         <!-- Alberta Cattle Price Widget -->
-        <div id="widget-cattle-price" data-widget-id="cattle-price" data-testid="widget-cattle-price" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+        <div id="widget-cattle-price" data-widget-id="cattle-price" data-testid="widget-cattle-price" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Alberta Cattle Price</p>
@@ -208,9 +167,9 @@
                 <p class="text-sm text-gray-600 mb-3">{{ feedlot.location }}</p>
                 <div class="flex space-x-2">
                     <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="recent-feedlot-open-link-{{ feedlot._id }}" class="flex-1 bg-teal hover:opacity-90 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
-                        Open
+                        Dashboard
                     </a>
-                    <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" data-testid="recent-feedlot-view-link-{{ feedlot._id }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
+                    <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="recent-feedlot-view-link-{{ feedlot._id }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
                         View
                     </a>
                 </div>
@@ -257,28 +216,12 @@
             <p class="text-sm text-gray-600 mb-4">Select which widgets to display on your dashboard:</p>
             <div class="space-y-3">
                 <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-feedlots" data-widget-id="feedlots" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Total Feedlots</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-pens" data-widget-id="pens" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Total Pens</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-cattle" data-widget-id="cattle" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Total Cattle</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-batches" data-widget-id="batches" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Total Batches</span>
+                    <input type="checkbox" id="widget-check-combined-stats" data-widget-id="combined-stats" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Statistics</span>
                 </label>
                 <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
                     <input type="checkbox" id="widget-check-users" data-widget-id="users" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
                     <span class="text-sm font-medium text-gray-700">Total Users</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-quick-actions" data-widget-id="quick-actions" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Quick Actions</span>
                 </label>
                 <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
                     <input type="checkbox" id="widget-check-datetime" data-widget-id="datetime" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
@@ -737,7 +680,6 @@
 
     // Dashboard Widget Customization
     const dashboardPreferences = {{ dashboard_preferences|tojson|safe }};
-    let draggedElement = null;
     let resizeElement = null;
     let resizeStartX = 0;
     let resizeStartY = 0;
@@ -749,7 +691,7 @@
         const modal = document.getElementById('widget-settings-modal');
         // Load current visibility state
         const visibility = dashboardPreferences.widget_visibility || {};
-        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions', 'datetime', 'weather', 'cattle-price'];
+        const allWidgets = ['combined-stats', 'users', 'datetime', 'weather', 'cattle-price'];
         allWidgets.forEach(widgetId => {
             const checkbox = document.getElementById(`widget-check-${widgetId}`);
             if (checkbox) {
@@ -782,7 +724,6 @@
         // Save preferences
         saveDashboardPreferences({
             widget_visibility: visibility,
-            widget_order: getWidgetOrder(),
             widget_sizes: getWidgetSizes()
         });
         
@@ -801,11 +742,6 @@
                 }
             }
         });
-    }
-    
-    function getWidgetOrder() {
-        const widgets = Array.from(document.querySelectorAll('.widget-item'));
-        return widgets.map(widget => widget.getAttribute('data-widget-id'));
     }
     
     function getWidgetSizes() {
@@ -857,7 +793,7 @@
         }
         
         // Reset visibility: all widgets visible
-        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions', 'datetime', 'weather', 'cattle-price'];
+        const allWidgets = ['combined-stats', 'users', 'datetime', 'weather', 'cattle-price'];
         const visibility = {};
         allWidgets.forEach(widgetId => {
             visibility[widgetId] = true;
@@ -866,9 +802,6 @@
                 widget.style.display = '';
             }
         });
-        
-        // Reset order: restore widgets to original containers and order
-        restoreDefaultWidgetOrder();
         
         // Reset sizes: remove all custom width/height styles
         allWidgets.forEach(widgetId => {
@@ -882,7 +815,6 @@
         // Save default preferences
         const defaultPreferences = {
             widget_visibility: visibility,
-            widget_order: getWidgetOrder(),
             widget_sizes: {}
         };
         
@@ -897,66 +829,52 @@
         }, 500);
     }
     
-    // Helper function to restore default widget order
-    function restoreDefaultWidgetOrder() {
-        const container1 = document.getElementById('widgets-container');
-        const container2 = document.getElementById('widgets-container-2');
-        const container3 = document.getElementById('widgets-container-3');
-        
-        // Default order for container 1: feedlots, pens, cattle, batches
-        const container1Order = ['feedlots', 'pens', 'cattle', 'batches'];
-        container1Order.forEach(widgetId => {
-            const widget = document.getElementById(`widget-${widgetId}`);
-            if (widget && container1) {
-                container1.appendChild(widget);
-            }
-        });
-        
-        // Default order for container 2: users, quick-actions
-        const container2Order = ['users', 'quick-actions'];
-        container2Order.forEach(widgetId => {
-            const widget = document.getElementById(`widget-${widgetId}`);
-            if (widget && container2) {
-                container2.appendChild(widget);
-            }
-        });
-        
-        // Default order for container 3: datetime, weather, cattle-price
-        const container3Order = ['datetime', 'weather', 'cattle-price'];
-        container3Order.forEach(widgetId => {
-            const widget = document.getElementById(`widget-${widgetId}`);
-            if (widget && container3) {
-                container3.appendChild(widget);
-            }
-        });
-    }
-    
     // Load preferences on page load
     function loadDashboardPreferences() {
         if (!dashboardPreferences) return;
         
-        // Load widget visibility
-        if (dashboardPreferences.widget_visibility) {
-            updateWidgetVisibility(dashboardPreferences.widget_visibility);
-        }
+        // Migrate old widget IDs to new ones
+        const oldWidgetIds = ['feedlots', 'pens', 'cattle', 'batches', 'quick-actions'];
+        const newWidgetId = 'combined-stats';
         
-        // Load widget order
-        if (dashboardPreferences.widget_order && dashboardPreferences.widget_order.length > 0) {
-            const container1 = document.getElementById('widgets-container');
-            const container2 = document.getElementById('widgets-container-2');
-            const container3 = document.getElementById('widgets-container-3');
-            const allContainers = [container1, container2, container3].filter(c => c);
+        // Migrate widget visibility
+        if (dashboardPreferences.widget_visibility) {
+            const visibility = dashboardPreferences.widget_visibility;
+            let needsMigration = false;
             
-            dashboardPreferences.widget_order.forEach(widgetId => {
-                const widget = document.getElementById(`widget-${widgetId}`);
-                if (widget) {
-                    // Find which container it should be in
-                    const currentContainer = widget.parentElement;
-                    if (allContainers.includes(currentContainer)) {
-                        currentContainer.appendChild(widget);
+            // Check if any old widget IDs exist
+            oldWidgetIds.forEach(oldId => {
+                if (visibility.hasOwnProperty(oldId)) {
+                    needsMigration = true;
+                    // If any of the old widgets were visible, make combined-stats visible
+                    if (visibility[oldId] !== false) {
+                        visibility[newWidgetId] = true;
                     }
+                    delete visibility[oldId];
                 }
             });
+            
+            // Migrate widget sizes
+            if (dashboardPreferences.widget_sizes) {
+                const sizes = dashboardPreferences.widget_sizes;
+                oldWidgetIds.forEach(oldId => {
+                    if (sizes.hasOwnProperty(oldId)) {
+                        // Use the first old widget's size for the new combined widget
+                        if (!sizes[newWidgetId]) {
+                            sizes[newWidgetId] = sizes[oldId];
+                        }
+                        delete sizes[oldId];
+                        needsMigration = true;
+                    }
+                });
+            }
+            
+            // Save migrated preferences if migration occurred
+            if (needsMigration) {
+                saveDashboardPreferences(dashboardPreferences);
+            }
+            
+            updateWidgetVisibility(visibility);
         }
         
         // Load widget sizes
@@ -976,65 +894,9 @@
         }
     }
     
-    // Drag and Drop Functionality
+    // Widget Functionality
     document.addEventListener('DOMContentLoaded', function() {
         loadDashboardPreferences();
-        
-        const widgets = document.querySelectorAll('.widget-item');
-        const containers = [
-            document.getElementById('widgets-container'),
-            document.getElementById('widgets-container-2'),
-            document.getElementById('widgets-container-3')
-        ].filter(c => c);
-        
-        widgets.forEach(widget => {
-            widget.addEventListener('dragstart', function(e) {
-                draggedElement = this;
-                this.style.opacity = '0.5';
-                e.dataTransfer.effectAllowed = 'move';
-            });
-            
-            widget.addEventListener('dragend', function() {
-                this.style.opacity = '';
-                draggedElement = null;
-            });
-            
-            widget.addEventListener('dragover', function(e) {
-                if (e.preventDefault) {
-                    e.preventDefault();
-                }
-                e.dataTransfer.dropEffect = 'move';
-                return false;
-            });
-            
-            widget.addEventListener('drop', function(e) {
-                if (e.stopPropagation) {
-                    e.stopPropagation();
-                }
-                
-                if (draggedElement !== this) {
-                    const container = this.parentElement;
-                    const allWidgets = Array.from(container.querySelectorAll('.widget-item'));
-                    const draggedIndex = allWidgets.indexOf(draggedElement);
-                    const targetIndex = allWidgets.indexOf(this);
-                    
-                    if (draggedIndex < targetIndex) {
-                        container.insertBefore(draggedElement, this.nextSibling);
-                    } else {
-                        container.insertBefore(draggedElement, this);
-                    }
-                    
-                    // Save new order
-                    saveDashboardPreferences({
-                        widget_order: getWidgetOrder(),
-                        widget_visibility: dashboardPreferences.widget_visibility || {},
-                        widget_sizes: getWidgetSizes()
-                    });
-                }
-                
-                return false;
-            });
-        });
         
         // Resize functionality
         const resizeHandles = document.querySelectorAll('.resize-handle');
@@ -1074,7 +936,6 @@
             if (resizeElement) {
                 // Save new sizes
                 saveDashboardPreferences({
-                    widget_order: getWidgetOrder(),
                     widget_visibility: dashboardPreferences.widget_visibility || {},
                     widget_sizes: getWidgetSizes()
                 });
@@ -1115,7 +976,7 @@
         
         if (dateElement && timeElement) {
             const now = new Date();
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
             dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
             
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
@@ -1256,7 +1117,7 @@
             // In production, replace this with actual API call
             const mockPrice = 185.50; // CAD per cwt (hundredweight)
             const today = new Date();
-            const dateStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const dateStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             
             priceElement.textContent = `$${mockPrice.toFixed(2)}/cwt`;
             dateElement.textContent = `Updated: ${dateStr}`;

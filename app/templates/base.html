@@ -4,20 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}HerdLinx SaaS{% endblock %}</title>
+    {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('favicon_path') %}
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=current_feedlot.branding.favicon_path) }}">
+    {% else %}
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
+    {% endif %}
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'navy': '#0A2540',
-                        'teal': '#2D8B8B',
+                        'navy': '{{ current_feedlot.branding.secondary_color if current_feedlot and current_feedlot.get("branding") and current_feedlot.branding.get("secondary_color") else "#0A2540" }}',
+                        'teal': '{{ current_feedlot.branding.primary_color if current_feedlot and current_feedlot.get("branding") and current_feedlot.branding.get("primary_color") else "#2D8B8B" }}',
                         'gold': '#F5A623',
                     }
                 }
             }
         }
     </script>
+    {% if current_feedlot and current_feedlot.get('branding') %}
+    <style>
+        :root {
+            --brand-primary: {{ current_feedlot.branding.primary_color if current_feedlot.branding.get('primary_color') else '#2D8B8B' }};
+            --brand-secondary: {{ current_feedlot.branding.secondary_color if current_feedlot.branding.get('secondary_color') else '#0A2540' }};
+        }
+        .bg-navy {
+            background-color: var(--brand-secondary) !important;
+        }
+        .bg-teal {
+            background-color: var(--brand-primary) !important;
+        }
+        .text-teal {
+            color: var(--brand-primary) !important;
+        }
+        .border-teal {
+            border-color: var(--brand-primary) !important;
+        }
+        .focus\:ring-teal:focus {
+            --tw-ring-color: var(--brand-primary) !important;
+        }
+        .hover\:bg-teal:hover {
+            background-color: var(--brand-primary) !important;
+        }
+    </style>
+    {% endif %}
     <style>
         #menu-panel a {
             display: block;
@@ -63,6 +94,7 @@
             display: flex !important;
         }
     </style>
+    {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Navigation -->
@@ -77,12 +109,31 @@
                 <!-- Logo and Label - Center -->
                 <div class="absolute left-1/2 transform -translate-x-1/2">
                     <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
+                        {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('logo_path') %}
+                        <img src="{{ url_for('static', filename=current_feedlot.branding.logo_path) }}" 
+                             alt="{{ current_feedlot.branding.company_name if current_feedlot.branding.get('company_name') else current_feedlot.name }}" 
+                             class="h-16 w-16 rounded-full object-cover"
+                             onerror="this.style.display='none'; document.getElementById('brand-name').style.display='block';">
+                        {% else %}
                         <img src="{{ url_for('static', filename='img/logo.png') }}" 
                              alt="HerdLinx SaaS" 
                              class="h-16 w-16 rounded-full object-cover"
                              onerror="this.style.display='none'; document.getElementById('brand-name').style.display='block';">
-                        <span class="text-xl font-bold text-white">HERD MANAGEMENT SYSTEM</span>
-                        <span id="brand-name" class="text-2xl font-bold hover:text-teal" style="display:none;">HerdLinx SaaS</span>
+                        {% endif %}
+                        <span class="text-xl font-bold text-white">
+                            {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('company_name') %}
+                                {{ current_feedlot.branding.company_name }}
+                            {% else %}
+                                HERD MANAGEMENT SYSTEM
+                            {% endif %}
+                        </span>
+                        <span id="brand-name" class="text-2xl font-bold hover:text-teal" style="display:none;">
+                            {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('company_name') %}
+                                {{ current_feedlot.branding.company_name }}
+                            {% else %}
+                                HerdLinx SaaS
+                            {% endif %}
+                        </span>
                     </a>
                 </div>
                 <!-- Profile Section - Right Side -->
@@ -213,6 +264,22 @@
     </div>
     {% endif %}
     
+    <!-- Back Button -->
+    {% block back_button %}
+    <div class="bg-white border-b border-gray-200 shadow-sm" data-testid="back-button-container">
+        <div class="container mx-auto px-4 py-3">
+            <button onclick="window.history.back()" 
+                    data-testid="back-button" 
+                    class="flex items-center space-x-2 text-teal hover:text-teal hover:opacity-80 transition-colors font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                <span>Back</span>
+            </button>
+        </div>
+    </div>
+    {% endblock %}
+    
     <script>
         function toggleMenu() {
             const menuPanel = document.getElementById('menu-panel');
@@ -310,8 +377,8 @@
             const timeElement = document.getElementById('current-time');
             
             if (dateElement && timeElement) {
-                // Format date: Day, Month DD, YYYY
-                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                // Format date: Month DD, YYYY
+                const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
                 dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
                 
                 // Format time: HH:MM:SS AM/PM
@@ -443,6 +510,109 @@
             <p>&copy; 2025 Herdlinx. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Contrast Utility Script -->
+    <script>
+        /**
+         * Calculate relative luminance of a color (RGB values 0-255)
+         * Formula from WCAG 2.1: https://www.w3.org/WAI/GL/wiki/Relative_luminance
+         */
+        function getLuminance(r, g, b) {
+            const [rs, gs, bs] = [r, g, b].map(val => {
+                val = val / 255;
+                return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
+            });
+            return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+        }
+
+        /**
+         * Parse RGB color from computed style
+         */
+        function parseRGB(rgbString) {
+            const match = rgbString.match(/\d+/g);
+            return match ? match.map(Number) : [255, 255, 255];
+        }
+
+        /**
+         * Calculate contrast ratio between two colors
+         * Formula from WCAG 2.1: (L1 + 0.05) / (L2 + 0.05)
+         */
+        function getContrastRatio(color1, color2) {
+            const lum1 = getLuminance(...color1);
+            const lum2 = getLuminance(...color2);
+            const lighter = Math.max(lum1, lum2);
+            const darker = Math.min(lum1, lum2);
+            return (lighter + 0.05) / (darker + 0.05);
+        }
+
+        /**
+         * Get the effective background color of an element, checking parent elements if transparent
+         */
+        function getEffectiveBackgroundColor(element) {
+            let current = element;
+            while (current && current !== document.body) {
+                const computedStyle = window.getComputedStyle(current);
+                const bgColor = computedStyle.backgroundColor;
+                const bgRGB = parseRGB(bgColor);
+                
+                // Check if background is not transparent (alpha > 0)
+                // If rgba/rgb format, check alpha value
+                const rgbaMatch = computedStyle.backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+                if (rgbaMatch) {
+                    const alpha = rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1;
+                    if (alpha > 0.01) {
+                        return bgRGB;
+                    }
+                } else if (bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
+                    return bgRGB;
+                }
+                
+                current = current.parentElement;
+            }
+            // Default to white if no background found
+            return [255, 255, 255];
+        }
+
+        /**
+         * Automatically adjust text color based on background contrast
+         * Applies 'text-gray-900' (black) or 'text-white' (white) class
+         */
+        function adjustTextColorForContrast(element) {
+            // Get effective background color (checking parent elements if transparent)
+            const bgRGB = getEffectiveBackgroundColor(element);
+            
+            // Calculate contrast with black (0, 0, 0) and white (255, 255, 255)
+            const contrastWithBlack = getContrastRatio(bgRGB, [0, 0, 0]);
+            const contrastWithWhite = getContrastRatio(bgRGB, [255, 255, 255]);
+            
+            // Remove existing text color classes
+            element.classList.remove('text-gray-900', 'text-white', 'text-teal', 'text-teal-700');
+            
+            // Apply the color with better contrast
+            if (contrastWithWhite > contrastWithBlack) {
+                element.classList.add('text-white');
+            } else {
+                element.classList.add('text-gray-900');
+            }
+        }
+
+        /**
+         * Apply automatic contrast adjustment to all elements with data-auto-contrast attribute
+         */
+        function applyAutoContrast() {
+            document.querySelectorAll('[data-auto-contrast]').forEach(element => {
+                adjustTextColorForContrast(element);
+            });
+        }
+
+        // Run on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyAutoContrast);
+        } else {
+            applyAutoContrast();
+        }
+    </script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>
 

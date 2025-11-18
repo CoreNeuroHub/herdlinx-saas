@@ -23,6 +23,10 @@ def init_db():
         db.manifest_templates.create_index('feedlot_id')
         db.manifest_templates.create_index([('feedlot_id', 1), ('is_default', 1)])
         
+        db.manifests.create_index('feedlot_id')
+        db.manifests.create_index([('feedlot_id', 1), ('created_at', -1)])
+        db.manifests.create_index('created_at')
+        
         print("Database initialized successfully")
     except Exception as e:
         print(f"Error initializing database indexes: {e}")

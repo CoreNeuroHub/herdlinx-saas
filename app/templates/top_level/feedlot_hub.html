@@ -91,7 +91,7 @@
         {% endif %}
         
         <div class="mt-4">
-            <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" data-testid="feedlot-card-link-{{ feedlot._id }}" class="inline-flex items-center text-teal hover:text-teal-700 font-semibold transition duration-200">
+            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="feedlot-card-link-{{ feedlot._id }}" class="inline-flex items-center text-teal hover:text-teal-700 font-semibold transition duration-200">
                 Go to feedlot
                 <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>

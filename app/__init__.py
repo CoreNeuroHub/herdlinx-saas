@@ -78,7 +78,7 @@ def create_app(config_class=Config):
     
     # Add custom Jinja filters
     @app.template_filter('strftime')
-    def strftime_filter(value, fmt='%Y-%m-%d'):
+    def strftime_filter(value, fmt='%B %d, %Y'):
         """Convert datetime or date string to formatted string"""
         if value is None:
             return ''
@@ -156,6 +156,10 @@ def create_app(config_class=Config):
             try:
                 feedlot = Feedlot.find_by_id(feedlot_id)
                 if feedlot:
+                    # Load branding data
+                    branding = Feedlot.get_branding(feedlot_id)
+                    if branding:
+                        feedlot['branding'] = branding
                     nav_context['current_feedlot'] = feedlot
                     nav_context['show_feedlot_nav'] = True
                     current_feedlot = feedlot

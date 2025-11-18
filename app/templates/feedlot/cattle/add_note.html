@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Add Note - {{ cattle.cattle_id }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Add Note</h1>
+    
+    <div class="bg-white rounded-lg shadow-lg p-8 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Cattle Information</h3>
+        <div class="space-y-2">
+            <p><span class="font-semibold">ID:</span> {{ cattle.cattle_id }}</p>
+            <p><span class="font-semibold">Sex:</span> {{ cattle.sex }}</p>
+            <p><span class="font-semibold">Current Weight:</span> {{ cattle.weight }} kg</p>
+            {% if cattle.lf_tag %}
+            <p><span class="font-semibold">LF Tag:</span> {{ cattle.lf_tag }}</p>
+            {% endif %}
+            {% if cattle.uhf_tag %}
+            <p><span class="font-semibold">UHF Tag:</span> {{ cattle.uhf_tag }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">New Note</h3>
+        
+        <form method="POST" class="space-y-4" data-testid="add-note-form">
+            <div>
+                <label for="note" class="block text-sm font-medium text-gray-700 mb-2">Note *</label>
+                <textarea id="note" name="note" required rows="6"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                       placeholder="Enter note about this cattle"></textarea>
+            </div>
+            
+            <div>
+                <label for="recorded_by" class="block text-sm font-medium text-gray-700 mb-2">Recorded By</label>
+                <input type="text" id="recorded_by" name="recorded_by"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                       placeholder="Name of person recording note" value="{{ session.get('username', 'user') }}">
+            </div>
+            
+            <div class="flex space-x-4 pt-4">
+                <button type="submit" data-testid="submit-add-note-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Add Note
+                </button>
+                <a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="cancel-add-note-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg text-center transition duration-200">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

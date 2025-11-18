@@ -6,6 +6,7 @@ from app.models.pen import Pen
 from app.models.batch import Batch
 from app.models.cattle import Cattle
 from app.models.manifest_template import ManifestTemplate
+from app.models.manifest import Manifest
 from app.routes.auth_routes import login_required, feedlot_access_required
 from app.utils.manifest_generator import generate_manifest_data, generate_pdf
 
@@ -37,10 +38,13 @@ def dashboard(feedlot_id):
     # Get recent batches
     recent_batches = Batch.find_by_feedlot(feedlot_id)[-5:]
     
+    user_type = session.get('user_type')
+    
     return render_template('feedlot/dashboard.html', 
                          feedlot=feedlot, 
                          statistics=statistics,
-                         recent_batches=recent_batches)
+                         recent_batches=recent_batches,
+                         user_type=user_type)
 
 # Pen Management Routes
 @feedlot_bp.route('/feedlot/<feedlot_id>/pens')
@@ -329,9 +333,10 @@ def create_cattle(feedlot_id):
                                  batches=batches, 
                                  pens=pens)
         
+        created_by = session.get('username', 'user')
         cattle_record_id = Cattle.create_cattle(feedlot_id, batch_id, cattle_id, sex, 
                                                weight, health_status, lf_tag, uhf_tag, pen_id, notes,
-                                               color, breed, brand_drawings, brand_locations, other_marks)
+                                               color, breed, brand_drawings, brand_locations, other_marks, created_by=created_by)
         flash('Cattle record created successfully.', 'success')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
@@ -375,6 +380,7 @@ def move_cattle(feedlot_id, cattle_id):
     
     if request.method == 'POST':
         new_pen_id = request.form.get('pen_id')
+        moved_by = session.get('username', 'user')
         
         if new_pen_id and not Pen.is_capacity_available(new_pen_id):
             flash('Selected pen is at full capacity.', 'error')
@@ -384,7 +390,7 @@ def move_cattle(feedlot_id, cattle_id):
                                  cattle=cattle, 
                                  pens=pens)
         
-        Cattle.move_cattle(cattle_id, new_pen_id)
+        Cattle.move_cattle(cattle_id, new_pen_id, moved_by)
         flash('Cattle moved successfully.', 'success')
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     
@@ -412,6 +418,32 @@ def add_weight_record(feedlot_id, cattle_id):
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     
     return render_template('feedlot/cattle/add_weight.html', feedlot=feedlot, cattle=cattle)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/add_note', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def add_note(feedlot_id, cattle_id):
+    """Add a note for cattle"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    cattle = Cattle.find_by_id(cattle_id)
+    
+    if not cattle:
+        flash('Cattle record not found.', 'error')
+        return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
+    
+    if request.method == 'POST':
+        note = request.form.get('note', '').strip()
+        recorded_by = session.get('username', 'user')
+        
+        if not note:
+            flash('Note cannot be empty.', 'error')
+            return render_template('feedlot/cattle/add_note.html', feedlot=feedlot, cattle=cattle)
+        
+        Cattle.add_note(cattle_id, note, recorded_by)
+        flash('Note added successfully.', 'success')
+        return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
+    
+    return render_template('feedlot/cattle/add_note.html', feedlot=feedlot, cattle=cattle)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/update_tags', methods=['GET', 'POST'])
 @login_required
@@ -517,6 +549,20 @@ def export_manifest(feedlot_id):
         
         # Generate manifest data
         manifest_data = generate_manifest_data(cattle_list, template_data, feedlot, manual_data)
+        
+        # Get cattle IDs for history tracking
+        cattle_ids = [str(cattle['_id']) for cattle in cattle_list]
+        
+        # Save manifest to history
+        template_id = request.form.get('template_id') if request.form.get('template_id') != 'none' else None
+        created_by = session.get('username', 'unknown')
+        manifest_record_id = Manifest.create_manifest(
+            feedlot_id=feedlot_id,
+            manifest_data=manifest_data,
+            cattle_ids=cattle_ids,
+            template_id=template_id,
+            created_by=created_by
+        )
         
         # Get export format
         export_format = request.form.get('export_format', 'pdf')
@@ -648,4 +694,109 @@ def delete_manifest_template(feedlot_id, template_id):
     ManifestTemplate.delete_template(template_id)
     flash('Manifest template deleted successfully.', 'success')
     return redirect(url_for('feedlot.list_manifest_templates', feedlot_id=feedlot_id))
+
+# Manifest History Routes
+@feedlot_bp.route('/feedlot/<feedlot_id>/manifest/history')
+@login_required
+@feedlot_access_required()
+def list_manifest_history(feedlot_id):
+    """List manifest history for a feedlot"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
+    
+    # Get pagination parameters
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 20))
+    skip = (page - 1) * per_page
+    
+    # Get manifests
+    manifests = Manifest.find_by_feedlot(feedlot_id, limit=per_page, skip=skip)
+    total_count = Manifest.count_by_feedlot(feedlot_id)
+    total_pages = (total_count + per_page - 1) // per_page
+    
+    return render_template('feedlot/manifest/history.html',
+                         feedlot=feedlot,
+                         manifests=manifests,
+                         page=page,
+                         per_page=per_page,
+                         total_count=total_count,
+                         total_pages=total_pages)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/manifest/history/<manifest_id>/view')
+@login_required
+@feedlot_access_required()
+def view_manifest_history(feedlot_id, manifest_id):
+    """View a specific manifest from history"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    manifest = Manifest.find_by_id(manifest_id)
+    
+    if not feedlot or not manifest:
+        flash('Feedlot or manifest not found.', 'error')
+        return redirect(url_for('feedlot.list_manifest_history', feedlot_id=feedlot_id))
+    
+    # Verify manifest belongs to feedlot
+    if str(manifest['feedlot_id']) != feedlot_id:
+        flash('Manifest not found.', 'error')
+        return redirect(url_for('feedlot.list_manifest_history', feedlot_id=feedlot_id))
+    
+    manifest_data = manifest.get('manifest_data', {})
+    
+    return render_template('feedlot/manifest/view_history.html',
+                         feedlot=feedlot,
+                         manifest=manifest,
+                         manifest_data=manifest_data)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/manifest/history/<manifest_id>/download')
+@login_required
+@feedlot_access_required()
+def download_manifest_history(feedlot_id, manifest_id):
+    """Download a manifest from history as PDF"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    manifest = Manifest.find_by_id(manifest_id)
+    
+    if not feedlot or not manifest:
+        flash('Feedlot or manifest not found.', 'error')
+        return redirect(url_for('feedlot.list_manifest_history', feedlot_id=feedlot_id))
+    
+    # Verify manifest belongs to feedlot
+    if str(manifest['feedlot_id']) != feedlot_id:
+        flash('Manifest not found.', 'error')
+        return redirect(url_for('feedlot.list_manifest_history', feedlot_id=feedlot_id))
+    
+    manifest_data = manifest.get('manifest_data', {})
+    
+    # Generate PDF
+    pdf_buffer = generate_pdf(manifest_data)
+    
+    # Create filename with manifest date
+    manifest_date = manifest_data.get('part_b', {}).get('date', datetime.now().strftime('%Y%m%d'))
+    filename = f"manifest_{feedlot_id}_{manifest_date}_{manifest_id[:8]}.pdf"
+    
+    return Response(
+        pdf_buffer.getvalue(),
+        mimetype='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename={filename}'}
+    )
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/manifest/history/<manifest_id>/delete', methods=['POST'])
+@login_required
+@feedlot_access_required()
+def delete_manifest_history(feedlot_id, manifest_id):
+    """Delete a manifest from history"""
+    manifest = Manifest.find_by_id(manifest_id)
+    
+    if not manifest:
+        flash('Manifest not found.', 'error')
+        return redirect(url_for('feedlot.list_manifest_history', feedlot_id=feedlot_id))
+    
+    # Verify manifest belongs to feedlot
+    if str(manifest['feedlot_id']) != feedlot_id:
+        flash('Manifest not found.', 'error')
+        return redirect(url_for('feedlot.list_manifest_history', feedlot_id=feedlot_id))
+    
+    Manifest.delete_manifest(manifest_id)
+    flash('Manifest deleted successfully.', 'success')
+    return redirect(url_for('feedlot.list_manifest_history', feedlot_id=feedlot_id))
 
