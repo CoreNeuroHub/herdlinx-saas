@@ -16,12 +16,11 @@
 
     <!-- Statistics Widgets -->
     <div id="widgets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
-        <!-- Total Feedlots Widget -->
-        <div id="widget-feedlots" data-widget-id="feedlots" data-testid="widget-feedlots" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
+        <!-- Combined Statistics Widget -->
+        <div id="widget-combined-stats" data-widget-id="combined-stats" data-testid="widget-combined-stats" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+            <div class="flex items-center justify-between mb-4">
                 <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Total Feedlots</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_feedlots }}</p>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Statistics</p>
                 </div>
                 <div class="bg-teal bg-opacity-10 rounded-full p-3">
                     <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,56 +28,22 @@
                     </svg>
                 </div>
             </div>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-600">Total Feedlots</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_stats.total_feedlots }}</p>
+                </div>
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-600">Total Pens</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_stats.total_pens }}</p>
+                </div>
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-600">Total Cattle</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_stats.total_cattle }}</p>
+                </div>
+            </div>
             <div class="mt-4">
                 <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="view-all-feedlots-link" class="text-sm text-teal hover:underline font-medium">View all feedlots →</a>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-
-        <!-- Total Pens Widget -->
-        <div id="widget-pens" data-widget-id="pens" data-testid="widget-pens" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Total Pens</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_pens }}</p>
-                </div>
-                <div class="bg-navy bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-
-        <!-- Total Cattle Widget -->
-        <div id="widget-cattle" data-widget-id="cattle" data-testid="widget-cattle" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Total Cattle</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_cattle }}</p>
-                </div>
-                <div class="bg-gold bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-
-        <!-- Total Batches Widget -->
-        <div id="widget-batches" data-widget-id="batches" data-testid="widget-batches" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Total Batches</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_batches }}</p>
-                </div>
-                <div class="bg-teal bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                    </svg>
-                </div>
             </div>
             <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
         </div>
@@ -88,7 +53,7 @@
     <div id="widgets-container-2" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
         <!-- Total Users Widget -->
         <div id="widget-users" data-widget-id="users" data-testid="widget-users" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between mb-4">
                 <div>
                     <p class="text-sm font-medium text-gray-600 mb-1">Total Users</p>
                     <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_users }}</p>
@@ -99,27 +64,22 @@
                     </svg>
                 </div>
             </div>
+            <div class="mt-4 max-h-48 overflow-y-auto">
+                <div class="space-y-2">
+                    {% if dashboard_stats.users_per_feedlot %}
+                        {% for item in dashboard_stats.users_per_feedlot %}
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-700">{{ item.feedlot_name }}</span>
+                            <span class="font-semibold text-gray-800">{{ item.user_count }} user{% if item.user_count != 1 %}s{% endif %}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-sm text-gray-500">No users found</p>
+                    {% endif %}
+                </div>
+            </div>
             <div class="mt-4">
                 <a href="{{ url_for('top_level.manage_users') }}" data-testid="manage-users-link" class="text-sm text-teal hover:underline font-medium">Manage users →</a>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-
-        <!-- Quick Actions Widget -->
-        <div id="widget-quick-actions" data-widget-id="quick-actions" data-testid="widget-quick-actions" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative cursor-move" draggable="true" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-            <div class="space-y-3">
-                <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-action-feedlot-hub-link" class="block w-full bg-teal hover:opacity-90 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
-                    View Feedlot Hub
-                </a>
-                {% if user_type in ['super_owner', 'super_admin'] %}
-                <button onclick="openAddFeedlotModal()" data-testid="quick-action-add-feedlot-button" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
-                    Add New Feedlot
-                </button>
-                {% endif %}
-                <button onclick="openAddUserModal()" data-testid="quick-action-add-user-button" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center font-semibold py-2 px-4 rounded-lg transition duration-200">
-                    Add New User
-                </button>
             </div>
             <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
         </div>
@@ -259,28 +219,12 @@
             <p class="text-sm text-gray-600 mb-4">Select which widgets to display on your dashboard:</p>
             <div class="space-y-3">
                 <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-feedlots" data-widget-id="feedlots" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Total Feedlots</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-pens" data-widget-id="pens" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Total Pens</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-cattle" data-widget-id="cattle" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Total Cattle</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-batches" data-widget-id="batches" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Total Batches</span>
+                    <input type="checkbox" id="widget-check-combined-stats" data-widget-id="combined-stats" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <span class="text-sm font-medium text-gray-700">Statistics</span>
                 </label>
                 <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
                     <input type="checkbox" id="widget-check-users" data-widget-id="users" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
                     <span class="text-sm font-medium text-gray-700">Total Users</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-quick-actions" data-widget-id="quick-actions" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Quick Actions</span>
                 </label>
                 <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
                     <input type="checkbox" id="widget-check-datetime" data-widget-id="datetime" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
@@ -751,7 +695,7 @@
         const modal = document.getElementById('widget-settings-modal');
         // Load current visibility state
         const visibility = dashboardPreferences.widget_visibility || {};
-        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions', 'datetime', 'weather', 'cattle-price'];
+        const allWidgets = ['combined-stats', 'users', 'datetime', 'weather', 'cattle-price'];
         allWidgets.forEach(widgetId => {
             const checkbox = document.getElementById(`widget-check-${widgetId}`);
             if (checkbox) {
@@ -859,7 +803,7 @@
         }
         
         // Reset visibility: all widgets visible
-        const allWidgets = ['feedlots', 'pens', 'cattle', 'batches', 'users', 'quick-actions', 'datetime', 'weather', 'cattle-price'];
+        const allWidgets = ['combined-stats', 'users', 'datetime', 'weather', 'cattle-price'];
         const visibility = {};
         allWidgets.forEach(widgetId => {
             visibility[widgetId] = true;
@@ -905,8 +849,8 @@
         const container2 = document.getElementById('widgets-container-2');
         const container3 = document.getElementById('widgets-container-3');
         
-        // Default order for container 1: feedlots, pens, cattle, batches
-        const container1Order = ['feedlots', 'pens', 'cattle', 'batches'];
+        // Default order for container 1: combined-stats
+        const container1Order = ['combined-stats'];
         container1Order.forEach(widgetId => {
             const widget = document.getElementById(`widget-${widgetId}`);
             if (widget && container1) {
@@ -914,8 +858,8 @@
             }
         });
         
-        // Default order for container 2: users, quick-actions
-        const container2Order = ['users', 'quick-actions'];
+        // Default order for container 2: users
+        const container2Order = ['users'];
         container2Order.forEach(widgetId => {
             const widget = document.getElementById(`widget-${widgetId}`);
             if (widget && container2) {
@@ -937,9 +881,67 @@
     function loadDashboardPreferences() {
         if (!dashboardPreferences) return;
         
-        // Load widget visibility
+        // Migrate old widget IDs to new ones
+        const oldWidgetIds = ['feedlots', 'pens', 'cattle', 'batches', 'quick-actions'];
+        const newWidgetId = 'combined-stats';
+        
+        // Migrate widget visibility
         if (dashboardPreferences.widget_visibility) {
-            updateWidgetVisibility(dashboardPreferences.widget_visibility);
+            const visibility = dashboardPreferences.widget_visibility;
+            let needsMigration = false;
+            
+            // Check if any old widget IDs exist
+            oldWidgetIds.forEach(oldId => {
+                if (visibility.hasOwnProperty(oldId)) {
+                    needsMigration = true;
+                    // If any of the old widgets were visible, make combined-stats visible
+                    if (visibility[oldId] !== false) {
+                        visibility[newWidgetId] = true;
+                    }
+                    delete visibility[oldId];
+                }
+            });
+            
+            // Migrate widget order
+            if (dashboardPreferences.widget_order && dashboardPreferences.widget_order.length > 0) {
+                const order = dashboardPreferences.widget_order;
+                const hasOldWidgets = oldWidgetIds.some(oldId => order.includes(oldId));
+                
+                if (hasOldWidgets) {
+                    // Replace old widget IDs with new combined-stats widget
+                    const newOrder = order.map(id => {
+                        if (oldWidgetIds.includes(id)) {
+                            return newWidgetId;
+                        }
+                        return id;
+                    });
+                    // Remove duplicates
+                    dashboardPreferences.widget_order = [...new Set(newOrder)];
+                    needsMigration = true;
+                }
+            }
+            
+            // Migrate widget sizes
+            if (dashboardPreferences.widget_sizes) {
+                const sizes = dashboardPreferences.widget_sizes;
+                oldWidgetIds.forEach(oldId => {
+                    if (sizes.hasOwnProperty(oldId)) {
+                        // Use the first old widget's size for the new combined widget
+                        if (!sizes[newWidgetId]) {
+                            sizes[newWidgetId] = sizes[oldId];
+                        }
+                        delete sizes[oldId];
+                        needsMigration = true;
+                    }
+                });
+            }
+            
+            // Save migrated preferences if migration occurred
+            if (needsMigration) {
+                saveDashboardPreferences(dashboardPreferences);
+            }
+            
+            updateWidgetVisibility(visibility);
         }
         
         // Load widget order

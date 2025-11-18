@@ -40,14 +40,13 @@ def dashboard():
     total_feedlots = len(feedlots)
     total_pens = 0
     total_cattle = 0
-    total_batches = 0
     total_users = 0
+    users_per_feedlot = []
     
     if feedlots:
         feedlot_ids = [ObjectId(str(f['_id'])) for f in feedlots]
         total_pens = db.pens.count_documents({'feedlot_id': {'$in': feedlot_ids}})
         total_cattle = db.cattle.count_documents({'feedlot_id': {'$in': feedlot_ids}})
-        total_batches = db.batches.count_documents({'feedlot_id': {'$in': feedlot_ids}})
         
         # Count users associated with these feedlots
         user_query = {'$or': [
@@ -55,6 +54,24 @@ def dashboard():
             {'feedlot_ids': {'$in': feedlot_ids}}
         ]}
         total_users = db.users.count_documents(user_query)
+        
+        # Calculate users per feedlot
+        for feedlot in feedlots:
+            feedlot_id = ObjectId(str(feedlot['_id']))
+            feedlot_name = feedlot.get('name', 'Unknown')
+            
+            # Count users for this feedlot (single feedlot_id or in feedlot_ids array)
+            user_count = db.users.count_documents({
+                '$or': [
+                    {'feedlot_id': feedlot_id},
+                    {'feedlot_ids': feedlot_id}
+                ]
+            })
+            
+            users_per_feedlot.append({
+                'feedlot_name': feedlot_name,
+                'user_count': user_count
+            })
     
     # Get recent feedlots (last 5)
     recent_feedlots = sorted(feedlots, key=lambda x: x.get('created_at', datetime(1970, 1, 1)), reverse=True)[:5]
@@ -63,8 +80,8 @@ def dashboard():
         'total_feedlots': total_feedlots,
         'total_pens': total_pens,
         'total_cattle': total_cattle,
-        'total_batches': total_batches,
         'total_users': total_users,
+        'users_per_feedlot': users_per_feedlot,
         'recent_feedlots': recent_feedlots
     }
     
