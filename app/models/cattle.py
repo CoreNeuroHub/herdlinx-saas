@@ -34,6 +34,7 @@ class Cattle:
                 'recorded_at': datetime.utcnow(),
                 'recorded_by': created_by
             }],
+            'notes_history': [],  # Track notes history
             'tag_pair_history': [],  # Track previous LF/UHF tag pairs
             'audit_log': []  # Track all cattle activities
         }
@@ -238,6 +239,44 @@ class Cattle:
         # Sort by recorded_at descending and get the first (most recent)
         latest_record = max(weight_history, key=lambda x: x['recorded_at'])
         return latest_record['weight']
+
+    @staticmethod
+    def add_note(cattle_record_id, note, recorded_by='system'):
+        """Add a new note to the cattle's notes history"""
+        note_record = {
+            'note': note,
+            'recorded_at': datetime.utcnow(),
+            'recorded_by': recorded_by
+        }
+        
+        db.cattle.update_one(
+            {'_id': ObjectId(cattle_record_id)},
+            {
+                '$set': {
+                    'updated_at': datetime.utcnow()
+                },
+                '$push': {'notes_history': note_record}
+            }
+        )
+        
+        # Add audit log entry for note addition
+        description = f'Note added: {note[:50]}{"..." if len(note) > 50 else ""}'
+        Cattle.add_audit_log_entry(
+            cattle_record_id, 
+            'note_added', 
+            description, 
+            recorded_by,
+            {'note': note}
+        )
+    
+    @staticmethod
+    def get_notes_history(cattle_record_id):
+        """Get the complete notes history for a cattle record"""
+        cattle = Cattle.find_by_id(cattle_record_id)
+        if not cattle:
+            return []
+        
+        return cattle.get('notes_history', [])
 
     @staticmethod
     def get_movement_history(cattle_record_id):

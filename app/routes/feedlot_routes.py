@@ -419,6 +419,32 @@ def add_weight_record(feedlot_id, cattle_id):
     
     return render_template('feedlot/cattle/add_weight.html', feedlot=feedlot, cattle=cattle)
 
+@feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/add_note', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def add_note(feedlot_id, cattle_id):
+    """Add a note for cattle"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    cattle = Cattle.find_by_id(cattle_id)
+    
+    if not cattle:
+        flash('Cattle record not found.', 'error')
+        return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
+    
+    if request.method == 'POST':
+        note = request.form.get('note', '').strip()
+        recorded_by = session.get('username', 'user')
+        
+        if not note:
+            flash('Note cannot be empty.', 'error')
+            return render_template('feedlot/cattle/add_note.html', feedlot=feedlot, cattle=cattle)
+        
+        Cattle.add_note(cattle_id, note, recorded_by)
+        flash('Note added successfully.', 'success')
+        return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
+    
+    return render_template('feedlot/cattle/add_note.html', feedlot=feedlot, cattle=cattle)
+
 @feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/update_tags', methods=['GET', 'POST'])
 @login_required
 @feedlot_access_required()
