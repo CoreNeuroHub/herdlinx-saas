@@ -118,9 +118,12 @@
                 <p class="text-xs text-gray-500 mt-2">Custom display name. If left empty, feedlot name will be used.</p>
             </div>
             
-            <div class="flex space-x-4 pt-4">
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 pt-4">
                 <button type="submit" data-testid="update-branding-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Update Branding
+                </button>
+                <button type="button" onclick="resetColors()" data-testid="reset-colors-button" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Reset Colors
                 </button>
                 <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="cancel-branding-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg text-center transition duration-200">
                     Cancel
@@ -216,6 +219,24 @@ function removeFavicon() {
         if (preview) preview.classList.add('hidden');
         if (placeholder) placeholder.classList.remove('hidden');
         if (input) input.value = '';
+    }
+}
+
+function resetColors() {
+    if (confirm('Reset colors to default brand colors? This will update primary color to #2D8B8B (Teal) and secondary color to #0A2540 (Dark Navy).')) {
+        const primaryColor = document.getElementById('primary_color');
+        const primaryColorText = document.getElementById('primary_color_text');
+        const secondaryColor = document.getElementById('secondary_color');
+        const secondaryColorText = document.getElementById('secondary_color_text');
+        
+        // Default brand colors from brand-colors.md
+        const defaultPrimary = '#2D8B8B'; // Teal
+        const defaultSecondary = '#0A2540'; // Dark Navy
+        
+        if (primaryColor) primaryColor.value = defaultPrimary;
+        if (primaryColorText) primaryColorText.value = defaultPrimary;
+        if (secondaryColor) secondaryColor.value = defaultSecondary;
+        if (secondaryColorText) secondaryColorText.value = defaultSecondary;
     }
 }
 </script>
