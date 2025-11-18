@@ -89,7 +89,7 @@
                 <button type="submit" data-testid="update-feedlot-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Update Feedlot
                 </button>
-                <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" data-testid="cancel-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg text-center transition duration-200">
+                <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="cancel-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg text-center transition duration-200">
                     Cancel
                 </a>
             </div>

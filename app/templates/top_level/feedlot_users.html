@@ -13,7 +13,7 @@
             <button onclick="openAddFeedlotUserModal()" data-testid="add-feedlot-user-button" class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
                 + Add User
             </button>
-            <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" data-testid="back-to-feedlot-link" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="back-to-feedlot-link" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
                 Back
             </a>
         </div>

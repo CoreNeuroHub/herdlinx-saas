@@ -181,7 +181,7 @@ def create_feedlot():
 @login_required
 @admin_access_required
 def view_feedlot(feedlot_id):
-    """View feedlot details"""
+    """View feedlot details - redirects to feedlot dashboard"""
     # Check if business owner or business admin has access to this feedlot
     user_type = session.get('user_type')
     if user_type in ['business_owner', 'business_admin']:
@@ -195,10 +195,8 @@ def view_feedlot(feedlot_id):
         flash('Feedlot not found.', 'error')
         return redirect(url_for('top_level.dashboard'))
     
-    statistics = Feedlot.get_statistics(feedlot_id)
-    owner = Feedlot.get_owner(feedlot_id)
-    user_type = session.get('user_type')
-    return render_template('top_level/view_feedlot.html', feedlot=feedlot, statistics=statistics, owner=owner, user_type=user_type)
+    # Redirect to feedlot dashboard instead of showing view page
+    return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
 
 @top_level_bp.route('/feedlot/<feedlot_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -260,7 +258,7 @@ def edit_feedlot(feedlot_id):
             )
         
         flash('Feedlot updated successfully.', 'success')
-        return redirect(url_for('top_level.view_feedlot', feedlot_id=feedlot_id))
+        return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
     
     return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners, user_type=user_type)
 

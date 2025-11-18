@@ -212,7 +212,7 @@
                     <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="recent-feedlot-open-link-{{ feedlot._id }}" class="flex-1 bg-teal hover:opacity-90 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
                         Dashboard
                     </a>
-                    <a href="{{ url_for('top_level.view_feedlot', feedlot_id=feedlot._id) }}" data-testid="recent-feedlot-view-link-{{ feedlot._id }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
+                    <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="recent-feedlot-view-link-{{ feedlot._id }}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
                         View
                     </a>
                 </div>
