@@ -102,6 +102,24 @@ def create_app(config_class=Config):
     # This prevents connection failures during cold starts in serverless environments
     # The init_db() and create_default_admin() will be called on first database access
     
+    # Initialize database on first request (Flask 3.0+ compatible)
+    def initialize_database_once():
+        if not hasattr(app, '_db_initialized'):
+            try:
+                from .models import init_db, create_default_admin
+                # Ensure DB connection is established
+                get_db()
+                init_db()
+                create_default_admin()
+                app._db_initialized = True
+            except Exception as e:
+                import traceback
+                print(f"Warning: Database initialization error: {e}")
+                traceback.print_exc()
+    
+    # Register the before_request handler
+    app.before_request(initialize_database_once)
+    
     # Register blueprints
     try:
         from .routes.auth_routes import auth_bp
