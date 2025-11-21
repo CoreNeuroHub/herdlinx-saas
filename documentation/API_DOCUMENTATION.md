@@ -651,7 +651,7 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 
 - Check the `errors` array in responses for detailed error messages
 - Verify API key is active and associated with the correct feedlot
-- Ensure `feedlot_code` matches exactly (case-insensitive, but stored as uppercase)
+- Ensure `feedlot_code` matches exactly (case-insensitive, but stored as lowercase)
 - Validate data types match expected formats (numbers, strings, dates)
 
 ---

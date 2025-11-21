@@ -66,7 +66,7 @@ def sync_batches():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
@@ -219,7 +219,7 @@ def sync_livestock():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
@@ -336,7 +336,7 @@ def sync_induction_events():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
@@ -512,7 +512,7 @@ def sync_pairing_events():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
@@ -620,7 +620,7 @@ def sync_checkin_events():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
@@ -732,7 +732,7 @@ def sync_repair_events():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'

@@ -72,7 +72,7 @@ def get_feedlot_db(feedlot_code):
     """Get feedlot-specific MongoDB database connection
     
     Args:
-        feedlot_code: The feedlot code (will be normalized to uppercase)
+        feedlot_code: The feedlot code (will be normalized to lowercase)
     
     Returns:
         Database instance for the feedlot
@@ -82,8 +82,8 @@ def get_feedlot_db(feedlot_code):
     if not feedlot_code:
         raise ValueError("feedlot_code is required")
     
-    # Normalize feedlot_code to uppercase for consistency
-    normalized_code = feedlot_code.upper().strip()
+    # Normalize feedlot_code to lowercase for consistency
+    normalized_code = feedlot_code.lower().strip()
     db_name = f"feedlot_{normalized_code}"
     
     # Return cached connection if available

@@ -28,7 +28,7 @@ class APISyncer:
         """
         self.api_base_url = api_base_url.rstrip('/')
         self.api_key = api_key
-        self.feedlot_code = feedlot_code.upper()
+        self.feedlot_code = feedlot_code.lower()
         self.db_path = db_path
         self.headers = {
             "X-API-Key": api_key,

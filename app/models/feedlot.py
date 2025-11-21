@@ -15,7 +15,7 @@ class Feedlot:
         """
         if not feedlot_code:
             raise ValueError("feedlot_code is required")
-        return f"feedlot_{feedlot_code.upper().strip()}"
+        return f"feedlot_{feedlot_code.lower().strip()}"
     
     @staticmethod
     def get_feedlot_code_from_id(feedlot_id):
@@ -95,7 +95,7 @@ class Feedlot:
         feedlot_data = {
             'name': name,
             'location': location,
-            'feedlot_code': feedlot_code.upper().strip() if feedlot_code else None,
+            'feedlot_code': feedlot_code.lower().strip() if feedlot_code else None,
             'contact_info': contact_info or {},
             'land_description': land_description or None,
             'premises_id': premises_id or None,
@@ -111,7 +111,7 @@ class Feedlot:
         
         # Initialize feedlot-specific database
         try:
-            Feedlot.initialize_feedlot_database(feedlot_code.upper().strip())
+            Feedlot.initialize_feedlot_database(feedlot_code.lower().strip())
         except Exception as e:
             # Log error but don't fail feedlot creation
             print(f"Warning: Failed to initialize feedlot database for {feedlot_code}: {e}")
@@ -140,7 +140,7 @@ class Feedlot:
         """Find feedlot by feedlot_code (case-insensitive)"""
         if not feedlot_code:
             return None
-        return db.feedlots.find_one({'feedlot_code': feedlot_code.upper().strip()})
+        return db.feedlots.find_one({'feedlot_code': feedlot_code.lower().strip()})
     
     @staticmethod
     def update_feedlot(feedlot_id, update_data):
