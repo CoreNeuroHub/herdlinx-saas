@@ -145,6 +145,9 @@ def create_app(config_class=Config):
     # Initialize database on first request (Flask 3.0+ compatible)
     def initialize_database_once():
         if not hasattr(app, '_db_initialized'):
+            # Set flag immediately to prevent retry attempts on subsequent requests
+            # This ensures we fail fast if initialization fails
+            app._db_initialized = False
             try:
                 from .models import init_db, create_default_admin
                 # Ensure DB connection is established
@@ -154,8 +157,11 @@ def create_app(config_class=Config):
                 app._db_initialized = True
             except Exception as e:
                 import traceback
-                print(f"Warning: Database initialization error: {e}")
+                print(f"Error: Database initialization failed: {e}")
                 traceback.print_exc()
+                # Re-raise the exception to fail fast and prevent silent failures
+                # This ensures the application doesn't continue with an uninitialized database
+                raise
     
     # Register the before_request handler
     app.before_request(initialize_database_once)
