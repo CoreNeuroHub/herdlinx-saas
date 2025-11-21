@@ -12,6 +12,13 @@ from app.utils.manifest_generator import generate_manifest_data, generate_pdf
 
 feedlot_bp = Blueprint('feedlot', __name__)
 
+def get_feedlot_code(feedlot_id):
+    """Helper function to get feedlot_code from feedlot_id"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if feedlot:
+        return feedlot.get('feedlot_code')
+    return None
+
 def convert_objectids_to_strings(data):
     """Recursively convert ObjectId objects to strings for JSON serialization"""
     if isinstance(data, dict):
@@ -33,10 +40,15 @@ def dashboard(feedlot_id):
         flash('Feedlot not found.', 'error')
         return redirect(url_for('auth.login'))
     
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
     statistics = Feedlot.get_statistics(feedlot_id)
     
     # Get recent batches
-    recent_batches = Batch.find_by_feedlot(feedlot_id)[-5:]
+    recent_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)[-5:]
     
     user_type = session.get('user_type')
     
@@ -53,11 +65,20 @@ def dashboard(feedlot_id):
 def list_pens(feedlot_id):
     """List all pens for a feedlot"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    pens = Pen.find_by_feedlot(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
     
     # Add current cattle count to each pen
     for pen in pens:
-        pen['current_count'] = Pen.get_current_cattle_count(str(pen['_id']))
+        pen['current_count'] = Pen.get_current_cattle_count(feedlot_code, str(pen['_id']))
     
     # Get pen map configuration
     pen_map = Feedlot.get_pen_map(feedlot_id)
@@ -83,13 +104,21 @@ def list_pens(feedlot_id):
 def create_pen(feedlot_id):
     """Create a new pen"""
     feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
     
     if request.method == 'POST':
         pen_number = request.form.get('pen_number')
         capacity = int(request.form.get('capacity'))
         description = request.form.get('description')
         
-        pen_id = Pen.create_pen(feedlot_id, pen_number, capacity, description)
+        pen_id = Pen.create_pen(feedlot_code, feedlot_id, pen_number, capacity, description)
         flash('Pen created successfully.', 'success')
         return redirect(url_for('feedlot.list_pens', feedlot_id=feedlot_id))
     
@@ -101,13 +130,22 @@ def create_pen(feedlot_id):
 def view_pen(feedlot_id, pen_id):
     """View pen details"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    pen = Pen.find_by_id(pen_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    pen = Pen.find_by_id(feedlot_code, pen_id)
     
     if not pen:
         flash('Pen not found.', 'error')
         return redirect(url_for('feedlot.list_pens', feedlot_id=feedlot_id))
     
-    cattle = Cattle.find_by_pen(pen_id)
+    cattle = Cattle.find_by_pen(feedlot_code, pen_id)
     pen['current_count'] = len(cattle)
     
     return render_template('feedlot/pens/view.html', feedlot=feedlot, pen=pen, cattle=cattle)
@@ -118,7 +156,16 @@ def view_pen(feedlot_id, pen_id):
 def edit_pen(feedlot_id, pen_id):
     """Edit pen details"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    pen = Pen.find_by_id(pen_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    pen = Pen.find_by_id(feedlot_code, pen_id)
     
     if not pen:
         flash('Pen not found.', 'error')
@@ -131,7 +178,7 @@ def edit_pen(feedlot_id, pen_id):
             'description': request.form.get('description')
         }
         
-        Pen.update_pen(pen_id, update_data)
+        Pen.update_pen(feedlot_code, pen_id, update_data)
         flash('Pen updated successfully.', 'success')
         return redirect(url_for('feedlot.view_pen', feedlot_id=feedlot_id, pen_id=pen_id))
     
@@ -142,7 +189,17 @@ def edit_pen(feedlot_id, pen_id):
 @feedlot_access_required()
 def delete_pen(feedlot_id, pen_id):
     """Delete a pen"""
-    Pen.delete_pen(pen_id)
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    Pen.delete_pen(feedlot_code, pen_id)
     flash('Pen deleted successfully.', 'success')
     return redirect(url_for('feedlot.list_pens', feedlot_id=feedlot_id))
 
@@ -152,7 +209,16 @@ def delete_pen(feedlot_id, pen_id):
 def map_pens(feedlot_id):
     """Map pens on a grid layout"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    pens = Pen.find_by_feedlot(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
     
     if request.method == 'POST':
         data = request.get_json()
@@ -177,7 +243,16 @@ def map_pens(feedlot_id):
 def view_pen_map(feedlot_id):
     """View pen map (read-only display)"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    pens = Pen.find_by_feedlot(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
     pen_map = Feedlot.get_pen_map(feedlot_id)
     
     # Create pen lookup dictionary (convert ObjectId to string for JSON serialization)
@@ -201,11 +276,20 @@ def view_pen_map(feedlot_id):
 def list_batches(feedlot_id):
     """List all batches for a feedlot"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    batches = Batch.find_by_feedlot(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
     
     # Add cattle count to each batch
     for batch in batches:
-        batch['cattle_count'] = Batch.get_cattle_count(str(batch['_id']))
+        batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
     
     return render_template('feedlot/batches/list.html', feedlot=feedlot, batches=batches)
 
@@ -215,6 +299,14 @@ def list_batches(feedlot_id):
 def create_batch(feedlot_id):
     """Create a new batch"""
     feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
     
     if request.method == 'POST':
         batch_number = request.form.get('batch_number')
@@ -225,7 +317,7 @@ def create_batch(feedlot_id):
         # Convert date string to datetime object
         induction_date = datetime.strptime(induction_date_str, '%Y-%m-%d') if induction_date_str else None
         
-        batch_id = Batch.create_batch(feedlot_id, batch_number, induction_date, funder, notes)
+        batch_id = Batch.create_batch(feedlot_code, feedlot_id, batch_number, induction_date, funder, notes)
         flash('Batch created successfully.', 'success')
         return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
     
@@ -237,13 +329,22 @@ def create_batch(feedlot_id):
 def view_batch(feedlot_id, batch_id):
     """View batch details"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    batch = Batch.find_by_id(batch_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    batch = Batch.find_by_id(feedlot_code, batch_id)
     
     if not batch:
         flash('Batch not found.', 'error')
         return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
     
-    cattle = Cattle.find_by_batch(batch_id)
+    cattle = Cattle.find_by_batch(feedlot_code, batch_id)
     batch['cattle_count'] = len(cattle)
     
     return render_template('feedlot/batches/view.html', feedlot=feedlot, batch=batch, cattle=cattle)
@@ -255,6 +356,14 @@ def view_batch(feedlot_id, batch_id):
 def list_cattle(feedlot_id):
     """List all cattle for a feedlot with search, filter, and sort"""
     feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
     
     # Get filter parameters
     search = request.args.get('search', '').strip()
@@ -266,6 +375,7 @@ def list_cattle(feedlot_id):
     
     # Get filtered cattle
     cattle = Cattle.find_by_feedlot_with_filters(
+        feedlot_code,
         feedlot_id,
         search=search if search else None,
         health_status=health_status_filter if health_status_filter else None,
@@ -276,13 +386,13 @@ def list_cattle(feedlot_id):
     )
     
     # Get all pens for filter dropdown
-    pens = Pen.find_by_feedlot(feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
     
     # Create pen lookup dictionary for efficient template access
     pen_map = {str(pen['_id']): pen for pen in pens}
     
     # Get unique values for filter dropdowns
-    all_cattle = Cattle.find_by_feedlot(feedlot_id)
+    all_cattle = Cattle.find_by_feedlot(feedlot_code, feedlot_id)
     unique_health_statuses = list(set(c.get('health_status', '') for c in all_cattle if c.get('health_status')))
     unique_sexes = list(set(c.get('sex', '') for c in all_cattle if c.get('sex')))
     
@@ -306,6 +416,14 @@ def list_cattle(feedlot_id):
 def create_cattle(feedlot_id):
     """Create cattle record"""
     feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
     
     if request.method == 'POST':
         batch_id = request.form.get('batch_id')
@@ -324,24 +442,24 @@ def create_cattle(feedlot_id):
         other_marks = request.form.get('other_marks')
         
         # Check pen capacity if pen is assigned
-        if pen_id and not Pen.is_capacity_available(pen_id):
+        if pen_id and not Pen.is_capacity_available(feedlot_code, pen_id):
             flash('Pen is at full capacity.', 'error')
-            batches = Batch.find_by_feedlot(feedlot_id)
-            pens = Pen.find_by_feedlot(feedlot_id)
+            batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
+            pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
             return render_template('feedlot/cattle/create.html', 
                                  feedlot=feedlot, 
                                  batches=batches, 
                                  pens=pens)
         
         created_by = session.get('username', 'user')
-        cattle_record_id = Cattle.create_cattle(feedlot_id, batch_id, cattle_id, sex, 
+        cattle_record_id = Cattle.create_cattle(feedlot_code, feedlot_id, batch_id, cattle_id, sex, 
                                                weight, health_status, lf_tag, uhf_tag, pen_id, notes,
                                                color, breed, brand_drawings, brand_locations, other_marks, created_by=created_by)
         flash('Cattle record created successfully.', 'success')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
-    batches = Batch.find_by_feedlot(feedlot_id)
-    pens = Pen.find_by_feedlot(feedlot_id)
+    batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
     
     return render_template('feedlot/cattle/create.html', feedlot=feedlot, batches=batches, pens=pens)
 
@@ -351,14 +469,23 @@ def create_cattle(feedlot_id):
 def view_cattle(feedlot_id, cattle_id):
     """View cattle details"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    cattle = Cattle.find_by_id(cattle_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    cattle = Cattle.find_by_id(feedlot_code, cattle_id)
     
     if not cattle:
         flash('Cattle record not found.', 'error')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
-    pen = Pen.find_by_id(cattle['pen_id']) if cattle.get('pen_id') else None
-    batch = Batch.find_by_id(cattle['batch_id'])
+    pen = Pen.find_by_id(feedlot_code, cattle['pen_id']) if cattle.get('pen_id') else None
+    batch = Batch.find_by_id(feedlot_code, cattle['batch_id'])
     
     return render_template('feedlot/cattle/view.html', 
                          feedlot=feedlot, 
@@ -372,7 +499,16 @@ def view_cattle(feedlot_id, cattle_id):
 def move_cattle(feedlot_id, cattle_id):
     """Move cattle to different pen"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    cattle = Cattle.find_by_id(cattle_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    cattle = Cattle.find_by_id(feedlot_code, cattle_id)
     
     if not cattle:
         flash('Cattle record not found.', 'error')
@@ -382,19 +518,19 @@ def move_cattle(feedlot_id, cattle_id):
         new_pen_id = request.form.get('pen_id')
         moved_by = session.get('username', 'user')
         
-        if new_pen_id and not Pen.is_capacity_available(new_pen_id):
+        if new_pen_id and not Pen.is_capacity_available(feedlot_code, new_pen_id):
             flash('Selected pen is at full capacity.', 'error')
-            pens = Pen.find_by_feedlot(feedlot_id)
+            pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
             return render_template('feedlot/cattle/move.html', 
                                  feedlot=feedlot, 
                                  cattle=cattle, 
                                  pens=pens)
         
-        Cattle.move_cattle(cattle_id, new_pen_id, moved_by)
+        Cattle.move_cattle(feedlot_code, cattle_id, new_pen_id, moved_by)
         flash('Cattle moved successfully.', 'success')
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     
-    pens = Pen.find_by_feedlot(feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
     return render_template('feedlot/cattle/move.html', feedlot=feedlot, cattle=cattle, pens=pens)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/add_weight', methods=['GET', 'POST'])
@@ -403,7 +539,16 @@ def move_cattle(feedlot_id, cattle_id):
 def add_weight_record(feedlot_id, cattle_id):
     """Add a weight record for cattle"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    cattle = Cattle.find_by_id(cattle_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    cattle = Cattle.find_by_id(feedlot_code, cattle_id)
     
     if not cattle:
         flash('Cattle record not found.', 'error')
@@ -413,7 +558,7 @@ def add_weight_record(feedlot_id, cattle_id):
         weight = float(request.form.get('weight'))
         recorded_by = request.form.get('recorded_by', 'user')
         
-        Cattle.add_weight_record(cattle_id, weight, recorded_by)
+        Cattle.add_weight_record(feedlot_code, cattle_id, weight, recorded_by)
         flash('Weight record added successfully.', 'success')
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     
@@ -425,7 +570,16 @@ def add_weight_record(feedlot_id, cattle_id):
 def add_note(feedlot_id, cattle_id):
     """Add a note for cattle"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    cattle = Cattle.find_by_id(cattle_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    cattle = Cattle.find_by_id(feedlot_code, cattle_id)
     
     if not cattle:
         flash('Cattle record not found.', 'error')
@@ -439,7 +593,7 @@ def add_note(feedlot_id, cattle_id):
             flash('Note cannot be empty.', 'error')
             return render_template('feedlot/cattle/add_note.html', feedlot=feedlot, cattle=cattle)
         
-        Cattle.add_note(cattle_id, note, recorded_by)
+        Cattle.add_note(feedlot_code, cattle_id, note, recorded_by)
         flash('Note added successfully.', 'success')
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     
@@ -451,7 +605,16 @@ def add_note(feedlot_id, cattle_id):
 def update_tags(feedlot_id, cattle_id):
     """Update/re-pair LF and UHF tags for cattle"""
     feedlot = Feedlot.find_by_id(feedlot_id)
-    cattle = Cattle.find_by_id(cattle_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    cattle = Cattle.find_by_id(feedlot_code, cattle_id)
     
     if not cattle:
         flash('Cattle record not found.', 'error')
@@ -462,7 +625,7 @@ def update_tags(feedlot_id, cattle_id):
         new_uhf_tag = request.form.get('uhf_tag', '').strip()
         updated_by = session.get('username', 'user')
         
-        Cattle.update_tag_pair(cattle_id, new_lf_tag, new_uhf_tag, updated_by)
+        Cattle.update_tag_pair(feedlot_code, cattle_id, new_lf_tag, new_uhf_tag, updated_by)
         flash('Tag pair updated successfully. Previous pair has been saved to history.', 'success')
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     
@@ -484,15 +647,20 @@ def export_manifest(feedlot_id):
         selection_method = request.form.get('selection_method', 'pen')
         
         # Get selected cattle
+        feedlot_code = feedlot.get('feedlot_code')
+        if not feedlot_code:
+            flash('Feedlot code not found.', 'error')
+            return redirect(url_for('feedlot.export_manifest', feedlot_id=feedlot_id))
+        
         cattle_list = []
         if selection_method == 'pen':
             pen_ids = request.form.getlist('pen_ids')
             for pen_id in pen_ids:
-                cattle_list.extend(Cattle.find_by_pen(pen_id))
+                cattle_list.extend(Cattle.find_by_pen(feedlot_code, pen_id))
         else:  # manual selection
             cattle_ids = request.form.getlist('cattle_ids')
             for cattle_id in cattle_ids:
-                cattle = Cattle.find_by_id(cattle_id)
+                cattle = Cattle.find_by_id(feedlot_code, cattle_id)
                 if cattle:
                     cattle_list.append(cattle)
         
@@ -585,13 +753,18 @@ def export_manifest(feedlot_id):
         return redirect(url_for('feedlot.export_manifest', feedlot_id=feedlot_id))
     
     # GET request - show export form
-    pens = Pen.find_by_feedlot(feedlot_id)
-    all_cattle = Cattle.find_by_feedlot(feedlot_id)
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
+    
+    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
+    all_cattle = Cattle.find_by_feedlot(feedlot_code, feedlot_id)
     templates = ManifestTemplate.find_by_feedlot(feedlot_id)
     
     # Add cattle count to pens
     for pen in pens:
-        pen['cattle_count'] = Pen.get_current_cattle_count(str(pen['_id']))
+        pen['cattle_count'] = Pen.get_current_cattle_count(feedlot_code, str(pen['_id']))
     
     return render_template('feedlot/manifest/export.html',
                          feedlot=feedlot,

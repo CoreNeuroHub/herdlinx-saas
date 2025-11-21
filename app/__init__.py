@@ -7,14 +7,14 @@ from config import Config
 # Don't create connection at module level for serverless - defer to first use
 _mongodb_client = None
 _db_instance = None
+_feedlot_db_cache = {}  # Cache for feedlot-specific databases
 
-def get_db():
-    """Get MongoDB database connection, creating it if necessary"""
-    global _mongodb_client, _db_instance
+def _get_mongodb_client():
+    """Get or create MongoDB client"""
+    global _mongodb_client
     
-    # Return cached connection if available
-    if _db_instance is not None:
-        return _db_instance
+    if _mongodb_client is not None:
+        return _mongodb_client
     
     # Validate MONGODB_URI is set (may be None if Config failed to load it during import)
     if Config.MONGODB_URI is None:
@@ -48,14 +48,54 @@ def get_db():
         # Create client - connection is lazy, won't connect until first use
         print(f"Creating MongoDB client with URI: {Config.MONGODB_URI[:20]}...")  # Debug
         _mongodb_client = MongoClient(Config.MONGODB_URI, **client_options)
-        _db_instance = _mongodb_client[Config.MONGODB_DB]
         print("MongoDB client created successfully")
-        return _db_instance
+        return _mongodb_client
     except Exception as e:
         print(f"Error creating MongoDB client: {e}")
         import traceback
         traceback.print_exc()
         raise
+
+def get_db():
+    """Get master MongoDB database connection (for feedlots and users collections)"""
+    global _db_instance
+    
+    # Return cached connection if available
+    if _db_instance is not None:
+        return _db_instance
+    
+    client = _get_mongodb_client()
+    _db_instance = client[Config.MONGODB_DB]
+    return _db_instance
+
+def get_feedlot_db(feedlot_code):
+    """Get feedlot-specific MongoDB database connection
+    
+    Args:
+        feedlot_code: The feedlot code (will be normalized to uppercase)
+    
+    Returns:
+        Database instance for the feedlot
+    """
+    global _feedlot_db_cache
+    
+    if not feedlot_code:
+        raise ValueError("feedlot_code is required")
+    
+    # Normalize feedlot_code to uppercase for consistency
+    normalized_code = feedlot_code.upper().strip()
+    db_name = f"feedlot_{normalized_code}"
+    
+    # Return cached connection if available
+    if db_name in _feedlot_db_cache:
+        return _feedlot_db_cache[db_name]
+    
+    # Create new database connection
+    client = _get_mongodb_client()
+    feedlot_db = client[db_name]
+    _feedlot_db_cache[db_name] = feedlot_db
+    
+    return feedlot_db
 
 # Initialize db variable to be a lazy proxy
 class LazyDB:
@@ -148,6 +188,7 @@ def create_app(config_class=Config):
         nav_context = {
             'current_feedlot': None,
             'current_feedlot_id': None,
+            'current_feedlot_code': None,
             'show_top_level_nav': False,
             'show_feedlot_nav': False,
             'user_type': session.get('user_type'),
@@ -179,6 +220,7 @@ def create_app(config_class=Config):
                     if branding:
                         feedlot['branding'] = branding
                     nav_context['current_feedlot'] = feedlot
+                    nav_context['current_feedlot_code'] = feedlot.get('feedlot_code')
                     nav_context['show_feedlot_nav'] = True
                     current_feedlot = feedlot
             except Exception:

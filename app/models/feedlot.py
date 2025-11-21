@@ -1,8 +1,78 @@
 from datetime import datetime
 from bson import ObjectId
-from app import db
+from app import db, get_feedlot_db
 
 class Feedlot:
+    @staticmethod
+    def get_database_name(feedlot_code):
+        """Generate database name for a feedlot
+        
+        Args:
+            feedlot_code: The feedlot code
+        
+        Returns:
+            Database name string (feedlot_{feedlot_code})
+        """
+        if not feedlot_code:
+            raise ValueError("feedlot_code is required")
+        return f"feedlot_{feedlot_code.upper().strip()}"
+    
+    @staticmethod
+    def get_feedlot_code_from_id(feedlot_id):
+        """Get feedlot_code from feedlot_id
+        
+        Args:
+            feedlot_id: The feedlot ID
+        
+        Returns:
+            feedlot_code string or None if not found
+        """
+        feedlot = Feedlot.find_by_id(feedlot_id)
+        if feedlot:
+            return feedlot.get('feedlot_code')
+        return None
+    
+    @staticmethod
+    def initialize_feedlot_database(feedlot_code):
+        """Initialize a feedlot-specific database with collections and indexes
+        
+        Args:
+            feedlot_code: The feedlot code
+        
+        Returns:
+            Database instance
+        """
+        if not feedlot_code:
+            raise ValueError("feedlot_code is required")
+        
+        # Get feedlot database
+        feedlot_db = get_feedlot_db(feedlot_code)
+        
+        # Initialize collections and indexes
+        # Pens collection
+        feedlot_db.pens.create_index('feedlot_id')
+        feedlot_db.pens.create_index([('feedlot_id', 1), ('pen_number', 1)], unique=True)
+        
+        # Batches collection
+        feedlot_db.batches.create_index('feedlot_id')
+        feedlot_db.batches.create_index([('feedlot_id', 1), ('batch_number', 1)], unique=True)
+        
+        # Cattle collection
+        feedlot_db.cattle.create_index('feedlot_id')
+        feedlot_db.cattle.create_index('batch_id')
+        feedlot_db.cattle.create_index('pen_id')
+        feedlot_db.cattle.create_index([('feedlot_id', 1), ('cattle_id', 1)], unique=True)
+        
+        # Manifest templates collection
+        feedlot_db.manifest_templates.create_index('feedlot_id')
+        feedlot_db.manifest_templates.create_index([('feedlot_id', 1), ('is_default', 1)])
+        
+        # Manifests collection
+        feedlot_db.manifests.create_index('feedlot_id')
+        feedlot_db.manifests.create_index([('feedlot_id', 1), ('created_at', -1)])
+        feedlot_db.manifests.create_index('created_at')
+        
+        return feedlot_db
     @staticmethod
     def create_feedlot(name, location, feedlot_code, contact_info=None, owner_id=None, land_description=None, premises_id=None):
         """Create a new feedlot
@@ -37,7 +107,16 @@ class Feedlot:
             feedlot_data['owner_id'] = ObjectId(owner_id)
         
         result = db.feedlots.insert_one(feedlot_data)
-        return str(result.inserted_id)
+        feedlot_id = str(result.inserted_id)
+        
+        # Initialize feedlot-specific database
+        try:
+            Feedlot.initialize_feedlot_database(feedlot_code.upper().strip())
+        except Exception as e:
+            # Log error but don't fail feedlot creation
+            print(f"Warning: Failed to initialize feedlot database for {feedlot_code}: {e}")
+        
+        return feedlot_id
     
     @staticmethod
     def find_by_id(feedlot_id):
@@ -75,11 +154,23 @@ class Feedlot:
     @staticmethod
     def get_statistics(feedlot_id):
         """Get feedlot statistics"""
+        # Get feedlot_code from feedlot_id
+        feedlot_code = Feedlot.get_feedlot_code_from_id(feedlot_id)
+        if not feedlot_code:
+            return {
+                'total_pens': 0,
+                'total_cattle': 0,
+                'total_batches': 0,
+                'cattle_by_pen': 0
+            }
+        
+        # Get feedlot-specific database
+        feedlot_db = get_feedlot_db(feedlot_code)
         feedlot_id_obj = ObjectId(feedlot_id)
         
-        total_pens = db.pens.count_documents({'feedlot_id': feedlot_id_obj})
-        total_cattle = db.cattle.count_documents({'feedlot_id': feedlot_id_obj})
-        total_batches = db.batches.count_documents({'feedlot_id': feedlot_id_obj})
+        total_pens = feedlot_db.pens.count_documents({'feedlot_id': feedlot_id_obj})
+        total_cattle = feedlot_db.cattle.count_documents({'feedlot_id': feedlot_id_obj})
+        total_batches = feedlot_db.batches.count_documents({'feedlot_id': feedlot_id_obj})
         
         # Get cattle in each pen
         pipeline = [
@@ -89,7 +180,7 @@ class Feedlot:
                 'count': {'$sum': 1}
             }}
         ]
-        cattle_by_pen = list(db.cattle.aggregate(pipeline))
+        cattle_by_pen = list(feedlot_db.cattle.aggregate(pipeline))
         
         return {
             'total_pens': total_pens,

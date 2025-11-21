@@ -1,14 +1,35 @@
 from datetime import datetime
 from bson import ObjectId
-from app import db
+from app import get_feedlot_db
 from app.models.pen import Pen
 
 class Cattle:
     @staticmethod
-    def create_cattle(feedlot_id, batch_id, cattle_id, sex, weight, 
+    def create_cattle(feedlot_code, feedlot_id, batch_id, cattle_id, sex, weight, 
                      health_status, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
                      color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None, created_by='system'):
-        """Create a new cattle record"""
+        """Create a new cattle record
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            feedlot_id: The feedlot ID
+            batch_id: The batch ID
+            cattle_id: Cattle ID
+            sex: Sex of cattle
+            weight: Weight
+            health_status: Health status
+            lf_tag: Optional LF tag
+            uhf_tag: Optional UHF tag
+            pen_id: Optional pen ID
+            notes: Optional notes
+            color: Optional color
+            breed: Optional breed
+            brand_drawings: Optional brand drawings
+            brand_locations: Optional brand locations
+            other_marks: Optional other marks
+            created_by: User who created the record
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
         cattle_data = {
             'feedlot_id': ObjectId(feedlot_id),
             'batch_id': ObjectId(batch_id),
@@ -39,46 +60,84 @@ class Cattle:
             'audit_log': []  # Track all cattle activities
         }
         
-        result = db.cattle.insert_one(cattle_data)
+        result = feedlot_db.cattle.insert_one(cattle_data)
         cattle_record_id = str(result.inserted_id)
         
         # Add initial audit log entry for creation
-        Cattle.add_audit_log_entry(cattle_record_id, 'created', f'Cattle record created (ID: {cattle_id})', created_by)
+        Cattle.add_audit_log_entry(feedlot_code, cattle_record_id, 'created', f'Cattle record created (ID: {cattle_id})', created_by)
         
         return cattle_record_id
     
     @staticmethod
-    def find_by_id(cattle_record_id):
-        """Find cattle by ID"""
-        return db.cattle.find_one({'_id': ObjectId(cattle_record_id)})
+    def find_by_id(feedlot_code, cattle_record_id):
+        """Find cattle by ID
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        return feedlot_db.cattle.find_one({'_id': ObjectId(cattle_record_id)})
     
     @staticmethod
-    def find_by_cattle_id(feedlot_id, cattle_id):
-        """Find cattle by cattle ID"""
-        return db.cattle.find_one({
+    def find_by_cattle_id(feedlot_code, feedlot_id, cattle_id):
+        """Find cattle by cattle ID
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            feedlot_id: The feedlot ID
+            cattle_id: The cattle ID
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        return feedlot_db.cattle.find_one({
             'feedlot_id': ObjectId(feedlot_id),
             'cattle_id': cattle_id
         })
     
     @staticmethod
-    def find_by_feedlot(feedlot_id):
-        """Find all cattle for a feedlot"""
-        return list(db.cattle.find({'feedlot_id': ObjectId(feedlot_id)}))
+    def find_by_feedlot(feedlot_code, feedlot_id):
+        """Find all cattle for a feedlot
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            feedlot_id: The feedlot ID
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        return list(feedlot_db.cattle.find({'feedlot_id': ObjectId(feedlot_id)}))
     
     @staticmethod
-    def find_by_batch(batch_id):
-        """Find all cattle in a batch"""
-        return list(db.cattle.find({'batch_id': ObjectId(batch_id)}))
+    def find_by_batch(feedlot_code, batch_id):
+        """Find all cattle in a batch
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            batch_id: The batch ID
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        return list(feedlot_db.cattle.find({'batch_id': ObjectId(batch_id)}))
     
     @staticmethod
-    def find_by_pen(pen_id):
-        """Find all cattle in a pen"""
-        return list(db.cattle.find({'pen_id': ObjectId(pen_id), 'status': 'active'}))
+    def find_by_pen(feedlot_code, pen_id):
+        """Find all cattle in a pen
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            pen_id: The pen ID
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        return list(feedlot_db.cattle.find({'pen_id': ObjectId(pen_id), 'status': 'active'}))
     
     @staticmethod
-    def update_cattle(cattle_record_id, update_data, updated_by='system'):
-        """Update cattle information"""
-        cattle = Cattle.find_by_id(cattle_record_id)
+    def update_cattle(feedlot_code, cattle_record_id, update_data, updated_by='system'):
+        """Update cattle information
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+            update_data: Dictionary of fields to update
+            updated_by: User who made the update
+        """
+        cattle = Cattle.find_by_id(feedlot_code, cattle_record_id)
         if not cattle:
             return
         
@@ -103,8 +162,8 @@ class Cattle:
                     
                     # Format change description
                     if field == 'pen_id':
-                        old_pen = Pen.find_by_id(old_value) if old_value else None
-                        new_pen = Pen.find_by_id(new_value) if new_value else None
+                        old_pen = Pen.find_by_id(feedlot_code, old_value) if old_value else None
+                        new_pen = Pen.find_by_id(feedlot_code, new_value) if new_value else None
                         old_name = old_pen.get('pen_number', str(old_value)) if old_pen else None
                         new_name = new_pen.get('pen_number', str(new_value)) if new_pen else None
                         changes.append(f"{field}: {old_name or 'none'} → {new_name or 'none'}")
@@ -115,8 +174,9 @@ class Cattle:
                     else:
                         changes.append(f"{field}: {old_value or 'none'} → {new_value or 'none'}")
         
+        feedlot_db = get_feedlot_db(feedlot_code)
         update_data['updated_at'] = datetime.utcnow()
-        db.cattle.update_one(
+        feedlot_db.cattle.update_one(
             {'_id': ObjectId(cattle_record_id)},
             {'$set': update_data}
         )
@@ -125,6 +185,7 @@ class Cattle:
         if changes:
             description = f'Cattle information updated: {", ".join(changes)}'
             Cattle.add_audit_log_entry(
+                feedlot_code,
                 cattle_record_id,
                 'information_updated',
                 description,
@@ -133,19 +194,27 @@ class Cattle:
             )
     
     @staticmethod
-    def move_cattle(cattle_record_id, new_pen_id, moved_by='system'):
-        """Move cattle to a different pen"""
-        cattle = Cattle.find_by_id(cattle_record_id)
+    def move_cattle(feedlot_code, cattle_record_id, new_pen_id, moved_by='system'):
+        """Move cattle to a different pen
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+            new_pen_id: The new pen ID
+            moved_by: User who moved the cattle
+        """
+        cattle = Cattle.find_by_id(feedlot_code, cattle_record_id)
         old_pen_id = cattle.get('pen_id') if cattle else None
         
         # Get pen names for audit log
-        old_pen = Pen.find_by_id(old_pen_id) if old_pen_id else None
-        new_pen = Pen.find_by_id(new_pen_id) if new_pen_id else None
+        old_pen = Pen.find_by_id(feedlot_code, old_pen_id) if old_pen_id else None
+        new_pen = Pen.find_by_id(feedlot_code, new_pen_id) if new_pen_id else None
         
         old_pen_name = old_pen.get('pen_number', str(old_pen_id)) if old_pen else None
         new_pen_name = new_pen.get('pen_number', str(new_pen_id)) if new_pen else None
         
-        db.cattle.update_one(
+        feedlot_db = get_feedlot_db(feedlot_code)
+        feedlot_db.cattle.update_one(
             {'_id': ObjectId(cattle_record_id)},
             {'$set': {
                 'pen_id': ObjectId(new_pen_id) if new_pen_id else None,
@@ -158,6 +227,7 @@ class Cattle:
         if old_pen_name:
             description = f'Moved from pen {old_pen_name} to pen {new_pen_name}' if new_pen_name else f'Removed from pen {old_pen_name}'
         Cattle.add_audit_log_entry(
+            feedlot_code,
             cattle_record_id, 
             'pen_moved', 
             description, 
@@ -166,9 +236,16 @@ class Cattle:
         )
     
     @staticmethod
-    def remove_cattle(cattle_record_id, removed_by='system'):
-        """Remove cattle (mark as inactive)"""
-        db.cattle.update_one(
+    def remove_cattle(feedlot_code, cattle_record_id, removed_by='system'):
+        """Remove cattle (mark as inactive)
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+            removed_by: User who removed the cattle
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        feedlot_db.cattle.update_one(
             {'_id': ObjectId(cattle_record_id)},
             {'$set': {
                 'status': 'removed',
@@ -178,6 +255,7 @@ class Cattle:
         
         # Add audit log entry for removal
         Cattle.add_audit_log_entry(
+            feedlot_code,
             cattle_record_id,
             'removed',
             'Cattle record marked as removed',
@@ -186,9 +264,16 @@ class Cattle:
         )
     
     @staticmethod
-    def add_weight_record(cattle_record_id, weight, recorded_by='system'):
-        """Add a new weight record to the cattle's weight history"""
-        cattle = Cattle.find_by_id(cattle_record_id)
+    def add_weight_record(feedlot_code, cattle_record_id, weight, recorded_by='system'):
+        """Add a new weight record to the cattle's weight history
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+            weight: The weight to record
+            recorded_by: User who recorded the weight
+        """
+        cattle = Cattle.find_by_id(feedlot_code, cattle_record_id)
         previous_weight = cattle.get('weight') if cattle else None
         
         weight_record = {
@@ -197,7 +282,8 @@ class Cattle:
             'recorded_by': recorded_by
         }
         
-        db.cattle.update_one(
+        feedlot_db = get_feedlot_db(feedlot_code)
+        feedlot_db.cattle.update_one(
             {'_id': ObjectId(cattle_record_id)},
             {
                 '$set': {
@@ -213,6 +299,7 @@ class Cattle:
         if previous_weight:
             description += f' (previous: {previous_weight} kg)'
         Cattle.add_audit_log_entry(
+            feedlot_code,
             cattle_record_id, 
             'weight_recorded', 
             description, 
@@ -221,18 +308,28 @@ class Cattle:
         )
     
     @staticmethod
-    def get_weight_history(cattle_record_id):
-        """Get the complete weight history for a cattle record"""
-        cattle = Cattle.find_by_id(cattle_record_id)
+    def get_weight_history(feedlot_code, cattle_record_id):
+        """Get the complete weight history for a cattle record
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+        """
+        cattle = Cattle.find_by_id(feedlot_code, cattle_record_id)
         if not cattle:
             return []
         
         return cattle.get('weight_history', [])
     
     @staticmethod
-    def get_latest_weight(cattle_record_id):
-        """Get the most recent weight for a cattle record"""
-        weight_history = Cattle.get_weight_history(cattle_record_id)
+    def get_latest_weight(feedlot_code, cattle_record_id):
+        """Get the most recent weight for a cattle record
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+        """
+        weight_history = Cattle.get_weight_history(feedlot_code, cattle_record_id)
         if not weight_history:
             return None
         
@@ -241,15 +338,23 @@ class Cattle:
         return latest_record['weight']
 
     @staticmethod
-    def add_note(cattle_record_id, note, recorded_by='system'):
-        """Add a new note to the cattle's notes history"""
+    def add_note(feedlot_code, cattle_record_id, note, recorded_by='system'):
+        """Add a new note to the cattle's notes history
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+            note: The note to add
+            recorded_by: User who added the note
+        """
         note_record = {
             'note': note,
             'recorded_at': datetime.utcnow(),
             'recorded_by': recorded_by
         }
         
-        db.cattle.update_one(
+        feedlot_db = get_feedlot_db(feedlot_code)
+        feedlot_db.cattle.update_one(
             {'_id': ObjectId(cattle_record_id)},
             {
                 '$set': {
@@ -262,6 +367,7 @@ class Cattle:
         # Add audit log entry for note addition
         description = f'Note added: {note[:50]}{"..." if len(note) > 50 else ""}'
         Cattle.add_audit_log_entry(
+            feedlot_code,
             cattle_record_id, 
             'note_added', 
             description, 
@@ -270,18 +376,28 @@ class Cattle:
         )
     
     @staticmethod
-    def get_notes_history(cattle_record_id):
-        """Get the complete notes history for a cattle record"""
-        cattle = Cattle.find_by_id(cattle_record_id)
+    def get_notes_history(feedlot_code, cattle_record_id):
+        """Get the complete notes history for a cattle record
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+        """
+        cattle = Cattle.find_by_id(feedlot_code, cattle_record_id)
         if not cattle:
             return []
         
         return cattle.get('notes_history', [])
-
+    
     @staticmethod
-    def get_movement_history(cattle_record_id):
-        """Get movement history for cattle"""
-        cattle = Cattle.find_by_id(cattle_record_id)
+    def get_movement_history(feedlot_code, cattle_record_id):
+        """Get movement history for cattle
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+        """
+        cattle = Cattle.find_by_id(feedlot_code, cattle_record_id)
         if not cattle:
             return []
         
@@ -289,8 +405,20 @@ class Cattle:
         return cattle.get('movement_history', [])
     
     @staticmethod
-    def find_by_feedlot_with_filters(feedlot_id, search=None, health_status=None, sex=None, pen_id=None, sort_by='cattle_id', sort_order='asc'):
-        """Find cattle with filtering and sorting"""
+    def find_by_feedlot_with_filters(feedlot_code, feedlot_id, search=None, health_status=None, sex=None, pen_id=None, sort_by='cattle_id', sort_order='asc'):
+        """Find cattle with filtering and sorting
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            feedlot_id: The feedlot ID
+            search: Optional search term for cattle_id
+            health_status: Optional health status filter
+            sex: Optional sex filter
+            pen_id: Optional pen ID filter
+            sort_by: Field to sort by
+            sort_order: Sort order ('asc' or 'desc')
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
         query = {'feedlot_id': ObjectId(feedlot_id)}
         
         # Add search filter for cattle_id
@@ -324,12 +452,21 @@ class Cattle:
         sort_field = sort_field_map.get(sort_by, 'cattle_id')
         sort_criteria = [(sort_field, sort_direction)]
         
-        return list(db.cattle.find(query).sort(sort_criteria))
+        return list(feedlot_db.cattle.find(query).sort(sort_criteria))
     
     @staticmethod
-    def update_tag_pair(cattle_record_id, new_lf_tag, new_uhf_tag, updated_by='system', reason=None):
-        """Update LF and UHF tag pair, saving previous pair to history"""
-        cattle = Cattle.find_by_id(cattle_record_id)
+    def update_tag_pair(feedlot_code, cattle_record_id, new_lf_tag, new_uhf_tag, updated_by='system', reason=None):
+        """Update LF and UHF tag pair, saving previous pair to history
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+            new_lf_tag: New LF tag
+            new_uhf_tag: New UHF tag
+            updated_by: User who updated the tags
+            reason: Optional reason for tag update
+        """
+        cattle = Cattle.find_by_id(feedlot_code, cattle_record_id)
         if not cattle:
             return False
         
@@ -340,6 +477,8 @@ class Cattle:
         
         # Check if tags are actually changing
         tags_changed = (current_lf_tag != new_lf_tag) or (current_uhf_tag != new_uhf_tag)
+        
+        feedlot_db = get_feedlot_db(feedlot_code)
         
         if tags_changed:
             # If there was a previous tag pair (both tags exist), save it to history
@@ -363,7 +502,7 @@ class Cattle:
                     tag_pair_record['paired_at'] = cattle.get('created_at')
                 
                 # Update cattle with new tags and add old pair to history
-                db.cattle.update_one(
+                feedlot_db.cattle.update_one(
                     {'_id': ObjectId(cattle_record_id)},
                     {
                         '$set': {
@@ -380,6 +519,7 @@ class Cattle:
                 if reason:
                     description += f' (Reason: {reason})'
                 Cattle.add_audit_log_entry(
+                    feedlot_code,
                     cattle_record_id, 
                     'tag_repair', 
                     description, 
@@ -388,7 +528,7 @@ class Cattle:
                 )
             else:
                 # No previous tags, just update (this is initial pairing)
-                db.cattle.update_one(
+                feedlot_db.cattle.update_one(
                     {'_id': ObjectId(cattle_record_id)},
                     {
                         '$set': {
@@ -402,6 +542,7 @@ class Cattle:
                 # Add audit log entry for initial pairing
                 description = f'Tags paired: LF {new_lf_tag or "none"}, UHF {new_uhf_tag or "none"}'
                 Cattle.add_audit_log_entry(
+                    feedlot_code,
                     cattle_record_id, 
                     'tag_pairing', 
                     description, 
@@ -412,17 +553,32 @@ class Cattle:
         return True
     
     @staticmethod
-    def get_tag_pair_history(cattle_record_id):
-        """Get the complete tag pair history for a cattle record"""
-        cattle = Cattle.find_by_id(cattle_record_id)
+    def get_tag_pair_history(feedlot_code, cattle_record_id):
+        """Get the complete tag pair history for a cattle record
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+        """
+        cattle = Cattle.find_by_id(feedlot_code, cattle_record_id)
         if not cattle:
             return []
         
         return cattle.get('tag_pair_history', [])
     
     @staticmethod
-    def add_audit_log_entry(cattle_record_id, activity_type, description, performed_by='system', details=None):
-        """Add an entry to the cattle audit log"""
+    def add_audit_log_entry(feedlot_code, cattle_record_id, activity_type, description, performed_by='system', details=None):
+        """Add an entry to the cattle audit log
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+            activity_type: Type of activity
+            description: Description of the activity
+            performed_by: User who performed the activity
+            details: Optional additional details
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
         audit_entry = {
             'activity_type': activity_type,
             'description': description,
@@ -431,15 +587,20 @@ class Cattle:
             'details': details or {}
         }
         
-        db.cattle.update_one(
+        feedlot_db.cattle.update_one(
             {'_id': ObjectId(cattle_record_id)},
             {'$push': {'audit_log': audit_entry}}
         )
     
     @staticmethod
-    def get_audit_log(cattle_record_id):
-        """Get the complete audit log for a cattle record"""
-        cattle = Cattle.find_by_id(cattle_record_id)
+    def get_audit_log(feedlot_code, cattle_record_id):
+        """Get the complete audit log for a cattle record
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+        """
+        cattle = Cattle.find_by_id(feedlot_code, cattle_record_id)
         if not cattle:
             return []
         

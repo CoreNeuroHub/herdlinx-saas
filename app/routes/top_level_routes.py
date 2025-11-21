@@ -74,10 +74,15 @@ def dashboard():
     
     if feedlots:
         feedlot_ids = [ObjectId(str(f['_id'])) for f in feedlots]
-        total_pens = db.pens.count_documents({'feedlot_id': {'$in': feedlot_ids}})
-        total_cattle = db.cattle.count_documents({'feedlot_id': {'$in': feedlot_ids}})
         
-        # Count users associated with these feedlots
+        # Aggregate statistics from each feedlot's database
+        for feedlot in feedlots:
+            feedlot_id = str(feedlot['_id'])
+            stats = Feedlot.get_statistics(feedlot_id)
+            total_pens += stats.get('total_pens', 0)
+            total_cattle += stats.get('total_cattle', 0)
+        
+        # Count users associated with these feedlots (users are in master DB)
         user_query = {'$or': [
             {'feedlot_id': {'$in': feedlot_ids}},
             {'feedlot_ids': {'$in': feedlot_ids}}
@@ -151,17 +156,16 @@ def feedlot_hub():
     for feedlot in feedlots:
         feedlot_id = str(feedlot['_id'])
         
-        # Get statistics for this feedlot
-        total_pens = db.pens.count_documents({'feedlot_id': ObjectId(feedlot_id)})
-        total_cattle = db.cattle.count_documents({'feedlot_id': ObjectId(feedlot_id)})
+        # Get statistics for this feedlot (uses feedlot-specific database)
+        stats = Feedlot.get_statistics(feedlot_id)
         
         # Get owner information
         owner = Feedlot.get_owner(feedlot_id)
         
         # Create enriched feedlot dict
         enriched_feedlot = dict(feedlot)
-        enriched_feedlot['total_pens'] = total_pens
-        enriched_feedlot['total_cattle'] = total_cattle
+        enriched_feedlot['total_pens'] = stats.get('total_pens', 0)
+        enriched_feedlot['total_cattle'] = stats.get('total_cattle', 0)
         enriched_feedlot['owner'] = owner
         
         enriched_feedlots.append(enriched_feedlot)
