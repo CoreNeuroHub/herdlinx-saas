@@ -563,29 +563,29 @@ sqlite3 office_app/office_app.db "VACUUM;"
 
 ## Next Steps
 
-1. ✅ **Deploy Pi Backend** (if not already done)
+1. **Deploy Pi Backend** (if not already done)
    - Clone `aj/pi-backend` branch
    - Run `./scripts/setup.sh`
    - Run `./scripts/start.sh`
 
-2. ✅ **Deploy Server UI** (Linux or Windows)
+2. **Deploy Server UI** (Linux or Windows)
    - Clone appropriate deployment branch
    - Configure Pi connection in `.env`
    - Run startup script
 
-3. ✅ **Configure Web UI**
+3. **Configure Web UI**
    - Login with admin/admin
    - Change default password
    - Create user accounts
    - Configure sync settings
 
-4. ✅ **Monitor System**
+4. **Monitor System**
    - Watch sync status
    - Monitor database size
    - Check error logs
    - Verify LoRa data reception
 
-5. ✅ **Production Setup**
+5. **Production Setup**
    - Enable auto-start services
    - Setup automated backups
    - Configure monitoring/alerting
@@ -600,4 +600,4 @@ HerdLinx provides a distributed architecture with:
 - **Multiple Deployment Options**: Linux or Windows servers
 - **Complete Automation**: Setup and startup scripts handle all configuration
 
-The system is resilient, scalable, and production-ready. Happy deploying! 🚀
+The system is resilient, scalable, and production-ready. Happy deploying!

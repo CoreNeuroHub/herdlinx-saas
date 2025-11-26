@@ -395,8 +395,8 @@ def main():
     """Main function."""
     # Configuration - can be set via environment variables or command line args
     api_base_url = os.getenv("API_BASE_URL", "http://127.0.0.1:5000/api/v1/feedlot")
-    api_key = os.getenv("API_KEY", "xzeevsft-TDfd8NO_Z408LO7M2mMrIWqajAvQSDLzpM")
-    feedlot_code = os.getenv("FEEDLOT_CODE", "AAA111")
+    api_key = os.getenv("API_KEY", "93zyBezEDS09ffGK-PJHlAPNUnL9Z7PcSIb-uxVrnmc")
+    feedlot_code = os.getenv("FEEDLOT_CODE", "test_001")
     db_path = os.getenv("DB_PATH", "herdlinx.db")
     
     # Check for command line arguments
