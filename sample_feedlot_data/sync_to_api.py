@@ -9,6 +9,7 @@ import requests
 import json
 import sys
 import os
+import time
 from typing import Dict, List, Optional
 from datetime import datetime
 
@@ -35,32 +36,54 @@ class APISyncer:
             "Content-Type": "application/json"
         }
     
-    def _make_request(self, endpoint: str, data: Dict) -> Dict:
+    def _make_request(self, endpoint: str, data: Dict, max_retries: int = 3, timeout: int = 120) -> Dict:
         """
-        Make a POST request to the API.
+        Make a POST request to the API with retry logic.
         
         Args:
             endpoint: API endpoint (e.g., "/batches")
             data: Request data
+            max_retries: Maximum number of retry attempts (default: 3)
+            timeout: Request timeout in seconds (default: 120)
             
         Returns:
             Response JSON as dictionary
         """
         url = f"{self.api_base_url}{endpoint}"
         
-        try:
-            response = requests.post(url, headers=self.headers, json=data, timeout=30)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Error making request to {endpoint}: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                try:
-                    error_data = e.response.json()
-                    print(f"Error details: {json.dumps(error_data, indent=2)}")
-                except:
-                    print(f"Response text: {e.response.text}")
-            raise
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, headers=self.headers, json=data, timeout=timeout)
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.Timeout as e:
+                if attempt < max_retries - 1:
+                    wait_time = (2 ** attempt) * 5  # Exponential backoff: 5s, 10s, 20s
+                    print(f"Request to {endpoint} timed out (attempt {attempt + 1}/{max_retries}). Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    print(f"Error making request to {endpoint}: Request timed out after {max_retries} attempts")
+                    raise
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1 and isinstance(e, (requests.exceptions.ConnectionError, requests.exceptions.HTTPError)):
+                    wait_time = (2 ** attempt) * 2  # Exponential backoff: 2s, 4s, 8s
+                    print(f"Error making request to {endpoint} (attempt {attempt + 1}/{max_retries}): {e}")
+                    print(f"Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    print(f"Error making request to {endpoint}: {e}")
+                    if hasattr(e, 'response') and e.response is not None:
+                        try:
+                            error_data = e.response.json()
+                            print(f"Error details: {json.dumps(error_data, indent=2)}")
+                        except:
+                            print(f"Response text: {e.response.text}")
+                    raise
+        
+        # This should never be reached, but just in case
+        raise Exception(f"Failed to make request to {endpoint} after {max_retries} attempts")
     
     def sync_batches(self) -> Dict:
         """Sync batches from database to API."""
@@ -100,6 +123,7 @@ class APISyncer:
             print("  No batches to sync.")
             return {"success": True, "records_processed": 0}
         
+        print(f"  Found {len(batches)} batches to sync...")
         data = {
             "feedlot_code": self.feedlot_code,
             "data": batches
@@ -143,6 +167,7 @@ class APISyncer:
             print("  No induction events to sync.")
             return {"success": True, "records_processed": 0}
         
+        print(f"  Found {len(events)} induction events to sync...")
         data = {
             "feedlot_code": self.feedlot_code,
             "data": events
@@ -394,9 +419,9 @@ class APISyncer:
 def main():
     """Main function."""
     # Configuration - can be set via environment variables or command line args
-    api_base_url = os.getenv("API_BASE_URL", "http://127.0.0.1:5000/api/v1/feedlot")
-    api_key = os.getenv("API_KEY", "93zyBezEDS09ffGK-PJHlAPNUnL9Z7PcSIb-uxVrnmc")
-    feedlot_code = os.getenv("FEEDLOT_CODE", "test_001")
+    api_base_url = os.getenv("API_BASE_URL", "https://herdlinx-saas.vercel.app/api/v1/feedlot")
+    api_key = os.getenv("API_KEY", "Ns9w67UgLA-lYrFpCR8eim8O2QoYKybMaGd3TeSKDdg")
+    feedlot_code = os.getenv("FEEDLOT_CODE", "uleth")
     db_path = os.getenv("DB_PATH", "herdlinx.db")
     
     # Check for command line arguments
