@@ -35,6 +35,7 @@ class Config:
     
     MONGODB_DB = os.environ.get('MONGODB_DB') or 'herdlinx_saas'
     
+    
     # Session settings
     # Flask uses secure cookies by default, which work perfectly in serverless environments
     # SESSION_TYPE is only used if flask-session is explicitly configured

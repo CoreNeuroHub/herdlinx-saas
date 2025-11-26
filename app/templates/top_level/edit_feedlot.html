@@ -27,8 +27,8 @@
                 <input type="text" id="feedlot_code" name="feedlot_code" value="{{ feedlot.get('feedlot_code', '') }}" required
                        data-testid="feedlot-code-input"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
-                       placeholder="e.g., FEEDLOT001" pattern="[A-Z0-9]+" title="Alphanumeric characters only (will be converted to uppercase)">
-                <p class="mt-1 text-sm text-gray-500">Unique identifier for office app integration. Alphanumeric only, will be converted to uppercase.</p>
+                       placeholder="e.g., feedlot-001" pattern="[a-z0-9_-]+" title="Lowercase alphanumeric characters, hyphens, and underscores only (will be converted to lowercase)">
+                <p class="mt-1 text-sm text-gray-500">Unique identifier for office app integration. Lowercase alphanumeric, hyphens (-), and underscores (_) only, will be converted to lowercase.</p>
             </div>
             
             <div>

@@ -2,34 +2,24 @@ from app import db
 from .user import User
 
 def init_db():
-    """Initialize database collections"""
+    """Initialize master database collections (feedlots and users only)
+    
+    Note: Feedlot-specific databases (pens, batches, cattle) are initialized
+    when feedlots are created via Feedlot.initialize_feedlot_database()
+    """
     try:
-        # Create indexes
+        # Create indexes for master database collections only
         db.users.create_index('username', unique=True)
         db.users.create_index('email', unique=True)
         db.users.create_index('feedlot_id')
         
-        db.pens.create_index('feedlot_id')
-        db.pens.create_index([('feedlot_id', 1), ('pen_number', 1)], unique=True)
+        # Feedlots collection indexes
+        db.feedlots.create_index('feedlot_code', unique=True)
+        db.feedlots.create_index('name')
         
-        db.batches.create_index('feedlot_id')
-        db.batches.create_index([('feedlot_id', 1), ('batch_number', 1)], unique=True)
-        
-        db.cattle.create_index('feedlot_id')
-        db.cattle.create_index('batch_id')
-        db.cattle.create_index('pen_id')
-        db.cattle.create_index([('feedlot_id', 1), ('cattle_id', 1)], unique=True)
-        
-        db.manifest_templates.create_index('feedlot_id')
-        db.manifest_templates.create_index([('feedlot_id', 1), ('is_default', 1)])
-        
-        db.manifests.create_index('feedlot_id')
-        db.manifests.create_index([('feedlot_id', 1), ('created_at', -1)])
-        db.manifests.create_index('created_at')
-        
-        print("Database initialized successfully")
+        print("Master database initialized successfully")
     except Exception as e:
-        print(f"Error initializing database indexes: {e}")
+        print(f"Error initializing master database indexes: {e}")
         # Don't raise - allow app to continue
 
 def create_default_admin():

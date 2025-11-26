@@ -66,9 +66,9 @@ CREATE TABLE users(
 **Role Permissions:**
 | Role  | Dashboard | User Mgmt | Settings | Repair |
 |-------|-----------|-----------|----------|--------|
-| Owner | ✅        | ✅        | ✅       | ✅     |
-| Admin | ✅        | ✅        | ✅       | ✅     |
-| User  | User-only | ❌        | ❌       | ✅     |
+| Owner | Yes       | Yes       | Yes      | Yes    |
+| Admin | Yes       | Yes       | Yes      | Yes    |
+| User  | User-only | No        | No       | Yes    |
 
 ---
 

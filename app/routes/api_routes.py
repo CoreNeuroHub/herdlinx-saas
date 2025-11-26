@@ -66,11 +66,19 @@ def sync_batches():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
             }), 403
+        
+        # Get feedlot_code for database operations
+        feedlot_code_normalized = feedlot.get('feedlot_code')
+        if not feedlot_code_normalized:
+            return jsonify({
+                'success': False,
+                'message': 'Feedlot code not found'
+            }), 500
         
         batches_data = data.get('data', [])
         if not isinstance(batches_data, list):
@@ -98,7 +106,7 @@ def sync_batches():
                     continue
                 
                 # Check if batch already exists (by name and feedlot_id)
-                existing_batches = Batch.find_by_feedlot(feedlot_id)
+                existing_batches = Batch.find_by_feedlot(feedlot_code_normalized, feedlot_id)
                 existing_batch = None
                 for b in existing_batches:
                     if b.get('batch_number', '').strip() == batch_name:
@@ -131,7 +139,7 @@ def sync_batches():
                 pen_id = None
                 if pen_number:
                     # Find or create pen
-                    existing_pens = Pen.find_by_feedlot(feedlot_id)
+                    existing_pens = Pen.find_by_feedlot(feedlot_code_normalized, feedlot_id)
                     existing_pen = None
                     for p in existing_pens:
                         if p.get('pen_number', '').strip() == pen_number:
@@ -141,13 +149,13 @@ def sync_batches():
                     if existing_pen:
                         # Update pen description if pen_location is provided
                         if pen_location:
-                            Pen.update_pen(str(existing_pen['_id']), {'description': pen_location})
+                            Pen.update_pen(feedlot_code_normalized, str(existing_pen['_id']), {'description': pen_location})
                         pen_id = str(existing_pen['_id'])
                     else:
                         # Create new pen with default capacity (can be updated later via UI)
                         # Use pen_location as description if provided
                         pen_description = pen_location if pen_location else f'Pen {pen_number}'
-                        pen_id = Pen.create_pen(feedlot_id, pen_number, capacity=100, description=pen_description)
+                        pen_id = Pen.create_pen(feedlot_code_normalized, feedlot_id, pen_number, capacity=100, description=pen_description)
                 
                 if existing_batch:
                     # Update existing batch
@@ -160,14 +168,14 @@ def sync_batches():
                     # Add pen_id if pen was found/created
                     if pen_id:
                         update_data['pen_id'] = ObjectId(pen_id)
-                    Batch.update_batch(str(existing_batch['_id']), update_data)
+                    Batch.update_batch(feedlot_code_normalized, str(existing_batch['_id']), update_data)
                     records_updated += 1
                 else:
                     # Create new batch
-                    batch_id = Batch.create_batch(feedlot_id, batch_number, induction_date, funder, notes)
+                    batch_id = Batch.create_batch(feedlot_code_normalized, feedlot_id, batch_number, induction_date, funder, notes)
                     # Update batch with pen_id if pen was found/created
                     if pen_id:
-                        Batch.update_batch(batch_id, {'pen_id': ObjectId(pen_id)})
+                        Batch.update_batch(feedlot_code_normalized, batch_id, {'pen_id': ObjectId(pen_id)})
                     records_created += 1
                     
             except Exception as e:
@@ -211,11 +219,19 @@ def sync_livestock():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
             }), 403
+        
+        # Get feedlot_code for database operations
+        feedlot_code_normalized = feedlot.get('feedlot_code')
+        if not feedlot_code_normalized:
+            return jsonify({
+                'success': False,
+                'message': 'Feedlot code not found'
+            }), 500
         
         livestock_data = data.get('data', [])
         if not isinstance(livestock_data, list):
@@ -252,7 +268,7 @@ def sync_livestock():
                 
                 # First, try to find by office_livestock_id stored in cattle_id
                 office_id_str = str(office_livestock_id)
-                all_cattle = Cattle.find_by_feedlot(feedlot_id)
+                all_cattle = Cattle.find_by_feedlot(feedlot_code_normalized, feedlot_id)
                 for cattle in all_cattle:
                     if cattle.get('cattle_id') == office_id_str:
                         existing_cattle = cattle
@@ -269,7 +285,7 @@ def sync_livestock():
                     # Update tags if they've changed
                     cattle_record_id = str(existing_cattle['_id'])
                     if current_lf_id != existing_cattle.get('lf_tag') or current_epc != existing_cattle.get('uhf_tag'):
-                        Cattle.update_tag_pair(cattle_record_id, current_lf_id, current_epc, updated_by='api')
+                        Cattle.update_tag_pair(feedlot_code_normalized, cattle_record_id, current_lf_id, current_epc, updated_by='api')
                     records_updated += 1
                 else:
                     # Cattle not found - this should be created via induction_events first
@@ -320,11 +336,19 @@ def sync_induction_events():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
             }), 403
+        
+        # Get feedlot_code for database operations
+        feedlot_code_normalized = feedlot.get('feedlot_code')
+        if not feedlot_code_normalized:
+            return jsonify({
+                'success': False,
+                'message': 'Feedlot code not found'
+            }), 500
         
         events_data = data.get('data', [])
         if not isinstance(events_data, list):
@@ -341,7 +365,7 @@ def sync_induction_events():
         errors = []
         
         # Cache batches for this feedlot
-        all_batches = Batch.find_by_feedlot(feedlot_id)
+        all_batches = Batch.find_by_feedlot(feedlot_code_normalized, feedlot_id)
         batch_cache = {b.get('batch_number', '').strip(): b for b in all_batches}
         
         for event_item in events_data:
@@ -388,13 +412,13 @@ def sync_induction_events():
                 
                 # Check if cattle already exists
                 office_id_str = str(livestock_id)
-                existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
+                existing_cattle = Cattle.find_by_cattle_id(feedlot_code_normalized, feedlot_id, office_id_str)
                 
                 if existing_cattle:
                     # Update existing cattle (induction already happened)
                     # If batch has a pen and cattle doesn't, assign it
                     if pen_id_for_cattle and not existing_cattle.get('pen_id'):
-                        Cattle.update_cattle(str(existing_cattle['_id']), {'pen_id': ObjectId(pen_id_for_cattle)}, updated_by='api')
+                        Cattle.update_cattle(feedlot_code_normalized, str(existing_cattle['_id']), {'pen_id': ObjectId(pen_id_for_cattle)}, updated_by='api')
                     records_updated += 1
                 else:
                     # Create new cattle record
@@ -419,6 +443,7 @@ def sync_induction_events():
                     health_status = 'Healthy'  # Default
                     
                     cattle_record_id = Cattle.create_cattle(
+                        feedlot_code=feedlot_code_normalized,
                         feedlot_id=feedlot_id,
                         batch_id=saas_batch_id,
                         cattle_id=cattle_id,
@@ -432,10 +457,11 @@ def sync_induction_events():
                     )
                     
                     # Update induction_date
-                    Cattle.update_cattle(cattle_record_id, {'induction_date': induction_date}, updated_by='api')
+                    Cattle.update_cattle(feedlot_code_normalized, cattle_record_id, {'induction_date': induction_date}, updated_by='api')
                     
                     # Add audit log entry for import
                     Cattle.add_audit_log_entry(
+                        feedlot_code_normalized,
                         cattle_record_id,
                         'imported',
                         f'Imported from office app (livestock_id: {livestock_id})',
@@ -486,11 +512,19 @@ def sync_pairing_events():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
             }), 403
+        
+        # Get feedlot_code for database operations
+        feedlot_code_normalized = feedlot.get('feedlot_code')
+        if not feedlot_code_normalized:
+            return jsonify({
+                'success': False,
+                'message': 'Feedlot code not found'
+            }), 500
         
         events_data = data.get('data', [])
         if not isinstance(events_data, list):
@@ -522,7 +556,7 @@ def sync_pairing_events():
                 
                 # Find cattle by office livestock_id
                 office_id_str = str(livestock_id)
-                existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
+                existing_cattle = Cattle.find_by_cattle_id(feedlot_code_normalized, feedlot_id, office_id_str)
                 
                 if not existing_cattle:
                     errors.append(f'Record {records_processed}: Livestock ID {livestock_id} not found. Create via induction_events first.')
@@ -532,14 +566,14 @@ def sync_pairing_events():
                 cattle_record_id = str(existing_cattle['_id'])
                 
                 # Update tags (this will add audit log entry automatically)
-                Cattle.update_tag_pair(cattle_record_id, lf_id, epc, updated_by='api')
+                Cattle.update_tag_pair(feedlot_code_normalized, cattle_record_id, lf_id, epc, updated_by='api')
                 
                 # Update weight if provided
                 if weight_kg is not None:
                     try:
                         weight_float = float(weight_kg)
                         if weight_float > 0:
-                            Cattle.add_weight_record(cattle_record_id, weight_float, recorded_by='api')
+                            Cattle.add_weight_record(feedlot_code_normalized, cattle_record_id, weight_float, recorded_by='api')
                     except (ValueError, TypeError):
                         pass  # Skip invalid weight
                 
@@ -586,11 +620,19 @@ def sync_checkin_events():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
             }), 403
+        
+        # Get feedlot_code for database operations
+        feedlot_code_normalized = feedlot.get('feedlot_code')
+        if not feedlot_code_normalized:
+            return jsonify({
+                'success': False,
+                'message': 'Feedlot code not found'
+            }), 500
         
         events_data = data.get('data', [])
         if not isinstance(events_data, list):
@@ -636,7 +678,7 @@ def sync_checkin_events():
                 
                 # Find cattle by office livestock_id
                 office_id_str = str(livestock_id)
-                existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
+                existing_cattle = Cattle.find_by_cattle_id(feedlot_code_normalized, feedlot_id, office_id_str)
                 
                 if not existing_cattle:
                     errors.append(f'Record {records_processed}: Livestock ID {livestock_id} not found. Create via induction_events first.')
@@ -646,7 +688,7 @@ def sync_checkin_events():
                 cattle_record_id = str(existing_cattle['_id'])
                 
                 # Add weight record
-                Cattle.add_weight_record(cattle_record_id, weight_float, recorded_by='api')
+                Cattle.add_weight_record(feedlot_code_normalized, cattle_record_id, weight_float, recorded_by='api')
                 records_created += 1
                     
             except Exception as e:
@@ -690,11 +732,19 @@ def sync_repair_events():
         
         # Validate feedlot_code matches the API key's feedlot
         feedlot = Feedlot.find_by_id(request.feedlot_id)
-        if not feedlot or feedlot.get('feedlot_code', '').upper() != feedlot_code.upper():
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
             return jsonify({
                 'success': False,
                 'message': 'feedlot_code does not match the API key\'s feedlot'
             }), 403
+        
+        # Get feedlot_code for database operations
+        feedlot_code_normalized = feedlot.get('feedlot_code')
+        if not feedlot_code_normalized:
+            return jsonify({
+                'success': False,
+                'message': 'Feedlot code not found'
+            }), 500
         
         events_data = data.get('data', [])
         if not isinstance(events_data, list):
@@ -734,7 +784,7 @@ def sync_repair_events():
                 
                 # Find cattle by office livestock_id
                 office_id_str = str(livestock_id)
-                existing_cattle = Cattle.find_by_cattle_id(feedlot_id, office_id_str)
+                existing_cattle = Cattle.find_by_cattle_id(feedlot_code_normalized, feedlot_id, office_id_str)
                 
                 if not existing_cattle:
                     errors.append(f'Record {records_processed}: Livestock ID {livestock_id} not found. Create via induction_events first.')
@@ -750,7 +800,7 @@ def sync_repair_events():
                 final_epc = new_epc if new_epc else existing_cattle.get('uhf_tag')
                 
                 # Update tags (this will add audit log entry automatically)
-                Cattle.update_tag_pair(cattle_record_id, final_lf_id, final_epc, updated_by='api', reason=reason)
+                Cattle.update_tag_pair(feedlot_code_normalized, cattle_record_id, final_lf_id, final_epc, updated_by='api', reason=reason)
                 
                 records_updated += 1
                     
