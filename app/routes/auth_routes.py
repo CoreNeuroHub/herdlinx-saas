@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, current_app
 from app.models.user import User
+from app.models.feedlot import Feedlot
 from functools import wraps
 import bcrypt
 import os
 import uuid
 from werkzeug.utils import secure_filename
+from bson import ObjectId
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -134,6 +136,89 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'success')
     return redirect(url_for('auth.login'))
+
+@auth_bp.route('/<feedlot_code>', methods=['GET', 'POST'])
+def feedlot_login(feedlot_code):
+    """Feedlot-specific login page accessible at /<feedlot_code>
+    
+    Note: This route must be defined after /login and /logout routes
+    to avoid conflicts with those paths.
+    """
+    # Normalize feedlot_code to lowercase
+    feedlot_code = feedlot_code.lower().strip()
+    
+    # Find feedlot by code
+    feedlot = Feedlot.find_by_code(feedlot_code)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_id = str(feedlot['_id'])
+    
+    # Load branding if available
+    branding = Feedlot.get_branding(feedlot_id)
+    if branding:
+        feedlot['branding'] = branding
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user = User.find_by_username(username)
+        
+        if user and User.verify_password(user['password_hash'], password):
+            if not user.get('is_active', True):
+                flash('Account is inactive.', 'error')
+                return render_template('auth/login.html', feedlot=feedlot, feedlot_code=feedlot_code)
+            
+            user_type = user.get('user_type')
+            # Validate user type - reject old/invalid types
+            valid_types = ['super_owner', 'super_admin', 'business_owner', 'business_admin', 'user']
+            if user_type not in valid_types:
+                flash('Invalid user account. Please contact an administrator.', 'error')
+                return render_template('auth/login.html', feedlot=feedlot, feedlot_code=feedlot_code)
+            
+            # Validate feedlot access for business owners/admins
+            if user_type in ['business_owner', 'business_admin']:
+                user_feedlot_ids = [str(fid) for fid in user.get('feedlot_ids', [])]
+                if str(feedlot_id) not in user_feedlot_ids:
+                    flash('You do not have access to this feedlot.', 'error')
+                    return render_template('auth/login.html', feedlot=feedlot, feedlot_code=feedlot_code)
+            
+            # Validate feedlot access for regular users
+            if user_type == 'user':
+                user_feedlot_id = str(user.get('feedlot_id', ''))
+                if user_feedlot_id != feedlot_id:
+                    flash('You do not have access to this feedlot.', 'error')
+                    return render_template('auth/login.html', feedlot=feedlot, feedlot_code=feedlot_code)
+            
+            # Set session data
+            session['user_id'] = str(user['_id'])
+            session['username'] = user['username']
+            session['user_type'] = user_type
+            session['user_profile'] = {
+                'first_name': user.get('first_name'),
+                'last_name': user.get('last_name'),
+                'profile_picture': user.get('profile_picture')
+            }
+            
+            # Redirect based on user type
+            if user_type in ['super_owner', 'super_admin']:
+                # Top level users go to top level dashboard
+                return redirect(url_for('top_level.dashboard'))
+            elif user_type in ['business_owner', 'business_admin']:
+                # Store feedlot_ids as list of strings
+                feedlot_ids = user.get('feedlot_ids', [])
+                session['feedlot_ids'] = [str(fid) for fid in feedlot_ids]
+                # Redirect to feedlot dashboard for the feedlot they logged into
+                return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
+            elif user_type == 'user':
+                session['feedlot_id'] = str(user['feedlot_id'])
+                return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
+        
+        flash('Invalid username or password.', 'error')
+    
+    return render_template('auth/login.html', feedlot=feedlot, feedlot_code=feedlot_code)
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 @login_required

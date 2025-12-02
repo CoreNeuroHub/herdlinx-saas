@@ -355,13 +355,6 @@
         });
     }
     
-    // Close modal when clicking outside
-    document.getElementById('add-feedlot-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeAddFeedlotModal();
-        }
-    });
-    
     // Close modals on Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -608,15 +601,6 @@
             userTypeSelect.addEventListener('change', updateFeedlotField);
         }
         
-        // Close user modal when clicking outside
-        const userModal = document.getElementById('add-user-modal');
-        if (userModal) {
-            userModal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeAddUserModal();
-                }
-            });
-        }
         
         // Handle user form submission via AJAX
         const userForm = document.getElementById('add-user-form');
@@ -945,15 +929,6 @@
             document.removeEventListener('mouseup', stopResize);
         }
         
-        // Close widget settings modal when clicking outside
-        const widgetModal = document.getElementById('widget-settings-modal');
-        if (widgetModal) {
-            widgetModal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeWidgetSettingsModal();
-                }
-            });
-        }
         
         // Close widget settings modal on Escape
         document.addEventListener('keydown', function(e) {

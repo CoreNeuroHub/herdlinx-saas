@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}HerdLinx SaaS{% endblock %}</title>
-    {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('favicon_path') %}
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename=current_feedlot.branding.favicon_path) }}">
+    {% set feedlot_for_branding = feedlot if feedlot else current_feedlot %}
+    {% if feedlot_for_branding and feedlot_for_branding.get('branding') and feedlot_for_branding.branding.get('favicon_path') %}
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename=feedlot_for_branding.branding.favicon_path.replace('/static/', '')) }}">
     {% else %}
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
     {% endif %}
@@ -15,19 +16,19 @@
             theme: {
                 extend: {
                     colors: {
-                        'navy': '{{ current_feedlot.branding.secondary_color if current_feedlot and current_feedlot.get("branding") and current_feedlot.branding.get("secondary_color") else "#0A2540" }}',
-                        'teal': '{{ current_feedlot.branding.primary_color if current_feedlot and current_feedlot.get("branding") and current_feedlot.branding.get("primary_color") else "#2D8B8B" }}',
+                        'navy': '{{ feedlot_for_branding.branding.secondary_color if feedlot_for_branding and feedlot_for_branding.get("branding") and feedlot_for_branding.branding.get("secondary_color") else "#0A2540" }}',
+                        'teal': '{{ feedlot_for_branding.branding.primary_color if feedlot_for_branding and feedlot_for_branding.get("branding") and feedlot_for_branding.branding.get("primary_color") else "#2D8B8B" }}',
                         'gold': '#F5A623',
                     }
                 }
             }
         }
     </script>
-    {% if current_feedlot and current_feedlot.get('branding') %}
+    {% if feedlot_for_branding and feedlot_for_branding.get('branding') %}
     <style>
         :root {
-            --brand-primary: {{ current_feedlot.branding.primary_color if current_feedlot.branding.get('primary_color') else '#2D8B8B' }};
-            --brand-secondary: {{ current_feedlot.branding.secondary_color if current_feedlot.branding.get('secondary_color') else '#0A2540' }};
+            --brand-primary: {{ feedlot_for_branding.branding.primary_color if feedlot_for_branding.branding.get('primary_color') else '#2D8B8B' }};
+            --brand-secondary: {{ feedlot_for_branding.branding.secondary_color if feedlot_for_branding.branding.get('secondary_color') else '#0A2540' }};
         }
         .bg-navy {
             background-color: var(--brand-secondary) !important;

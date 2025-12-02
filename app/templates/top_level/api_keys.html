@@ -410,18 +410,6 @@
         }
     });
     
-    // Close modals when clicking outside
-    document.getElementById('generate-key-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeGenerateKeyModal();
-        }
-    });
-    
-    document.getElementById('display-key-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeDisplayKeyModal();
-        }
-    });
     
     // Close modals on Escape key
     document.addEventListener('keydown', function(e) {

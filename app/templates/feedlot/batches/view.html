@@ -52,7 +52,6 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">UHF Tag</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Weight</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Health Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pen</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
             </thead>
@@ -72,17 +71,18 @@
                             {{ c.health_status|title }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {% if c.get('pen_id') %}
-                        <a href="{{ url_for('feedlot.view_pen', feedlot_id=feedlot._id, pen_id=c.pen_id) }}" 
-                           class="text-teal hover:opacity-80">View Pen</a>
-                        {% else %}
-                        <span class="text-gray-400">Not assigned</span>
-                        {% endif %}
-                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=c._id) }}" 
-                           class="text-teal hover:opacity-80">View</a>
+                        <div class="flex gap-3 items-center">
+                            <a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=c._id) }}" 
+                               data-testid="view-cattle-link-{{ c._id }}"
+                               class="text-teal hover:opacity-80">View Cattle</a>
+                            {% if c.get('pen_id') %}
+                            <span class="text-gray-400">|</span>
+                            <a href="{{ url_for('feedlot.view_pen', feedlot_id=feedlot._id, pen_id=c.pen_id) }}" 
+                               data-testid="view-pen-link-{{ c._id }}"
+                               class="text-teal hover:opacity-80">View Pen</a>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}

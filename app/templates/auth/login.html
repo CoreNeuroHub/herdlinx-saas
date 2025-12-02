@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Login - HerdLinx SaaS{% endblock %}
+{% block title %}{% if feedlot %}{{ feedlot.name }} - Login{% else %}Login - HerdLinx SaaS{% endif %}{% endblock %}
 
 {% block nav_items %}{% endblock %}
 
@@ -12,7 +12,34 @@
     #menu-panel {
         display: none !important;
     }
+    {% if feedlot and feedlot.get('branding') %}
+    :root {
+        --brand-primary: {{ feedlot.branding.primary_color if feedlot.branding.get('primary_color') else '#2D8B8B' }};
+        --brand-secondary: {{ feedlot.branding.secondary_color if feedlot.branding.get('secondary_color') else '#0A2540' }};
+    }
+    .bg-navy {
+        background-color: var(--brand-secondary) !important;
+    }
+    .bg-teal {
+        background-color: var(--brand-primary) !important;
+    }
+    .text-teal {
+        color: var(--brand-primary) !important;
+    }
+    .border-teal {
+        border-color: var(--brand-primary) !important;
+    }
+    .focus\:ring-teal:focus {
+        --tw-ring-color: var(--brand-primary) !important;
+    }
+    .hover\:bg-teal:hover {
+        background-color: var(--brand-primary) !important;
+    }
+    {% endif %}
 </style>
+{% if feedlot and feedlot.get('branding') and feedlot.branding.get('favicon_path') %}
+<link rel="icon" type="image/png" href="{{ url_for('static', filename=feedlot.branding.favicon_path.replace('/static/', '')) }}">
+{% endif %}
 {% endblock %}
 
 {% block back_button %}{% endblock %}
@@ -20,9 +47,28 @@
 {% block content %}
 <div class="max-w-md mx-auto mt-12">
     <div class="bg-white rounded-lg shadow-lg p-8">
-        <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">Login</h2>
+        {% if feedlot and feedlot.get('branding') and feedlot.branding.get('logo_path') %}
+        <div class="text-center mb-6">
+            <img src="{{ url_for('static', filename=feedlot.branding.logo_path.replace('/static/', '')) }}" 
+                 alt="{{ feedlot.name }} Logo" 
+                 class="max-h-16 mx-auto"
+                 data-testid="feedlot-login-logo">
+        </div>
+        {% endif %}
         
-        <form method="POST" data-testid="login-form" class="space-y-4">
+        <h2 class="text-3xl font-bold mb-2 text-center text-gray-800">
+            {% if feedlot %}
+                {{ feedlot.name }}
+            {% else %}
+                Login
+            {% endif %}
+        </h2>
+        
+        {% if feedlot %}
+        <p class="text-center text-gray-600 mb-6 text-sm">{{ feedlot.location }}</p>
+        {% endif %}
+        
+        <form method="POST" data-testid="login-form" class="space-y-4" action="{% if feedlot_code %}/{{ feedlot_code }}{% else %}{{ url_for('auth.login') }}{% endif %}">
             <div>
                 <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
                 <input type="text" id="username" name="username" required

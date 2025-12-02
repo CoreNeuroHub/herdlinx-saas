@@ -761,15 +761,6 @@
             }
         });
         
-        // Close user modal when clicking outside
-        const userModal = document.getElementById('add-user-modal');
-        if (userModal) {
-            userModal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeAddUserModal();
-                }
-            });
-        }
         
         // Close modal on Escape key
         document.addEventListener('keydown', function(e) {
@@ -844,14 +835,6 @@
         }
         
         // Edit User Modal Functions
-        const editModal = document.getElementById('edit-user-modal');
-        if (editModal) {
-            editModal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    closeEditUserModal();
-                }
-            });
-        }
         
         // Handle edit user form submission via AJAX
         const editUserForm = document.getElementById('edit-user-form');
