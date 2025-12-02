@@ -373,26 +373,16 @@ def sync_induction_events():
                 records_processed += 1
                 
                 livestock_id = event_item.get('livestock_id')
-                batch_id_office = event_item.get('batch_id')  # Office app batch ID
                 
                 if not livestock_id:
                     errors.append(f'Record {records_processed}: livestock_id is required')
                     records_skipped += 1
                     continue
                 
-                if not batch_id_office:
-                    errors.append(f'Record {records_processed}: batch_id is required')
-                    records_skipped += 1
-                    continue
-                
-                # Find batch in SaaS system
-                # We need to map office batch_id to SaaS batch
-                # For now, we'll need the office app to send batch name or we'll need a mapping
-                # Let's assume the office app sends batch_name or we look it up
+                # Find batch in SaaS system using batch_name
+                # Office app sends batch_name to map to SaaS batch
                 batch_name = event_item.get('batch_name')
                 if not batch_name:
-                    # Try to find batch by office batch_id if we have a mapping
-                    # For now, skip if no batch_name
                     errors.append(f'Record {records_processed}: batch_name is required to map to SaaS batch')
                     records_skipped += 1
                     continue
@@ -667,8 +657,8 @@ def sync_checkin_events():
                 
                 try:
                     weight_float = float(weight_kg)
-                    if weight_float <= 0:
-                        errors.append(f'Record {records_processed}: weight_kg must be greater than 0')
+                    if weight_float < 0:
+                        errors.append(f'Record {records_processed}: weight_kg cannot be negative')
                         records_skipped += 1
                         continue
                 except (ValueError, TypeError):
