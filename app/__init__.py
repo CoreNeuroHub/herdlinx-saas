@@ -2,12 +2,48 @@ from flask import Flask
 from pymongo import MongoClient
 from datetime import datetime
 from config import Config
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 # Initialize MongoDB connection lazily
 # Don't create connection at module level for serverless - defer to first use
 _mongodb_client = None
 _db_instance = None
 _feedlot_db_cache = {}  # Cache for feedlot-specific databases
+
+def _clean_mongodb_uri(uri):
+    """Clean MongoDB URI by removing SSL/TLS parameters for mongodb+srv:// connections
+    
+    For mongodb+srv://, PyMongo automatically handles TLS, so any ssl= or tls= 
+    parameters in the URI can cause warnings. This function removes them.
+    """
+    if not uri.startswith('mongodb+srv://'):
+        return uri
+    
+    # Parse the URI
+    parsed = urlparse(uri)
+    query_params = parse_qs(parsed.query, keep_blank_values=True)
+    
+    # Remove SSL/TLS related parameters that can cause warnings
+    params_to_remove = ['ssl', 'tls', 'ssl=true', 'ssl=false', 'tls=true', 'tls=false']
+    cleaned_params = {}
+    for key, value_list in query_params.items():
+        key_lower = key.lower()
+        # Skip SSL/TLS parameters
+        if key_lower not in ['ssl', 'tls']:
+            cleaned_params[key] = value_list
+    
+    # Reconstruct the URI
+    cleaned_query = urlencode(cleaned_params, doseq=True) if cleaned_params else ''
+    cleaned_uri = urlunparse((
+        parsed.scheme,
+        parsed.netloc,
+        parsed.path,
+        parsed.params,
+        cleaned_query,
+        parsed.fragment
+    ))
+    
+    return cleaned_uri
 
 def _get_mongodb_client():
     """Get or create MongoDB client"""
@@ -24,6 +60,9 @@ def _get_mongodb_client():
         )
     
     try:
+        # Clean the URI to remove problematic SSL/TLS parameters
+        cleaned_uri = _clean_mongodb_uri(Config.MONGODB_URI)
+        
         # Configure MongoDB client with appropriate settings for serverless environments
         client_options = {
             'serverSelectionTimeoutMS': 30000,  # Increased timeout for serverless
@@ -34,7 +73,7 @@ def _get_mongodb_client():
         }
         
         # For serverless environments (like Vercel), configure TLS/SSL properly
-        if Config.MONGODB_URI.startswith('mongodb+srv://'):
+        if cleaned_uri.startswith('mongodb+srv://'):
             # For mongodb+srv://, TLS is automatically enabled by PyMongo
             # Don't set tls options explicitly - let PyMongo handle it automatically
             # This prevents SSL parameter warnings and works better in serverless environments
@@ -42,14 +81,19 @@ def _get_mongodb_client():
         else:
             # For non-SRV connections, configure TLS explicitly if needed
             # Only set TLS options if the URI doesn't already specify them
-            if 'ssl=' not in Config.MONGODB_URI.lower() and 'tls=' not in Config.MONGODB_URI.lower():
+            # Don't enable TLS for localhost connections (local MongoDB typically doesn't use SSL)
+            is_localhost = 'localhost' in cleaned_uri.lower() or '127.0.0.1' in cleaned_uri.lower()
+            if not is_localhost and 'ssl=' not in cleaned_uri.lower() and 'tls=' not in cleaned_uri.lower():
                 client_options['tls'] = True
                 client_options['tlsAllowInvalidCertificates'] = False
                 client_options['tlsAllowInvalidHostnames'] = False
+                print("TLS enabled for remote MongoDB connection")
+            elif is_localhost:
+                print("TLS disabled for localhost MongoDB connection")
         
         # Create client - connection is lazy, won't connect until first use
-        print(f"Creating MongoDB client with URI: {Config.MONGODB_URI[:20]}...")  # Debug
-        _mongodb_client = MongoClient(Config.MONGODB_URI, **client_options)
+        print(f"Creating MongoDB client with URI: {cleaned_uri[:20]}...")  # Debug
+        _mongodb_client = MongoClient(cleaned_uri, **client_options)
         print("MongoDB client created successfully")
         return _mongodb_client
     except Exception as e:
