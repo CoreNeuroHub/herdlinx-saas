@@ -36,14 +36,16 @@ def _get_mongodb_client():
         # For serverless environments (like Vercel), configure TLS/SSL properly
         if Config.MONGODB_URI.startswith('mongodb+srv://'):
             # For mongodb+srv://, TLS is automatically enabled by PyMongo
-            # In Vercel's serverless environment, we should use system certificates
-            # Don't set tlsCAFile explicitly - let PyMongo use system defaults
-            # This works better in serverless environments where certifi paths may not be accessible
-            client_options['tls'] = True
-            client_options['tlsAllowInvalidCertificates'] = False
-            client_options['tlsAllowInvalidHostnames'] = False
-            # Don't set tlsCAFile - let Python's ssl module use system default CA bundle
-            print("Using system default CA certificates for TLS")
+            # Don't set tls options explicitly - let PyMongo handle it automatically
+            # This prevents SSL parameter warnings and works better in serverless environments
+            print("Using automatic TLS for mongodb+srv:// connection")
+        else:
+            # For non-SRV connections, configure TLS explicitly if needed
+            # Only set TLS options if the URI doesn't already specify them
+            if 'ssl=' not in Config.MONGODB_URI.lower() and 'tls=' not in Config.MONGODB_URI.lower():
+                client_options['tls'] = True
+                client_options['tlsAllowInvalidCertificates'] = False
+                client_options['tlsAllowInvalidHostnames'] = False
         
         # Create client - connection is lazy, won't connect until first use
         print(f"Creating MongoDB client with URI: {Config.MONGODB_URI[:20]}...")  # Debug
