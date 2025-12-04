@@ -41,45 +41,15 @@ Content-Type: application/json
 
 ## Endpoints and Payloads
 
-### 1. Sync Batches
+### 1. ~~Sync Batches~~ (REMOVED)
 
-**Endpoint**: `POST /api/v1/feedlot/batches`
+**Endpoint**: ~~`POST /api/v1/feedlot/batches`~~ **REMOVED**
 
-**Description**: Syncs batch data from the office SQLite database to SaaS.
+**Status**: ✅ **ENDPOINT REMOVED**
 
-**Payload Structure**:
+**Note**: Batches are now automatically created from the `induction-events` endpoint. The batch information (name, funder, notes, pen, pen_location) is included in each induction event payload, and batches are created/updated automatically when processing induction events.
 
-```json
-{
-  "feedlot_code": "FEEDLOT001",
-  "data": [
-    {
-      "id": 1,
-      "name": "Batch A - Oct 30",
-      "funder": "Funding Source",
-      "notes": "Additional notes",
-      "created_at": "2024-10-30T10:00:00"
-    }
-  ]
-}
-```
-
-**Field Descriptions**:
-
-| Field | Type | Required | Description | Source |
-|-------|------|----------|-------------|--------|
-| `id` | integer | Yes | Office database batch ID | `batches.id` |
-| `name` | string | Yes | Batch name/identifier | `batches.batch_name` |
-| `funder` | string | No | Funding source | `batches.funder` |
-| `notes` | string | No | Additional notes | `batches.notes` |
-| `created_at` | string | No | ISO timestamp | `batches.created_at` |
-
-**Notes**:
-- The `id` field is sent but not used by SaaS (for tracking purposes)
-- Empty strings are sent for optional fields if database value is NULL
-- Batches are synced without filtering (all batches are sent, not just unsynced ones)
-
-**Code Reference**: `office/scripts/api_sync.py` lines 157-170, 225-250
+**Code Reference**: Batch creation logic is now in `app/routes/api_routes.py` in the `sync_induction_events()` function.
 
 ---
 
@@ -87,20 +57,32 @@ Content-Type: application/json
 
 **Endpoint**: `POST /api/v1/feedlot/induction-events`
 
-**Description**: Syncs induction events that create cattle records in SaaS.
+**Description**: Syncs induction events that create cattle records in SaaS. **Now also creates/updates batches automatically from event data.**
 
 **Payload Structure**:
 
 ```json
 {
-  "feedlot_code": "FEEDLOT001",
+  "feedlot_code": "jfmurray",
   "data": [
     {
-      "id": 1,
+      "id": 7,
       "event_id": "hxbind000001",
-      "livestock_id": 123,
-      "batch_name": "Batch A - Oct 30",
-      "timestamp": "2024-10-30T10:00:00"
+      "livestock_id": 3,
+      "funder": "None",
+      "lot": "6",
+      "pen": "6",
+      "lot_group": "6",
+      "pen_location": "6",
+      "sex": "Steer",
+      "tag_color": "",
+      "visual_id": "",
+      "notes": "",
+      "batch_name": "BATCH_2025-12-04_7325",
+      "lf_id": "124000224161433",
+      "epc": "0900000000000003",
+      "weight": 0,
+      "timestamp": "2025-12-04 14:18:11.265273"
     }
   ]
 }
@@ -113,14 +95,24 @@ Content-Type: application/json
 | `id` | integer | Yes | Office database event ID | `events.id` |
 | `event_id` | string | Yes | Unique event identifier | `events.event_id` |
 | `livestock_id` | integer | Yes | Office livestock ID | `events.livestock_id` |
-| `batch_name` | string | Yes | Batch name for mapping | `events.parsed_data.batch` |
+| `batch_name` | string | Yes | Batch name (creates/finds batch) | `events.parsed_data.batch` |
+| `funder` | string | No | Batch funder | `events.parsed_data.funder` |
+| `pen` | string | No | Pen number (creates/updates pen) | `events.parsed_data.pen` |
+| `pen_location` | string | No | Pen location/description | `events.parsed_data.pen_location` |
+| `sex` | string | No | Cattle sex | `events.parsed_data.sex` |
+| `lf_id` | string | No | Low frequency tag ID | `events.parsed_data.lf_id` |
+| `epc` | string | No | UHF/EPC tag ID | `events.parsed_data.epc` |
+| `weight` | float | No | Initial weight | `events.parsed_data.weight` |
+| `notes` | string | No | Notes (for batch or cattle) | `events.parsed_data.notes` |
 | `timestamp` | string | Yes | Event timestamp | `events.received_at` |
 
 **Notes**:
 - Only events with `event_type = 'induction'` and `synced_at IS NULL` are synced
-- `batch_name` is extracted from `parsed_data` JSON field
+- **Batch Creation**: Batches are automatically created from `batch_name` if they don't exist. Batch fields (`funder`, `notes`, `pen`, `pen_location`) are used to create/update batches.
+- **Pen Creation**: Pens are automatically created/updated when `pen` field is provided.
+- **Cattle Creation**: Cattle records are created with all provided fields (`sex`, `weight`, `lf_id`, `epc`, `notes`).
 - Events are ordered by `received_at ASC` (oldest first)
-- **IMPORTANT**: SaaS API currently requires `batch_id` field, but office does not send it. This may cause sync failures. See known issues below.
+- The `funder` field value "None" (case-insensitive) is treated as empty string.
 
 **Code Reference**: `office/scripts/api_sync.py` lines 172-184, 252-286
 
