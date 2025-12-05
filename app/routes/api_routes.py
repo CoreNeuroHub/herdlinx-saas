@@ -399,6 +399,26 @@ def sync_induction_events():
                     if notes and existing_cattle.get('notes') != notes:
                         update_cattle_data['notes'] = notes
                     
+                    # Update tag_color (maps to color field) if provided
+                    tag_color = (event_item.get('tag_color') or '').strip()
+                    if tag_color and existing_cattle.get('color') != tag_color:
+                        update_cattle_data['color'] = tag_color
+                    
+                    # Update visual_id if provided
+                    visual_id = (event_item.get('visual_id') or '').strip()
+                    if visual_id and existing_cattle.get('visual_id') != visual_id:
+                        update_cattle_data['visual_id'] = visual_id
+                    
+                    # Update lot if provided
+                    lot = (event_item.get('lot') or '').strip()
+                    if lot and existing_cattle.get('lot') != lot:
+                        update_cattle_data['lot'] = lot
+                    
+                    # Update lot_group if provided
+                    lot_group = (event_item.get('lot_group') or '').strip()
+                    if lot_group and existing_cattle.get('lot_group') != lot_group:
+                        update_cattle_data['lot_group'] = lot_group
+                    
                     if update_cattle_data:
                         Cattle.update_cattle(feedlot_code_normalized, cattle_record_id, update_cattle_data, updated_by='api')
                     
@@ -438,6 +458,12 @@ def sync_induction_events():
                     uhf_tag = (event_item.get('epc') or '').strip() or None
                     notes = (event_item.get('notes') or '').strip() or None
                     
+                    # Extract additional fields from payload
+                    tag_color = (event_item.get('tag_color') or '').strip() or None
+                    visual_id = (event_item.get('visual_id') or '').strip() or None
+                    lot = (event_item.get('lot') or '').strip() or None
+                    lot_group = (event_item.get('lot_group') or '').strip() or None
+                    
                     cattle_record_id = Cattle.create_cattle(
                         feedlot_code=feedlot_code_normalized,
                         feedlot_id=feedlot_id,
@@ -449,7 +475,11 @@ def sync_induction_events():
                         lf_tag=lf_tag,
                         uhf_tag=uhf_tag,
                         pen_id=pen_id_for_cattle,
-                        notes=notes
+                        notes=notes,
+                        color=tag_color,
+                        visual_id=visual_id,
+                        lot=lot,
+                        lot_group=lot_group
                     )
                     
                     # Update induction_date

@@ -7,7 +7,8 @@ class Cattle:
     @staticmethod
     def create_cattle(feedlot_code, feedlot_id, batch_id, cattle_id, sex, weight, 
                      health_status, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
-                     color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None, created_by='system'):
+                     color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None, 
+                     visual_id=None, lot=None, lot_group=None, created_by='system'):
         """Create a new cattle record
         
         Args:
@@ -22,11 +23,14 @@ class Cattle:
             uhf_tag: Optional UHF tag
             pen_id: Optional pen ID
             notes: Optional notes
-            color: Optional color
+            color: Optional color (also accepts tag_color from API)
             breed: Optional breed
             brand_drawings: Optional brand drawings
             brand_locations: Optional brand locations
             other_marks: Optional other marks
+            visual_id: Optional visual ID
+            lot: Optional lot identifier
+            lot_group: Optional lot group identifier
             created_by: User who created the record
         """
         feedlot_db = get_feedlot_db(feedlot_code)
@@ -46,6 +50,9 @@ class Cattle:
             'brand_drawings': brand_drawings or '',
             'brand_locations': brand_locations or '',
             'other_marks': other_marks or '',
+            'visual_id': visual_id or '',
+            'lot': lot or '',
+            'lot_group': lot_group or '',
             'status': 'active',
             'induction_date': datetime.utcnow(),
             'created_at': datetime.utcnow(),
@@ -148,7 +155,8 @@ class Cattle:
         
         # Fields to track (excluding internal fields)
         trackable_fields = ['sex', 'health_status', 'color', 'breed', 'brand_drawings', 
-                          'brand_locations', 'other_marks', 'notes', 'induction_date', 'pen_id']
+                          'brand_locations', 'other_marks', 'notes', 'induction_date', 'pen_id',
+                          'visual_id', 'lot', 'lot_group']
         
         for field in trackable_fields:
             if field in update_data:

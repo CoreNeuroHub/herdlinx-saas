@@ -217,12 +217,11 @@ def create_app(config_class=Config):
         from .routes.auth_routes import auth_bp
         from .routes.top_level_routes import top_level_bp
         from .routes.feedlot_routes import feedlot_bp
-        from .routes.api_routes import api_bp
+        # API routes are only served by scripts/run_api.py (port 5021)
         
         app.register_blueprint(auth_bp)
         app.register_blueprint(top_level_bp)
         app.register_blueprint(feedlot_bp)
-        app.register_blueprint(api_bp, url_prefix='/api')
     except Exception as e:
         print(f"Error registering blueprints: {e}")
         raise

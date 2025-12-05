@@ -215,11 +215,15 @@ All endpoints return JSON responses with the following structure:
 
 **Field Mapping**:
 
+**Required Fields**:
+- `livestock_id` (required) - Office livestock ID, used as `cattle_id`
+- `batch_name` (required) - Batch name, creates or finds existing batch
+
 **Batch Fields** (used to create/update batches):
 - `batch_name` → `batch_number` (required) - Creates or finds existing batch
 - `funder` → `funder` (optional) - Batch funder information
 - `notes` → `notes` (optional) - Batch notes
-- `timestamp` → `induction_date` - Used for batch induction date
+- `timestamp` or `created_at` → `induction_date` - Used for batch induction date
 - `pen` → Creates/updates pen with `pen_number` (optional)
 - `pen_location` → Pen `description` (optional)
 
@@ -230,7 +234,17 @@ All endpoints return JSON responses with the following structure:
 - `lf_id` → `lf_tag` (optional)
 - `epc` → `uhf_tag` (optional)
 - `notes` → `notes` (optional)
-- `timestamp` → `induction_date` (optional, defaults to current time)
+- `timestamp` or `created_at` → `induction_date` (optional, defaults to current time)
+- `event_id` → Used in audit logs (optional)
+
+**Additional Fields** (processed and stored):
+- `tag_color` → `color` - Tag color (mapped to color field)
+- `visual_id` → `visual_id` - Visual ID
+- `lot` → `lot` - Lot identifier
+- `lot_group` → `lot_group` - Lot group identifier
+
+**Unused Fields** (accepted but not processed):
+- `id` - Office database event ID (used for office app tracking only)
 
 **Response**:
 ```json
