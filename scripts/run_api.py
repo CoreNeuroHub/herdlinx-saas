@@ -38,7 +38,6 @@ def create_api_app():
                 # Get request data
                 method = request.method
                 path = request.path
-                headers = dict(request.headers)
                 
                 # Get JSON payload if available
                 payload = None
@@ -55,26 +54,119 @@ def create_api_app():
                 logger.info(separator)
                 print(separator)
                 
-                request_info = f"API Request: {method} {path}"
+                request_info = f"INCOMING REQUEST: {method} {path}"
                 logger.info(request_info)
                 print(request_info)
                 
-                headers_str = json.dumps(headers, indent=2, default=str)
-                logger.info(f"Headers: {headers_str}")
-                print(f"Headers: {headers_str}")
-                
                 if payload:
                     payload_str = json.dumps(payload, indent=2, default=str)
-                    logger.info(f"Payload: {payload_str}")
-                    print(f"Payload: {payload_str}")
+                    logger.info(f"PAYLOAD:\n{payload_str}")
+                    print(f"PAYLOAD:\n{payload_str}")
                 else:
-                    logger.info("Payload: (empty or not JSON)")
-                    print("Payload: (empty or not JSON)")
+                    logger.info("PAYLOAD: (empty or not JSON)")
+                    print("PAYLOAD: (empty or not JSON)")
                 
                 logger.info(separator)
                 print(separator)
             except Exception as e:
                 logger.error(f"Error logging request: {str(e)}")
+                print(f"Error logging request: {str(e)}")
+    
+    # Log all responses to API endpoints
+    @app.after_request
+    def log_response(response):
+        """Log response details including database operation results"""
+        if request.path.startswith('/api'):
+            try:
+                separator = "=" * 60
+                
+                # Get response data
+                status_code = response.status_code
+                response_data = None
+                
+                # Try to parse response JSON
+                if response.is_json:
+                    try:
+                        response_data = response.get_json()
+                    except:
+                        pass
+                elif response.data:
+                    try:
+                        response_data = json.loads(response.data.decode('utf-8'))
+                    except:
+                        pass
+                
+                # Log response details
+                logger.info(separator)
+                print(separator)
+                
+                status_prefix = "[SUCCESS]" if 200 <= status_code < 300 else "[FAILED]"
+                response_info = f"{status_prefix} RESPONSE: {status_code} {request.method} {request.path}"
+                logger.info(response_info)
+                print(response_info)
+                
+                if response_data:
+                    # Extract database operation results
+                    success = response_data.get('success', False)
+                    message = response_data.get('message', '')
+                    records_processed = response_data.get('records_processed', 0)
+                    records_created = response_data.get('records_created', 0)
+                    records_updated = response_data.get('records_updated', 0)
+                    records_skipped = response_data.get('records_skipped', 0)
+                    batches_created = response_data.get('batches_created', 0)
+                    batches_updated = response_data.get('batches_updated', 0)
+                    errors = response_data.get('errors', [])
+                    
+                    # Display success status
+                    db_status = "[SUCCESS] DATABASE OPERATION: SUCCESS" if success else "[FAILED] DATABASE OPERATION: FAILED"
+                    logger.info(db_status)
+                    print(db_status)
+                    
+                    # Display summary
+                    summary_parts = []
+                    if message:
+                        summary_parts.append(f"Message: {message}")
+                    if records_processed > 0:
+                        summary_parts.append(f"Processed: {records_processed}")
+                    if records_created > 0:
+                        summary_parts.append(f"Created: {records_created}")
+                    if records_updated > 0:
+                        summary_parts.append(f"Updated: {records_updated}")
+                    if records_skipped > 0:
+                        summary_parts.append(f"Skipped: {records_skipped}")
+                    if batches_created > 0:
+                        summary_parts.append(f"Batches Created: {batches_created}")
+                    if batches_updated > 0:
+                        summary_parts.append(f"Batches Updated: {batches_updated}")
+                    
+                    if summary_parts:
+                        summary = " | ".join(summary_parts)
+                        logger.info(f"SUMMARY: {summary}")
+                        print(f"SUMMARY: {summary}")
+                    
+                    # Display errors if any
+                    if errors:
+                        errors_str = "\n".join([f"  - {error}" for error in errors])
+                        logger.warning(f"ERRORS:\n{errors_str}")
+                        print(f"ERRORS:\n{errors_str}")
+                    
+                    # Full response for debugging
+                    response_str = json.dumps(response_data, indent=2, default=str)
+                    logger.info(f"FULL RESPONSE:\n{response_str}")
+                    print(f"FULL RESPONSE:\n{response_str}")
+                else:
+                    logger.info("RESPONSE: (no JSON data)")
+                    print("RESPONSE: (no JSON data)")
+                
+                logger.info(separator)
+                print(separator)
+                print()  # Add blank line for readability
+                
+            except Exception as e:
+                logger.error(f"Error logging response: {str(e)}")
+                print(f"Error logging response: {str(e)}")
+        
+        return response
 
     # Register only the API blueprint
     from app.routes.api_routes import api_bp
