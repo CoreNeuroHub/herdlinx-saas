@@ -4,15 +4,20 @@ Dedicated server for Office Pi synchronization endpoints
 """
 import json
 import logging
+import sys
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from config import Config
 from app import get_db, db
 
-# Configure logging
+# Configure logging to explicitly output to console
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ],
+    force=True
 )
 logger = logging.getLogger(__name__)
 
@@ -45,15 +50,29 @@ def create_api_app():
                     except (json.JSONDecodeError, UnicodeDecodeError):
                         payload = request.data.decode('utf-8', errors='replace')
                 
-                # Log request details
-                logger.info("=" * 60)
-                logger.info(f"API Request: {method} {path}")
-                logger.info(f"Headers: {json.dumps(headers, indent=2, default=str)}")
+                # Log request details to both logger and console
+                separator = "=" * 60
+                logger.info(separator)
+                print(separator)
+                
+                request_info = f"API Request: {method} {path}"
+                logger.info(request_info)
+                print(request_info)
+                
+                headers_str = json.dumps(headers, indent=2, default=str)
+                logger.info(f"Headers: {headers_str}")
+                print(f"Headers: {headers_str}")
+                
                 if payload:
-                    logger.info(f"Payload: {json.dumps(payload, indent=2, default=str)}")
+                    payload_str = json.dumps(payload, indent=2, default=str)
+                    logger.info(f"Payload: {payload_str}")
+                    print(f"Payload: {payload_str}")
                 else:
                     logger.info("Payload: (empty or not JSON)")
-                logger.info("=" * 60)
+                    print("Payload: (empty or not JSON)")
+                
+                logger.info(separator)
+                print(separator)
             except Exception as e:
                 logger.error(f"Error logging request: {str(e)}")
 
