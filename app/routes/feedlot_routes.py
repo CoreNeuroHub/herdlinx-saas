@@ -444,7 +444,7 @@ def create_cattle(feedlot_id):
         return redirect(url_for('auth.login'))
     
     if request.method == 'POST':
-        batch_id = request.form.get('batch_id')
+        batch_id = request.form.get('batch_id') or None
         cattle_id = request.form.get('cattle_id')
         sex = request.form.get('sex')
         weight = float(request.form.get('weight'))
@@ -470,9 +470,9 @@ def create_cattle(feedlot_id):
                                  pens=pens)
         
         created_by = session.get('username', 'user')
-        cattle_record_id = Cattle.create_cattle(feedlot_code, feedlot_id, batch_id, cattle_id, sex, 
-                                               weight, health_status, lf_tag, uhf_tag, pen_id, notes,
-                                               color, breed, brand_drawings, brand_locations, other_marks, created_by=created_by)
+        cattle_record_id = Cattle.create_cattle(feedlot_code, feedlot_id, cattle_id, sex, 
+                                               weight, health_status, batch_id=batch_id, lf_tag=lf_tag, uhf_tag=uhf_tag, pen_id=pen_id, notes=notes,
+                                               color=color, breed=breed, brand_drawings=brand_drawings, brand_locations=brand_locations, other_marks=other_marks, created_by=created_by)
         flash('Cattle record created successfully.', 'success')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
@@ -503,7 +503,7 @@ def view_cattle(feedlot_id, cattle_id):
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
     pen = Pen.find_by_id(cattle['pen_id']) if cattle.get('pen_id') else None
-    batch = Batch.find_by_id(feedlot_code, cattle['batch_id'])
+    batch = Batch.find_by_id(feedlot_code, cattle['batch_id']) if cattle.get('batch_id') else None
     
     return render_template('feedlot/cattle/view.html', 
                          feedlot=feedlot, 

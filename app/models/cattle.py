@@ -5,8 +5,8 @@ from app.models.pen import Pen
 
 class Cattle:
     @staticmethod
-    def create_cattle(feedlot_code, feedlot_id, batch_id, cattle_id, sex, weight, 
-                     health_status, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
+    def create_cattle(feedlot_code, feedlot_id, cattle_id, sex, weight, 
+                     health_status, batch_id=None, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
                      color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None, 
                      visual_id=None, lot=None, lot_group=None, created_by='system'):
         """Create a new cattle record
@@ -14,11 +14,11 @@ class Cattle:
         Args:
             feedlot_code: The feedlot code (required for database selection)
             feedlot_id: The feedlot ID
-            batch_id: The batch ID
             cattle_id: Cattle ID
             sex: Sex of cattle
             weight: Weight
             health_status: Health status
+            batch_id: Optional batch ID (cattle can exist without a batch)
             lf_tag: Optional LF tag
             uhf_tag: Optional UHF tag
             pen_id: Optional pen ID
@@ -36,7 +36,7 @@ class Cattle:
         feedlot_db = get_feedlot_db(feedlot_code)
         cattle_data = {
             'feedlot_id': ObjectId(feedlot_id),
-            'batch_id': ObjectId(batch_id),
+            'batch_id': ObjectId(batch_id) if batch_id else None,
             'cattle_id': cattle_id,
             'sex': sex,
             'weight': weight,

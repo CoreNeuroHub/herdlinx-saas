@@ -510,11 +510,11 @@ def sync_induction_events():
                     cattle_record_id = Cattle.create_cattle(
                         feedlot_code=feedlot_code_normalized,
                         feedlot_id=feedlot_id,
-                        batch_id=saas_batch_id,
                         cattle_id=cattle_id,
                         sex=sex,
                         weight=weight_float,
                         health_status=health_status,
+                        batch_id=saas_batch_id,
                         lf_tag=lf_tag,
                         uhf_tag=uhf_tag,
                         pen_id=pen_id_for_cattle,
