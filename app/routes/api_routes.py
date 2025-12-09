@@ -234,6 +234,10 @@ def sync_induction_events():
                     records_skipped += 1
                     continue
                 
+                # Extract pen information from event (used in both batch creation and cattle assignment)
+                pen_number = (event_item.get('pen') or '').strip()
+                pen_location = (event_item.get('pen_location') or '').strip()
+                
                 # Find or create batch
                 saas_batch = batch_cache.get(batch_name)
                 if not saas_batch:
@@ -262,8 +266,6 @@ def sync_induction_events():
                     notes = (event_item.get('notes') or '').strip()
                     
                     # Handle pen creation/update from event data
-                    pen_number = (event_item.get('pen') or '').strip()
-                    pen_location = (event_item.get('pen_location') or '').strip()
                     
                     pen_id = None
                     if pen_number:
@@ -285,16 +287,28 @@ def sync_induction_events():
                             pen_description = pen_location if pen_location else f'Pen {pen_number}'
                             pen_id = Pen.create_pen(feedlot_id, pen_number, capacity=100, description=pen_description)
                     
-                    # Create new batch
-                    batch_id = Batch.create_batch(feedlot_code_normalized, feedlot_id, batch_name, induction_date, funder, notes)
-                    # Update batch with pen_id if pen was found/created
-                    if pen_id:
-                        Batch.update_batch(feedlot_code_normalized, batch_id, {'pen_id': ObjectId(pen_id)})
-                    
-                    # Refresh batch cache
-                    saas_batch = Batch.find_by_id(feedlot_code_normalized, batch_id)
-                    batch_cache[batch_name] = saas_batch
-                    batches_created += 1
+                    # Create new batch if it doesn't exist
+                    try:
+                        batch_id = Batch.create_batch(feedlot_code_normalized, feedlot_id, batch_name, induction_date, funder, notes)
+                        if not batch_id:
+                            raise Exception('Batch creation returned no ID')
+                        
+                        # Update batch with pen_id if pen was found/created
+                        if pen_id:
+                            Batch.update_batch(feedlot_code_normalized, batch_id, {'pen_id': ObjectId(pen_id)})
+                        
+                        # Refresh batch cache to include the newly created batch
+                        saas_batch = Batch.find_by_id(feedlot_code_normalized, batch_id)
+                        if not saas_batch:
+                            raise Exception(f'Failed to retrieve created batch with ID {batch_id}')
+                        
+                        batch_cache[batch_name] = saas_batch
+                        batches_created += 1
+                    except Exception as batch_error:
+                        # If batch creation fails, we can't proceed with cattle creation
+                        errors.append(f'Record {records_processed}: Failed to create batch "{batch_name}": {str(batch_error)}')
+                        records_skipped += 1
+                        continue
                 else:
                     # Batch exists - check if we need to update it
                     saas_batch_id = str(saas_batch['_id'])
@@ -314,10 +328,7 @@ def sync_induction_events():
                     if notes and saas_batch.get('notes') != notes:
                         update_batch_data['notes'] = notes
                     
-                    # Handle pen creation/update
-                    pen_number = (event_item.get('pen') or '').strip()
-                    pen_location = (event_item.get('pen_location') or '').strip()
-                    
+                    # Handle pen creation/update (pen_number and pen_location already extracted above)
                     pen_id = None
                     if pen_number:
                         existing_pens = Pen.find_by_feedlot(feedlot_id)
