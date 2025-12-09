@@ -50,6 +50,11 @@ def dashboard(feedlot_id):
     # Get recent batches
     recent_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)[-5:]
     
+    # Normalize batch data: ensure event_date exists (for backward compatibility with induction_date)
+    for batch in recent_batches:
+        if 'event_date' not in batch and 'induction_date' in batch:
+            batch['event_date'] = batch['induction_date']
+    
     user_type = session.get('user_type')
     
     return render_template('feedlot/dashboard.html', 
@@ -287,9 +292,12 @@ def list_batches(feedlot_id):
     
     batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
     
-    # Add cattle count to each batch
+    # Add cattle count to each batch and normalize event_date (for backward compatibility)
     for batch in batches:
         batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
+        # Normalize: ensure event_date exists (for backward compatibility with induction_date)
+        if 'event_date' not in batch and 'induction_date' in batch:
+            batch['event_date'] = batch['induction_date']
     
     return render_template('feedlot/batches/list.html', feedlot=feedlot, batches=batches)
 
@@ -310,14 +318,20 @@ def create_batch(feedlot_id):
     
     if request.method == 'POST':
         batch_number = request.form.get('batch_number')
-        induction_date_str = request.form.get('induction_date')
+        event_date_str = request.form.get('event_date')
         funder = request.form.get('funder')
         notes = request.form.get('notes')
+        event_type = request.form.get('event_type', 'induction')
+        
+        # Validate event_type
+        valid_event_types = ['induction', 'pairing', 'checkin', 'repair']
+        if event_type not in valid_event_types:
+            event_type = 'induction'
         
         # Convert date string to datetime object
-        induction_date = datetime.strptime(induction_date_str, '%Y-%m-%d') if induction_date_str else None
+        event_date = datetime.strptime(event_date_str, '%Y-%m-%d') if event_date_str else None
         
-        batch_id = Batch.create_batch(feedlot_code, feedlot_id, batch_number, induction_date, funder, notes)
+        batch_id = Batch.create_batch(feedlot_code, feedlot_id, batch_number, event_date, funder, notes, event_type)
         flash('Batch created successfully.', 'success')
         return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
     
@@ -343,6 +357,10 @@ def view_batch(feedlot_id, batch_id):
     if not batch:
         flash('Batch not found.', 'error')
         return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
+    
+    # Normalize: ensure event_date exists (for backward compatibility with induction_date)
+    if 'event_date' not in batch and 'induction_date' in batch:
+        batch['event_date'] = batch['induction_date']
     
     cattle = Cattle.find_by_batch(feedlot_code, batch_id)
     batch['cattle_count'] = len(cattle)

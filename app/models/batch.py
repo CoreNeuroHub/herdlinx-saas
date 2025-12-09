@@ -4,24 +4,26 @@ from app import get_feedlot_db
 
 class Batch:
     @staticmethod
-    def create_batch(feedlot_code, feedlot_id, batch_number, induction_date, funder, notes=None):
+    def create_batch(feedlot_code, feedlot_id, batch_number, event_date, funder, notes=None, event_type='induction'):
         """Create a new batch
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
             feedlot_id: The feedlot ID
             batch_number: Batch number
-            induction_date: Induction date
+            event_date: Event date
             funder: Funder information
             notes: Optional notes
+            event_type: Event type (induction, pairing, checkin, repair). Defaults to 'induction'
         """
         feedlot_db = get_feedlot_db(feedlot_code)
         batch_data = {
             'feedlot_id': ObjectId(feedlot_id),
             'batch_number': batch_number,
-            'induction_date': induction_date,
+            'event_date': event_date,
             'funder': funder,
             'notes': notes or '',
+            'event_type': event_type,
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow()
         }

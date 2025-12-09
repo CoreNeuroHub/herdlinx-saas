@@ -249,29 +249,35 @@ def sync_induction_events():
                             break
                 
                 if not saas_batch:
-                    # Create new batch from induction event data
-                    # Parse timestamp for induction_date
+                    # Create new batch from event data
+                    # Parse timestamp for event_date
                     timestamp_str = event_item.get('timestamp') or event_item.get('created_at')
                     if timestamp_str:
                         try:
                             # Handle format like "2025-12-04 14:18:11.265273"
                             if ' ' in timestamp_str and '.' in timestamp_str:
                                 timestamp_str = timestamp_str.split('.')[0]  # Remove microseconds
-                                induction_date = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+                                event_date = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
                             elif 'T' in timestamp_str:
-                                induction_date = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                                event_date = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
                             else:
-                                induction_date = datetime.strptime(timestamp_str, '%Y-%m-%d')
+                                event_date = datetime.strptime(timestamp_str, '%Y-%m-%d')
                         except (ValueError, AttributeError):
-                            induction_date = datetime.utcnow()
+                            event_date = datetime.utcnow()
                     else:
-                        induction_date = datetime.utcnow()
+                        event_date = datetime.utcnow()
                     
                     # Extract batch information from event
                     funder = (event_item.get('funder') or '').strip()
                     if funder == 'None' or funder.lower() == 'none':
                         funder = ''
                     notes = (event_item.get('notes') or '').strip()
+                    
+                    # Extract event_type from event, default to 'induction' for induction-events endpoint
+                    event_type = (event_item.get('event_type') or 'induction').strip().lower()
+                    valid_event_types = ['induction', 'pairing', 'checkin', 'repair']
+                    if event_type not in valid_event_types:
+                        event_type = 'induction'
                     
                     # Handle pen creation/update from event data
                     
@@ -297,7 +303,7 @@ def sync_induction_events():
                     
                     # Create new batch if it doesn't exist
                     try:
-                        batch_id = Batch.create_batch(feedlot_code_normalized, feedlot_id, batch_name, induction_date, funder, notes)
+                        batch_id = Batch.create_batch(feedlot_code_normalized, feedlot_id, batch_name, event_date, funder, notes, event_type)
                         if not batch_id:
                             raise Exception('Batch creation returned no ID')
                         
@@ -328,6 +334,13 @@ def sync_induction_events():
                     
                     # Update batch if new information is available
                     update_batch_data = {}
+                    
+                    # Update event_type if provided and different
+                    event_type = (event_item.get('event_type') or '').strip().lower()
+                    if event_type:
+                        valid_event_types = ['induction', 'pairing', 'checkin', 'repair']
+                        if event_type in valid_event_types and saas_batch.get('event_type') != event_type:
+                            update_batch_data['event_type'] = event_type
                     
                     # Update funder if provided and different
                     funder = (event_item.get('funder') or '').strip()
