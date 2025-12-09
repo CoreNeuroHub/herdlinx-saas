@@ -239,7 +239,15 @@ def sync_induction_events():
                 pen_location = (event_item.get('pen_location') or '').strip()
                 
                 # Find or create batch
+                # Look up batch in cache (case-insensitive lookup for robustness)
                 saas_batch = batch_cache.get(batch_name)
+                # If not found by exact match, try case-insensitive lookup
+                if not saas_batch:
+                    for cached_batch_name, cached_batch in batch_cache.items():
+                        if cached_batch_name.lower() == batch_name.lower():
+                            saas_batch = cached_batch
+                            break
+                
                 if not saas_batch:
                     # Create new batch from induction event data
                     # Parse timestamp for induction_date
@@ -302,6 +310,11 @@ def sync_induction_events():
                         if not saas_batch:
                             raise Exception(f'Failed to retrieve created batch with ID {batch_id}')
                         
+                        # Add to cache using batch_number from the database (should match batch_name)
+                        batch_number_from_db = saas_batch.get('batch_number', '').strip()
+                        if batch_number_from_db:
+                            batch_cache[batch_number_from_db] = saas_batch
+                        # Also add with batch_name as key for lookup consistency
                         batch_cache[batch_name] = saas_batch
                         batches_created += 1
                     except Exception as batch_error:
@@ -353,6 +366,12 @@ def sync_induction_events():
                     if update_batch_data:
                         Batch.update_batch(feedlot_code_normalized, saas_batch_id, update_batch_data)
                         batches_updated += 1
+                
+                # Ensure saas_batch is set (should always be set at this point)
+                if not saas_batch:
+                    errors.append(f'Record {records_processed}: Batch "{batch_name}" not found after creation/lookup')
+                    records_skipped += 1
+                    continue
                 
                 saas_batch_id = str(saas_batch['_id'])
                 
