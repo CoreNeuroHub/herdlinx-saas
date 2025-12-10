@@ -27,6 +27,18 @@
                     </svg>
                 </div>
             </a>
+            
+            <div data-testid="reset-database-settings-link" class="block p-4 border border-red-200 rounded-lg hover:border-red-400 hover:bg-red-50 transition duration-200 cursor-pointer" onclick="openResetDatabaseModal()">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-red-800 mb-1">Reset Database</h3>
+                        <p class="text-sm text-red-600">Clear all data from the database. This action cannot be undone.</p>
+                    </div>
+                    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </div>
+            </div>
         </div>
     </div>
     {% else %}
@@ -44,5 +56,80 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Reset Database Confirmation Modal -->
+<div id="reset-database-modal" data-testid="reset-database-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeResetDatabaseModalOnBackdrop(event)">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full" onclick="event.stopPropagation()">
+        <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-gray-800">Reset Database</h3>
+            <button type="button" data-testid="close-reset-database-modal-button" onclick="closeResetDatabaseModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="px-6 py-4">
+            <div class="mb-4">
+                <div class="flex items-start mb-4">
+                    <svg class="w-6 h-6 text-red-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <div>
+                        <p class="text-gray-800 font-semibold mb-2">Warning: This action cannot be undone!</p>
+                        <p class="text-gray-600 mb-3">This will permanently delete:</p>
+                        <ul class="list-disc list-inside text-gray-600 mb-3 space-y-1">
+                            <li>All feedlot-specific databases (including all cattle, batches, pens, manifests)</li>
+                            <li>All feedlots from the main database</li>
+                            <li>All API keys</li>
+                        </ul>
+                        <p class="text-gray-600 font-semibold">Users will be preserved.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
+            <button type="button" data-testid="cancel-reset-database-button" onclick="closeResetDatabaseModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                Cancel
+            </button>
+            <form id="reset-database-form" data-testid="reset-database-form" method="POST" action="{{ url_for('top_level.reset_database') }}" class="inline">
+                <button type="submit" data-testid="confirm-reset-database-button" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Reset Database
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openResetDatabaseModal() {
+    const modal = document.getElementById('reset-database-modal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Close on Escape key
+    document.addEventListener('keydown', handleResetDatabaseEscape);
+}
+
+function closeResetDatabaseModal() {
+    const modal = document.getElementById('reset-database-modal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    
+    // Remove Escape key listener
+    document.removeEventListener('keydown', handleResetDatabaseEscape);
+}
+
+function closeResetDatabaseModalOnBackdrop(event) {
+    if (event.target.id === 'reset-database-modal') {
+        closeResetDatabaseModal();
+    }
+}
+
+function handleResetDatabaseEscape(event) {
+    if (event.key === 'Escape') {
+        closeResetDatabaseModal();
+    }
+}
+</script>
 {% endblock %}
 

@@ -916,3 +916,59 @@ def delete_api_key(key_id):
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error deleting API key: {str(e)}'}), 500
 
+@top_level_bp.route('/settings/reset-database', methods=['POST'])
+@login_required
+@super_admin_required
+def reset_database():
+    """Reset the database - delete all data except users (top-level users only)"""
+    user_type = session.get('user_type')
+    
+    # Only allow top-level users
+    if user_type not in ['super_owner', 'super_admin']:
+        flash('Access denied. Database reset is only available for top-level users.', 'error')
+        return redirect(url_for('top_level.settings'))
+    
+    try:
+        from pymongo import MongoClient
+        from config import Config
+        
+        # Get MongoDB client to drop databases
+        client = MongoClient(Config.MONGODB_URI)
+        
+        # Get all feedlots before deleting them
+        feedlots = Feedlot.find_all()
+        
+        # Drop each feedlot-specific database
+        for feedlot in feedlots:
+            feedlot_code = feedlot.get('feedlot_code')
+            if feedlot_code:
+                try:
+                    # Normalize feedlot_code to lowercase for consistency
+                    normalized_code = feedlot_code.lower().strip()
+                    db_name = f"feedlot_{normalized_code}"
+                    
+                    # Drop the entire feedlot database
+                    client.drop_database(db_name)
+                    
+                except Exception as e:
+                    # Log error but continue with other feedlots
+                    current_app.logger.error(f"Error dropping feedlot database {db_name}: {str(e)}")
+        
+        # Delete all feedlots from main database
+        db.feedlots.delete_many({})
+        
+        # Delete all API keys from main database
+        db.api_keys.delete_many({})
+        
+        # Also check for pens in main database (in case they exist there)
+        if hasattr(db, 'pens'):
+            db.pens.delete_many({})
+        
+        flash('Database reset successfully. All data and feedlot databases have been deleted except users.', 'success')
+        return redirect(url_for('top_level.settings'))
+    
+    except Exception as e:
+        current_app.logger.error(f"Error resetting database: {str(e)}")
+        flash(f'Failed to reset database: {str(e)}', 'error')
+        return redirect(url_for('top_level.settings'))
+
