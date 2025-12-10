@@ -248,15 +248,26 @@
                         <span class="text-sm lg:text-base text-gray-600">{{ c.induction_date | strftime }}</span>
                     </td>
                     <td class="px-4 py-4 lg:px-6 whitespace-nowrap">
-                        <a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=c._id) }}" 
-                           data-testid="view-cattle-link-{{ c._id }}"
-                           style="background-color: #2D8B8B;" class="inline-flex items-center px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition-all duration-200">
-                            <svg class="w-4 h-4 mr-1 hidden lg:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            <span>View</span>
-                        </a>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=c._id) }}" 
+                               data-testid="view-cattle-link-{{ c._id }}"
+                               style="background-color: #2D8B8B;" class="inline-flex items-center px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-1 hidden lg:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                <span>View</span>
+                            </a>
+                            <button type="button"
+                                    onclick="openDeleteCattleModal('{{ c._id }}', '{{ c.cattle_id }}')"
+                                    data-testid="delete-cattle-button-{{ c._id }}"
+                                    class="inline-flex items-center px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-xs lg:text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-1 hidden lg:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                <span>Delete</span>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -309,5 +320,78 @@
     </div>
     {% endblock %}
 </div>
+
+<!-- Delete Cattle Confirmation Modal -->
+<div id="delete-cattle-modal" data-testid="delete-cattle-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Delete Cattle</h2>
+                <button onclick="closeDeleteCattleModal()" data-testid="close-delete-cattle-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <p class="text-gray-700 mb-4">Are you sure you want to delete cattle <strong id="delete-cattle-id"></strong>? This action cannot be undone.</p>
+            
+            <form method="POST" 
+                  id="delete-cattle-form"
+                  data-testid="delete-cattle-form"
+                  class="flex space-x-4">
+                <button type="submit" 
+                        data-testid="confirm-delete-cattle-button"
+                        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Delete
+                </button>
+                <button type="button" 
+                        onclick="closeDeleteCattleModal()"
+                        data-testid="cancel-delete-cattle-button"
+                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCattleId = null;
+let currentFeedlotId = '{{ feedlot._id }}';
+
+function openDeleteCattleModal(cattleId, cattleIdDisplay) {
+    currentCattleId = cattleId;
+    document.getElementById('delete-cattle-id').textContent = cattleIdDisplay;
+    document.getElementById('delete-cattle-form').action = `/feedlot/${currentFeedlotId}/cattle/${cattleId}/delete`;
+    document.getElementById('delete-cattle-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteCattleModal() {
+    document.getElementById('delete-cattle-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    currentCattleId = null;
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('delete-cattle-modal');
+        if (!modal.classList.contains('hidden')) {
+            closeDeleteCattleModal();
+        }
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('delete-cattle-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteCattleModal();
+    }
+});
+</script>
 {% endblock %}
 

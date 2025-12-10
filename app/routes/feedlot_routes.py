@@ -367,6 +367,85 @@ def view_batch(feedlot_id, batch_id):
     
     return render_template('feedlot/batches/view.html', feedlot=feedlot, batch=batch, cattle=cattle)
 
+@feedlot_bp.route('/feedlot/<feedlot_id>/batches/<batch_id>/edit', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def edit_batch(feedlot_id, batch_id):
+    """Edit batch details"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    batch = Batch.find_by_id(feedlot_code, batch_id)
+    
+    if not batch:
+        flash('Batch not found.', 'error')
+        return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
+    
+    # Normalize: ensure event_date exists (for backward compatibility with induction_date)
+    if 'event_date' not in batch and 'induction_date' in batch:
+        batch['event_date'] = batch['induction_date']
+    
+    if request.method == 'POST':
+        batch_number = request.form.get('batch_number')
+        event_date_str = request.form.get('event_date')
+        funder = request.form.get('funder')
+        notes = request.form.get('notes')
+        event_type = request.form.get('event_type', 'induction')
+        
+        # Validate event_type
+        valid_event_types = ['induction', 'pairing', 'checkin', 'repair']
+        if event_type not in valid_event_types:
+            event_type = 'induction'
+        
+        # Convert date string to datetime object
+        event_date = datetime.strptime(event_date_str, '%Y-%m-%d') if event_date_str else None
+        
+        update_data = {
+            'batch_number': batch_number,
+            'event_date': event_date,
+            'funder': funder,
+            'notes': notes or '',
+            'event_type': event_type
+        }
+        
+        Batch.update_batch(feedlot_code, batch_id, update_data)
+        flash('Batch updated successfully.', 'success')
+        return redirect(url_for('feedlot.view_batch', feedlot_id=feedlot_id, batch_id=batch_id))
+    
+    return render_template('feedlot/batches/edit.html', feedlot=feedlot, batch=batch)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/batches/<batch_id>/delete', methods=['POST'])
+@login_required
+@feedlot_access_required()
+def delete_batch(feedlot_id, batch_id):
+    """Delete a batch"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    batch = Batch.find_by_id(feedlot_code, batch_id)
+    
+    if not batch:
+        flash('Batch not found.', 'error')
+        return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
+    
+    Batch.delete_batch(feedlot_code, batch_id)
+    flash('Batch deleted successfully.', 'success')
+    return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
+
 # Cattle Management Routes
 @feedlot_bp.route('/feedlot/<feedlot_id>/cattle')
 @login_required
@@ -648,6 +727,32 @@ def update_tags(feedlot_id, cattle_id):
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     
     return render_template('feedlot/cattle/update_tags.html', feedlot=feedlot, cattle=cattle)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/delete', methods=['POST'])
+@login_required
+@feedlot_access_required()
+def delete_cattle(feedlot_id, cattle_id):
+    """Delete a cattle record"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    cattle = Cattle.find_by_id(feedlot_code, cattle_id)
+    
+    if not cattle:
+        flash('Cattle record not found.', 'error')
+        return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
+    
+    deleted_by = session.get('username', 'user')
+    Cattle.delete_cattle(feedlot_code, cattle_id, deleted_by)
+    flash('Cattle record deleted successfully.', 'success')
+    return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
 
 # Manifest Export Routes
 @feedlot_bp.route('/feedlot/<feedlot_id>/manifest/export', methods=['GET', 'POST'])

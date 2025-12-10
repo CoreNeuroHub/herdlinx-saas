@@ -19,14 +19,30 @@ class Pen:
         return str(result.inserted_id)
     
     @staticmethod
-    def find_by_id(pen_id):
-        """Find pen by ID"""
-        return db.pens.find_one({'_id': ObjectId(pen_id)})
+    def find_by_id(pen_id, include_deleted=False):
+        """Find pen by ID
+        
+        Args:
+            pen_id: The pen ID
+            include_deleted: If True, include soft-deleted pens. Defaults to False.
+        """
+        query = {'_id': ObjectId(pen_id)}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return db.pens.find_one(query)
     
     @staticmethod
-    def find_by_feedlot(feedlot_id):
-        """Find all pens for a feedlot"""
-        return list(db.pens.find({'feedlot_id': ObjectId(feedlot_id)}))
+    def find_by_feedlot(feedlot_id, include_deleted=False):
+        """Find all pens for a feedlot
+        
+        Args:
+            feedlot_id: The feedlot ID
+            include_deleted: If True, include soft-deleted pens. Defaults to False.
+        """
+        query = {'feedlot_id': ObjectId(feedlot_id)}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return list(db.pens.find(query))
     
     @staticmethod
     def update_pen(pen_id, update_data):
@@ -39,19 +55,35 @@ class Pen:
     
     @staticmethod
     def delete_pen(pen_id):
-        """Delete a pen"""
-        db.pens.delete_one({'_id': ObjectId(pen_id)})
+        """Soft delete a pen (marks as deleted but doesn't remove from database)
+        
+        Args:
+            pen_id: The pen ID
+        """
+        db.pens.update_one(
+            {'_id': ObjectId(pen_id)},
+            {'$set': {
+                'deleted_at': datetime.utcnow(),
+                'updated_at': datetime.utcnow()
+            }}
+        )
     
     @staticmethod
     def get_current_cattle_count(pen_id):
         """Get current number of cattle in a pen"""
-        return db.cattle.count_documents({'pen_id': ObjectId(pen_id), 'status': 'active'})
+        # Note: This method uses db.cattle which may need to be updated to use feedlot-specific database
+        # For now, we'll exclude soft-deleted cattle
+        return db.cattle.count_documents({
+            'pen_id': ObjectId(pen_id), 
+            'status': 'active',
+            'deleted_at': None
+        })
     
     @staticmethod
     def is_capacity_available(pen_id, additional_cattle=1):
         """Check if pen has available capacity"""
         pen = Pen.find_by_id(pen_id)
-        if not pen:
+        if not pen or pen.get('deleted_at'):
             return False
         
         current_count = Pen.get_current_cattle_count(pen_id)

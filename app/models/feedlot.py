@@ -119,28 +119,59 @@ class Feedlot:
         return feedlot_id
     
     @staticmethod
-    def find_by_id(feedlot_id):
-        """Find feedlot by ID"""
-        return db.feedlots.find_one({'_id': ObjectId(feedlot_id)})
+    def find_by_id(feedlot_id, include_deleted=False):
+        """Find feedlot by ID
+        
+        Args:
+            feedlot_id: The feedlot ID
+            include_deleted: If True, include soft-deleted feedlots. Defaults to False.
+        """
+        query = {'_id': ObjectId(feedlot_id)}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return db.feedlots.find_one(query)
     
     @staticmethod
-    def find_all():
-        """Find all feedlots"""
-        return list(db.feedlots.find())
+    def find_all(include_deleted=False):
+        """Find all feedlots
+        
+        Args:
+            include_deleted: If True, include soft-deleted feedlots. Defaults to False.
+        """
+        query = {}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return list(db.feedlots.find(query))
     
     @staticmethod
-    def find_by_ids(feedlot_ids):
-        """Find feedlots by a list of IDs"""
+    def find_by_ids(feedlot_ids, include_deleted=False):
+        """Find feedlots by a list of IDs
+        
+        Args:
+            feedlot_ids: List of feedlot IDs
+            include_deleted: If True, include soft-deleted feedlots. Defaults to False.
+        """
         if not feedlot_ids:
             return []
-        return db.feedlots.find({'_id': {'$in': feedlot_ids}})
+        query = {'_id': {'$in': feedlot_ids}}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return db.feedlots.find(query)
     
     @staticmethod
-    def find_by_code(feedlot_code):
-        """Find feedlot by feedlot_code (case-insensitive)"""
+    def find_by_code(feedlot_code, include_deleted=False):
+        """Find feedlot by feedlot_code (case-insensitive)
+        
+        Args:
+            feedlot_code: The feedlot code
+            include_deleted: If True, include soft-deleted feedlots. Defaults to False.
+        """
         if not feedlot_code:
             return None
-        return db.feedlots.find_one({'feedlot_code': feedlot_code.lower().strip()})
+        query = {'feedlot_code': feedlot_code.lower().strip()}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return db.feedlots.find_one(query)
     
     @staticmethod
     def update_feedlot(feedlot_id, update_data):
@@ -168,13 +199,13 @@ class Feedlot:
         feedlot_db = get_feedlot_db(feedlot_code)
         feedlot_id_obj = ObjectId(feedlot_id)
         
-        total_pens = feedlot_db.pens.count_documents({'feedlot_id': feedlot_id_obj})
-        total_cattle = feedlot_db.cattle.count_documents({'feedlot_id': feedlot_id_obj})
-        total_batches = feedlot_db.batches.count_documents({'feedlot_id': feedlot_id_obj})
+        total_pens = feedlot_db.pens.count_documents({'feedlot_id': feedlot_id_obj, 'deleted_at': None})
+        total_cattle = feedlot_db.cattle.count_documents({'feedlot_id': feedlot_id_obj, 'deleted_at': None})
+        total_batches = feedlot_db.batches.count_documents({'feedlot_id': feedlot_id_obj, 'deleted_at': None})
         
         # Get cattle in each pen
         pipeline = [
-            {'$match': {'feedlot_id': feedlot_id_obj}},
+            {'$match': {'feedlot_id': feedlot_id_obj, 'deleted_at': None}},
             {'$group': {
                 '_id': '$pen_id',
                 'count': {'$sum': 1}
@@ -300,4 +331,19 @@ class Feedlot:
                         os.remove(full_path)
                     except Exception:
                         pass  # Ignore errors during cleanup
+    
+    @staticmethod
+    def delete_feedlot(feedlot_id):
+        """Soft delete a feedlot (marks as deleted but doesn't remove from database)
+        
+        Args:
+            feedlot_id: The feedlot ID
+        """
+        db.feedlots.update_one(
+            {'_id': ObjectId(feedlot_id)},
+            {'$set': {
+                'deleted_at': datetime.utcnow(),
+                'updated_at': datetime.utcnow()
+            }}
+        )
 

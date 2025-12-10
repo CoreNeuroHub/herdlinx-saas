@@ -203,6 +203,21 @@
       - No JavaScript required: Sidebar is always visible, no dropdown functionality needed
       - Test IDs: Use pattern "{action}-{entity}-action" for action items (e.g., "create-pen-action", "edit-feedlot-action")
     </actions_sidebar>
+    <confirmation_dialogs>
+      ALL confirmation dialogs MUST use modal dialogs, NEVER use JavaScript confirm() or alert():
+      - Modal structure: Use a div with classes "hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      - Modal container: Inner div with classes "bg-white rounded-lg shadow-xl max-w-md w-full" (or max-w-lg for larger modals)
+      - Modal header: Include a title and close button (X icon) in a border-b section
+      - Modal content: Clear message explaining the action and its consequences
+      - Modal actions: Two buttons - one for confirmation (destructive actions use red bg-red-600), one for cancel (gray bg-gray-600)
+      - JavaScript functions: open{ModalName}Modal() and close{ModalName}Modal() functions to toggle the "hidden" class
+      - Body scroll lock: Set document.body.style.overflow = 'hidden' when opening, 'auto' when closing
+      - Escape key: Add event listener to close modal on Escape key press
+      - Click outside: Close modal when clicking on the backdrop (the outer modal div)
+      - Form submission: The confirmation button should submit a form, not use onclick with confirm()
+      - Test IDs: Modal container, close button, form, confirm button, and cancel button all need data-testid attributes
+      - Pattern: "{action}-{entity}-modal", "{action}-{entity}-form", "confirm-{action}-{entity}-button", "cancel-{action}-{entity}-button"
+    </confirmation_dialogs>
   </ui_components>
 </cursor_rule>
 
