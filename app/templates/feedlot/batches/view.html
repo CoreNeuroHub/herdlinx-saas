@@ -59,7 +59,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">LF Tag</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">UHF Tag</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Weight</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Health Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cattle Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
             </thead>
@@ -73,10 +73,11 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ c.weight }} kg</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <span class="px-2 py-1 rounded-full text-xs font-semibold 
-                            {% if c.health_status == 'healthy' %}bg-green-100 text-green-800
-                            {% elif c.health_status == 'sick' %}bg-red-100 text-red-800
-                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                            {{ c.health_status|title }}
+                            {% if c.cattle_status == 'Healthy' %}bg-green-100 text-green-800
+                            {% elif c.cattle_status == 'Sick' %}bg-red-100 text-red-800
+                            {% elif c.cattle_status == 'Export' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ c.cattle_status }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">

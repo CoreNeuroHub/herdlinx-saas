@@ -993,7 +993,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Cattle ID: "CATTLE-001"
 - Sex: "Male"
 - Weight: 500.0
-- Health Status: "Healthy"
+- Cattle Status: "Healthy"
 - LF Tag: "LF123456"
 - UHF Tag: "UHF123456"
 - Color: "Black"
@@ -1012,7 +1012,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 2. Navigate to cattle list
 3. Use search functionality
 4. Apply filters:
-   - Health status
+   - Cattle status
    - Sex
    - Pen
 5. Sort by different fields
@@ -1401,7 +1401,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Shows all cattle in feedlot
 - Displays:
   - Cattle ID
-  - Sex, weight, health status
+  - Sex, weight, cattle status
   - Current pen
   - Tags (LF, UHF)
 - Can search and filter
@@ -1434,7 +1434,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 1. Log in as regular user
 2. Navigate to cattle list
 3. Apply filters:
-   - Health status: "Healthy"
+   - Cattle status: "Healthy"
    - Sex: "Male"
    - Pen: (select pen)
 4. Apply filters
@@ -1474,7 +1474,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
    - Cattle ID: "CATTLE-001"
    - Sex: "Male"
    - Weight: 500.0
-   - Health Status: "Healthy"
+   - Cattle Status: "Healthy"
    - LF Tag: "LF123456"
    - UHF Tag: "UHF123456"
    - Pen: (select pen or leave empty)
@@ -1498,7 +1498,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Cattle ID: "CATTLE-001"
 - Sex: "Male"
 - Weight: 500.0
-- Health Status: "Healthy"
+- Cattle Status: "Healthy"
 - LF Tag: "LF123456"
 - UHF Tag: "UHF123456"
 - Pen: (existing pen or None)
@@ -1539,7 +1539,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Cattle details page loads
 - Shows:
   - Cattle ID, sex, weight
-  - Health status
+  - Cattle status
   - Current pen
   - Batch information
   - Tags (LF, UHF)

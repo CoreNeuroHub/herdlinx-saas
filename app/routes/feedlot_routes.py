@@ -385,7 +385,7 @@ def list_cattle(feedlot_id):
     
     # Get filter parameters
     search = request.args.get('search', '').strip()
-    health_status_filter = request.args.get('health_status', '')
+    cattle_status_filter = request.args.get('cattle_status', '')
     sex_filter = request.args.get('sex', '')
     pen_filter = request.args.get('pen_id', '')
     sort_by = request.args.get('sort_by', 'cattle_id')
@@ -396,7 +396,7 @@ def list_cattle(feedlot_id):
         feedlot_code,
         feedlot_id,
         search=search if search else None,
-        health_status=health_status_filter if health_status_filter else None,
+        cattle_status=cattle_status_filter if cattle_status_filter else None,
         sex=sex_filter if sex_filter else None,
         pen_id=pen_filter if pen_filter else None,
         sort_by=sort_by,
@@ -411,7 +411,7 @@ def list_cattle(feedlot_id):
     
     # Get unique values for filter dropdowns
     all_cattle = Cattle.find_by_feedlot(feedlot_code, feedlot_id)
-    unique_health_statuses = list(set(c.get('health_status', '') for c in all_cattle if c.get('health_status')))
+    unique_cattle_statuses = list(set(c.get('cattle_status', '') for c in all_cattle if c.get('cattle_status')))
     unique_sexes = list(set(c.get('sex', '') for c in all_cattle if c.get('sex')))
     
     return render_template('feedlot/cattle/list.html', 
@@ -419,10 +419,10 @@ def list_cattle(feedlot_id):
                          cattle=cattle,
                          pens=pens,
                          pen_map=pen_map,
-                         unique_health_statuses=sorted(unique_health_statuses),
+                         unique_cattle_statuses=sorted(unique_cattle_statuses),
                          unique_sexes=sorted(unique_sexes),
                          current_search=search,
-                         current_health_status=health_status_filter,
+                         current_cattle_status=cattle_status_filter,
                          current_sex=sex_filter,
                          current_pen=pen_filter,
                          current_sort_by=sort_by,
@@ -448,7 +448,7 @@ def create_cattle(feedlot_id):
         cattle_id = request.form.get('cattle_id')
         sex = request.form.get('sex')
         weight = float(request.form.get('weight'))
-        health_status = request.form.get('health_status')
+        cattle_status = request.form.get('cattle_status')
         lf_tag = request.form.get('lf_tag')
         uhf_tag = request.form.get('uhf_tag')
         pen_id = request.form.get('pen_id') or None
@@ -471,7 +471,7 @@ def create_cattle(feedlot_id):
         
         created_by = session.get('username', 'user')
         cattle_record_id = Cattle.create_cattle(feedlot_code, feedlot_id, cattle_id, sex, 
-                                               weight, health_status, batch_id=batch_id, lf_tag=lf_tag, uhf_tag=uhf_tag, pen_id=pen_id, notes=notes,
+                                               weight, cattle_status, batch_id=batch_id, lf_tag=lf_tag, uhf_tag=uhf_tag, pen_id=pen_id, notes=notes,
                                                color=color, breed=breed, brand_drawings=brand_drawings, brand_locations=brand_locations, other_marks=other_marks, created_by=created_by)
         flash('Cattle record created successfully.', 'success')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))

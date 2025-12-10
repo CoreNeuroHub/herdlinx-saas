@@ -496,7 +496,7 @@ def sync_induction_events():
                     except (ValueError, TypeError):
                         weight_float = 0.0
                     
-                    health_status = 'Healthy'  # Default
+                    cattle_status = 'Healthy'  # Default
                     lf_tag = (event_item.get('lf_id') or '').strip() or None
                     uhf_tag = (event_item.get('epc') or '').strip() or None
                     notes = (event_item.get('notes') or '').strip() or None
@@ -513,7 +513,7 @@ def sync_induction_events():
                         cattle_id=cattle_id,
                         sex=sex,
                         weight=weight_float,
-                        health_status=health_status,
+                        cattle_status=cattle_status,
                         batch_id=saas_batch_id,
                         lf_tag=lf_tag,
                         uhf_tag=uhf_tag,

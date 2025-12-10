@@ -140,7 +140,7 @@ Feedlot (Top Level)
 - `cattle_id`: Unique cattle identifier within the feedlot (string, unique per feedlot)
 - `sex`: Sex of the cattle (string)
 - `weight`: Current weight (number)
-- `health_status`: Health status (string)
+- `cattle_status`: Cattle status (string)
 - `lf_tag`: Low Frequency tag identifier (string, optional)
 - `uhf_tag`: Ultra High Frequency tag identifier (string, optional)
 - `color`: Color description (string, optional)
@@ -361,7 +361,7 @@ cattle = Cattle.find_by_feedlot_with_filters(
     feedlot_code, 
     feedlot_id,
     search='C001',
-    health_status='healthy',
+    cattle_status='Healthy',
     pen_id=pen_id,
     sort_by='weight',
     sort_order='desc'
@@ -440,7 +440,7 @@ cattle = Cattle.find_by_feedlot_with_filters(
    cattle = Cattle.find_by_feedlot_with_filters(
        feedlot_code, feedlot_id,
        search='C001',
-       health_status='healthy',
+       cattle_status='Healthy',
        sex='female',
        pen_id=pen_id,
        sort_by='weight',

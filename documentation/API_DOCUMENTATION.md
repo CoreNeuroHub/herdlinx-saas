@@ -274,7 +274,7 @@ All endpoints return JSON responses with the following structure:
   - If `sex` is provided, it's used; otherwise defaults to "Unknown"
   - If `weight` is provided and valid (> 0), it's used; otherwise defaults to 0.0
   - If `lf_id` or `epc` are provided, tags are set
-  - `health_status` defaults to "Healthy"
+  - `cattle_status` defaults to "Healthy"
 - **Pen Assignment**: Cattle are automatically assigned to the pen from the event (if `pen` is provided) or from the batch's pen (if batch has a `pen_id`).
 - **Timestamp Format**: Supports formats like "2025-12-04 14:18:11.265273", ISO format with 'T', or "YYYY-MM-DD" format.
 - If cattle already exists, the record is updated with new information (sex, weight, tags, pen, notes) if provided.

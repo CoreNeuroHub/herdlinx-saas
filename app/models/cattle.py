@@ -6,7 +6,7 @@ from app.models.pen import Pen
 class Cattle:
     @staticmethod
     def create_cattle(feedlot_code, feedlot_id, cattle_id, sex, weight, 
-                     health_status, batch_id=None, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
+                     cattle_status, batch_id=None, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
                      color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None, 
                      visual_id=None, lot=None, lot_group=None, created_by='system'):
         """Create a new cattle record
@@ -17,7 +17,7 @@ class Cattle:
             cattle_id: Cattle ID
             sex: Sex of cattle
             weight: Weight
-            health_status: Health status
+            cattle_status: Cattle status
             batch_id: Optional batch ID (cattle can exist without a batch)
             lf_tag: Optional LF tag
             uhf_tag: Optional UHF tag
@@ -40,7 +40,7 @@ class Cattle:
             'cattle_id': cattle_id,
             'sex': sex,
             'weight': weight,
-            'health_status': health_status,
+            'cattle_status': cattle_status,
             'lf_tag': lf_tag or '',
             'uhf_tag': uhf_tag or '',
             'pen_id': ObjectId(pen_id) if pen_id else None,
@@ -154,7 +154,7 @@ class Cattle:
         new_values = {}
         
         # Fields to track (excluding internal fields)
-        trackable_fields = ['sex', 'health_status', 'color', 'breed', 'brand_drawings', 
+        trackable_fields = ['sex', 'cattle_status', 'color', 'breed', 'brand_drawings', 
                           'brand_locations', 'other_marks', 'notes', 'induction_date', 'pen_id',
                           'visual_id', 'lot', 'lot_group']
         
@@ -413,14 +413,14 @@ class Cattle:
         return cattle.get('movement_history', [])
     
     @staticmethod
-    def find_by_feedlot_with_filters(feedlot_code, feedlot_id, search=None, health_status=None, sex=None, pen_id=None, sort_by='cattle_id', sort_order='asc'):
+    def find_by_feedlot_with_filters(feedlot_code, feedlot_id, search=None, cattle_status=None, sex=None, pen_id=None, sort_by='cattle_id', sort_order='asc'):
         """Find cattle with filtering and sorting
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
             feedlot_id: The feedlot ID
             search: Optional search term for cattle_id
-            health_status: Optional health status filter
+            cattle_status: Optional cattle status filter
             sex: Optional sex filter
             pen_id: Optional pen ID filter
             sort_by: Field to sort by
@@ -433,9 +433,9 @@ class Cattle:
         if search:
             query['cattle_id'] = {'$regex': search, '$options': 'i'}
         
-        # Add health status filter
-        if health_status:
-            query['health_status'] = health_status
+        # Add cattle status filter
+        if cattle_status:
+            query['cattle_status'] = cattle_status
         
         # Add sex filter
         if sex:
@@ -453,7 +453,7 @@ class Cattle:
             'cattle_id': 'cattle_id',
             'weight': 'weight',
             'induction_date': 'induction_date',
-            'health_status': 'health_status',
+            'cattle_status': 'cattle_status',
             'sex': 'sex'
         }
         
