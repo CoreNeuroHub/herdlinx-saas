@@ -1,6 +1,6 @@
 from datetime import datetime
 from bson import ObjectId
-from app import db
+from app import db, get_feedlot_db
 
 class Pen:
     @staticmethod
@@ -69,23 +69,36 @@ class Pen:
         )
     
     @staticmethod
-    def get_current_cattle_count(pen_id):
-        """Get current number of cattle in a pen"""
-        # Note: This method uses db.cattle which may need to be updated to use feedlot-specific database
-        # For now, we'll exclude soft-deleted cattle
-        return db.cattle.count_documents({
+    def get_current_cattle_count(pen_id, feedlot_code):
+        """Get current number of cattle in a pen
+        
+        Args:
+            pen_id: The pen ID
+            feedlot_code: The feedlot code (required for database selection)
+        """
+        if not feedlot_code:
+            return 0
+        
+        feedlot_db = get_feedlot_db(feedlot_code)
+        return feedlot_db.cattle.count_documents({
             'pen_id': ObjectId(pen_id), 
             'status': 'active',
             'deleted_at': None
         })
     
     @staticmethod
-    def is_capacity_available(pen_id, additional_cattle=1):
-        """Check if pen has available capacity"""
+    def is_capacity_available(pen_id, feedlot_code, additional_cattle=1):
+        """Check if pen has available capacity
+        
+        Args:
+            pen_id: The pen ID
+            feedlot_code: The feedlot code (required for database selection)
+            additional_cattle: Number of additional cattle to check capacity for (default: 1)
+        """
         pen = Pen.find_by_id(pen_id)
         if not pen or pen.get('deleted_at'):
             return False
         
-        current_count = Pen.get_current_cattle_count(pen_id)
+        current_count = Pen.get_current_cattle_count(pen_id, feedlot_code)
         return (current_count + additional_cattle) <= pen['capacity']
 

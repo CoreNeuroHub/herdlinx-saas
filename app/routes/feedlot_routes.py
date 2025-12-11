@@ -47,13 +47,29 @@ def dashboard(feedlot_id):
     
     statistics = Feedlot.get_statistics(feedlot_id)
     
-    # Get recent batches
-    recent_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)[-5:]
+    # Get all batches
+    all_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
     
     # Normalize batch data: ensure event_date exists (for backward compatibility with induction_date)
-    for batch in recent_batches:
+    # Also add cattle count and ensure event_type exists
+    for batch in all_batches:
         if 'event_date' not in batch and 'induction_date' in batch:
             batch['event_date'] = batch['induction_date']
+        # Add cattle count
+        batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
+        # Ensure event_type exists (default to 'induction' if not set)
+        if 'event_type' not in batch:
+            batch['event_type'] = 'induction'
+        # Ensure event_date exists for sorting (use created_at as fallback)
+        if 'event_date' not in batch:
+            batch['event_date'] = batch.get('created_at')
+    
+    # Sort by event_date descending (latest first), then take top 5
+    recent_batches = sorted(
+        all_batches,
+        key=lambda b: b.get('event_date') or b.get('created_at') or datetime.min,
+        reverse=True
+    )[:5]
     
     user_type = session.get('user_type')
     
@@ -83,7 +99,7 @@ def list_pens(feedlot_id):
     
     # Add current cattle count to each pen
     for pen in pens:
-        pen['current_count'] = Pen.get_current_cattle_count(str(pen['_id']))
+        pen['current_count'] = Pen.get_current_cattle_count(str(pen['_id']), feedlot_code)
     
     # Get pen map configuration
     pen_map = Feedlot.get_pen_map(feedlot_id)
@@ -539,7 +555,7 @@ def create_cattle(feedlot_id):
         other_marks = request.form.get('other_marks')
         
         # Check pen capacity if pen is assigned
-        if pen_id and not Pen.is_capacity_available(pen_id):
+        if pen_id and not Pen.is_capacity_available(pen_id, feedlot_code):
             flash('Pen is at full capacity.', 'error')
             batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
             pens = Pen.find_by_feedlot(feedlot_id)
@@ -615,7 +631,7 @@ def move_cattle(feedlot_id, cattle_id):
         new_pen_id = request.form.get('pen_id')
         moved_by = session.get('username', 'user')
         
-        if new_pen_id and not Pen.is_capacity_available(new_pen_id):
+        if new_pen_id and not Pen.is_capacity_available(new_pen_id, feedlot_code):
             flash('Selected pen is at full capacity.', 'error')
             pens = Pen.find_by_feedlot(feedlot_id)
             return render_template('feedlot/cattle/move.html', 
@@ -888,7 +904,7 @@ def export_manifest(feedlot_id):
     # Convert pen ObjectIds to strings
     for pen in pens:
         pen['_id'] = str(pen['_id'])
-        pen['cattle_count'] = Pen.get_current_cattle_count(pen['_id'])
+        pen['cattle_count'] = Pen.get_current_cattle_count(pen['_id'], feedlot_code)
     
     templates = ManifestTemplate.find_by_feedlot(feedlot_id)
     

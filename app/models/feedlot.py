@@ -199,7 +199,11 @@ class Feedlot:
         feedlot_db = get_feedlot_db(feedlot_code)
         feedlot_id_obj = ObjectId(feedlot_id)
         
-        total_pens = feedlot_db.pens.count_documents({'feedlot_id': feedlot_id_obj, 'deleted_at': None})
+        # Pens are stored in the master database, use Pen model to query correctly
+        from app.models.pen import Pen
+        pens = Pen.find_by_feedlot(feedlot_id)
+        total_pens = len(pens)
+        
         total_cattle = feedlot_db.cattle.count_documents({'feedlot_id': feedlot_id_obj, 'deleted_at': None})
         total_batches = feedlot_db.batches.count_documents({'feedlot_id': feedlot_id_obj, 'deleted_at': None})
         
