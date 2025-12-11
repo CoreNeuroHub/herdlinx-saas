@@ -23,23 +23,40 @@ def init_db():
         # Don't raise - allow app to continue
 
 def create_default_admin():
-    """Create default admin user if it doesn't exist"""
+    """Create default admin users if they don't exist"""
     try:
-        # Check if default admin user already exists
-        existing_user = User.find_by_username('sft')
+        # Create default users list
+        default_users = [
+            {
+                'username': 'sft',
+                'email': 'sft@herdlinx.com',
+                'password': 'sftcattle',
+                'user_type': 'super_admin'
+            },
+            {
+                'username': 'brad',
+                'email': 'brad@herdlinx.ca',
+                'password': 'brad123',
+                'user_type': 'super_owner'
+            }
+        ]
         
-        if not existing_user:
-            # Create the default admin user
-            User.create_user(
-                username='sft',
-                email='sft@herdlinx.com',
-                password='sftcattle',
-                user_type='super_owner',
-                feedlot_id=None
-            )
-            print("Default admin user 'sft' created successfully")
-        else:
-            print("Default admin user 'sft' already exists")
+        for user_data in default_users:
+            # Check if user already exists
+            existing_user = User.find_by_username(user_data['username'])
+            
+            if not existing_user:
+                # Create the default user
+                User.create_user(
+                    username=user_data['username'],
+                    email=user_data['email'],
+                    password=user_data['password'],
+                    user_type=user_data['user_type'],
+                    feedlot_id=None
+                )
+                print(f"Default user '{user_data['username']}' ({user_data['user_type']}) created successfully")
+            else:
+                print(f"Default user '{user_data['username']}' already exists")
     except Exception as e:
-        print(f"Error creating default admin user: {e}")
+        print(f"Error creating default admin users: {e}")
 
