@@ -431,6 +431,52 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
+### 6. Sync Export Events
+
+**Endpoint**: `POST /api/v1/feedlot/export-events`
+
+**Description**: Marks cattle as exported (sets `cattle_status` to "Export") based on UHF tag (EPC).
+
+**Request Body**:
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "epc": "0900000000000003",
+      "timestamp": "2024-11-25T10:30:00Z"
+    }
+  ]
+}
+```
+
+**Field Mapping**:
+- `epc` (required) → Used to find cattle by UHF tag
+- `timestamp` (optional) → Export timestamp (defaults to current time if not provided)
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Processed 1 export event records",
+  "records_processed": 1,
+  "records_created": 0,
+  "records_updated": 1,
+  "records_skipped": 0,
+  "errors": []
+}
+```
+
+**Notes**:
+- `epc` (UHF tag) is required to identify the cattle
+- Cattle status is updated to "Export"
+- If cattle is already marked as Export, the record is skipped (not counted as an error)
+- Export timestamp is recorded in the audit log
+- If cattle with the specified UHF tag is not found, the record is skipped with an error message
+- Timestamp format supports: "2024-11-25 10:30:00.123456", ISO format with 'T', or "YYYY-MM-DD" format
+
+---
+
 ## Error Handling
 
 ### HTTP Status Codes
@@ -513,6 +559,7 @@ Individual record errors are included in the `errors` array:
 3. **Livestock**: Update current state (optional, for reconciliation)
 4. **Check-in Events**: Add weight measurements over time
 5. **Repair Events**: Handle tag replacements as needed
+6. **Export Events**: Mark cattle as exported when they leave the feedlot
 
 ### Idempotency
 
@@ -520,6 +567,7 @@ All endpoints are designed to be idempotent:
 - **Induction Events**: Creates/updates batches automatically from event data; checks if cattle exists before creating
 - **Pairing/Repair Events**: Updates existing cattle records
 - **Check-in Events**: Always creates new weight history entries (multiple entries are expected)
+- **Export Events**: Updates cattle status to Export; skips if already exported
 
 ### Bulk Operations
 
@@ -642,6 +690,8 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 
 4. **"Invalid weight_kg value"**: Weight must be a positive number greater than 0.
 
+5. **"Cattle with UHF tag not found"**: Ensure the UHF tag (epc) exists in the system. Cattle must be created via `induction-events` first.
+
 ### Debugging Tips
 
 - Check the `errors` array in responses for detailed error messages
@@ -661,7 +711,11 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 
 ## Changelog
 
-### Version 1.1 (Current)
+### Version 1.2 (Current)
+- Added export-events endpoint to mark cattle as exported based on UHF tag
+- Export events update cattle_status to "Export" and record export timestamp in audit log
+
+### Version 1.1
 - Added web UI for API key management (Settings → API Keys)
 - Enhanced API key management with visual interface
 - Added key status tracking (Active/Inactive)

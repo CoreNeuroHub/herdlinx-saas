@@ -110,6 +110,25 @@ class Cattle:
         return feedlot_db.cattle.find_one(query)
     
     @staticmethod
+    def find_by_uhf_tag(feedlot_code, feedlot_id, uhf_tag, include_deleted=False):
+        """Find cattle by UHF tag (EPC)
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            feedlot_id: The feedlot ID
+            uhf_tag: The UHF tag (EPC)
+            include_deleted: If True, include soft-deleted cattle. Defaults to False.
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        query = {
+            'feedlot_id': ObjectId(feedlot_id),
+            'uhf_tag': uhf_tag
+        }
+        if not include_deleted:
+            query['deleted_at'] = None
+        return feedlot_db.cattle.find_one(query)
+    
+    @staticmethod
     def find_by_feedlot(feedlot_code, feedlot_id, include_deleted=False):
         """Find all cattle for a feedlot
         

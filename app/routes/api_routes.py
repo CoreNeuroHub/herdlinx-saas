@@ -899,6 +899,143 @@ def sync_repair_events():
             'message': f'Error processing request: {str(e)}'
         }), 500
 
+@api_bp.route('/v1/feedlot/export-events', methods=['POST'])
+@api_key_required
+def sync_export_events():
+    """Sync export events from office app - marks cattle as Export status"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'Request body must be JSON'
+            }), 400
+        
+        feedlot_code = data.get('feedlot_code')
+        if not feedlot_code:
+            return jsonify({
+                'success': False,
+                'message': 'feedlot_code is required in request body'
+            }), 400
+        
+        # Validate feedlot_code matches the API key's feedlot
+        feedlot = Feedlot.find_by_id(request.feedlot_id)
+        if not feedlot or feedlot.get('feedlot_code', '').lower() != feedlot_code.lower():
+            return jsonify({
+                'success': False,
+                'message': 'feedlot_code does not match the API key\'s feedlot'
+            }), 403
+        
+        # Get feedlot_code for database operations
+        feedlot_code_normalized = feedlot.get('feedlot_code')
+        if not feedlot_code_normalized:
+            return jsonify({
+                'success': False,
+                'message': 'Feedlot code not found'
+            }), 500
+        
+        events_data = data.get('data', [])
+        if not isinstance(events_data, list):
+            return jsonify({
+                'success': False,
+                'message': 'data must be an array'
+            }), 400
+        
+        feedlot_id = request.feedlot_id
+        records_processed = 0
+        records_created = 0
+        records_updated = 0
+        records_skipped = 0
+        errors = []
+        
+        for event_item in events_data:
+            try:
+                records_processed += 1
+                
+                epc = (event_item.get('epc') or '').strip()
+                timestamp_str = event_item.get('timestamp')
+                
+                if not epc:
+                    errors.append(f'Record {records_processed}: epc (UHF tag) is required')
+                    records_skipped += 1
+                    continue
+                
+                # Find cattle by UHF tag
+                existing_cattle = Cattle.find_by_uhf_tag(feedlot_code_normalized, feedlot_id, epc)
+                
+                if not existing_cattle:
+                    errors.append(f'Record {records_processed}: Cattle with UHF tag {epc} not found')
+                    records_skipped += 1
+                    continue
+                
+                cattle_record_id = str(existing_cattle['_id'])
+                
+                # Check if already exported
+                current_status = existing_cattle.get('cattle_status')
+                if current_status == 'Export':
+                    # Already exported, skip but don't count as error
+                    records_skipped += 1
+                    continue
+                
+                # Update cattle status to Export
+                Cattle.update_cattle(
+                    feedlot_code_normalized,
+                    cattle_record_id,
+                    {'cattle_status': 'Export'},
+                    updated_by='api'
+                )
+                
+                # Parse timestamp if provided
+                export_timestamp = datetime.utcnow()
+                if timestamp_str:
+                    try:
+                        # Handle format like "2025-12-04 14:18:11.265273"
+                        if ' ' in timestamp_str and '.' in timestamp_str:
+                            timestamp_str = timestamp_str.split('.')[0]  # Remove microseconds
+                            export_timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
+                        elif 'T' in timestamp_str:
+                            export_timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                        else:
+                            export_timestamp = datetime.strptime(timestamp_str, '%Y-%m-%d')
+                    except (ValueError, AttributeError):
+                        export_timestamp = datetime.utcnow()
+                
+                # Add audit log entry for export
+                Cattle.add_audit_log_entry(
+                    feedlot_code_normalized,
+                    cattle_record_id,
+                    'exported',
+                    f'Cattle marked as Export (UHF tag: {epc})',
+                    'api',
+                    {
+                        'uhf_tag': epc,
+                        'export_timestamp': export_timestamp.isoformat() if isinstance(export_timestamp, datetime) else str(export_timestamp),
+                        'previous_status': current_status
+                    }
+                )
+                
+                records_updated += 1
+                    
+            except Exception as e:
+                errors.append(f'Record {records_processed}: {str(e)}')
+                records_skipped += 1
+        
+        return jsonify({
+            'success': True,
+            'message': f'Processed {records_processed} export event records',
+            'records_processed': records_processed,
+            'records_created': records_created,
+            'records_updated': records_updated,
+            'records_skipped': records_skipped,
+            'errors': errors
+        }), 200
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error processing request: {str(e)}'
+        }), 500
+
 # API key generation is now only available through the web UI (Settings → API Keys)
 # This endpoint has been removed to restrict key generation to the secure web interface
 # Use the Settings page in the web application to generate and manage API keys

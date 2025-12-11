@@ -28,6 +28,18 @@
                 </div>
             </a>
             
+            <div data-testid="load-test-data-settings-link" class="block p-4 border border-teal-200 rounded-lg hover:border-teal-400 hover:bg-teal-50 transition duration-200 cursor-pointer" onclick="openLoadTestDataModal()">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-teal-800 mb-1">Load Test Data</h3>
+                        <p class="text-sm text-teal-600">Generate sample feedlots, batches, pens, and cattle for testing purposes.</p>
+                    </div>
+                    <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                </div>
+            </div>
+            
             <div data-testid="reset-database-settings-link" class="block p-4 border border-red-200 rounded-lg hover:border-red-400 hover:bg-red-50 transition duration-200 cursor-pointer" onclick="openResetDatabaseModal()">
                 <div class="flex items-center justify-between">
                     <div>
@@ -55,6 +67,40 @@
         </div>
     </div>
     {% endif %}
+</div>
+
+<!-- Load Test Data Modal -->
+<div id="load-test-data-modal" data-testid="load-test-data-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeLoadTestDataModalOnBackdrop(event)">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full" onclick="event.stopPropagation()">
+        <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-gray-800">Load Test Data</h3>
+            <button type="button" data-testid="close-load-test-data-modal-button" onclick="closeLoadTestDataModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="px-6 py-4">
+            <p class="text-gray-600">This may take a few moments to complete.</p>
+        </div>
+        <div class="border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
+            <button type="button" data-testid="cancel-load-test-data-button" onclick="closeLoadTestDataModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                Cancel
+            </button>
+            <div id="load-test-data-button-container" class="inline-block">
+                <button type="button" data-testid="confirm-load-test-data-button" onclick="handleLoadTestDataButtonClick()" class="px-4 py-2 bg-teal hover:opacity-90 text-white rounded-lg transition-colors">
+                    Load Test Data
+                </button>
+            </div>
+            <div id="load-test-data-spinner-container" class="hidden inline-flex items-center px-4 py-2">
+                <svg class="animate-spin h-5 w-5 text-teal mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-teal">Loading...</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Reset Database Confirmation Modal -->
@@ -101,6 +147,88 @@
 </div>
 
 <script>
+function openLoadTestDataModal() {
+    const modal = document.getElementById('load-test-data-modal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    
+    // Close on Escape key
+    document.addEventListener('keydown', handleLoadTestDataEscape);
+}
+
+function closeLoadTestDataModal() {
+    const modal = document.getElementById('load-test-data-modal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    
+    // Remove Escape key listener
+    document.removeEventListener('keydown', handleLoadTestDataEscape);
+}
+
+function closeLoadTestDataModalOnBackdrop(event) {
+    if (event.target.id === 'load-test-data-modal') {
+        closeLoadTestDataModal();
+    }
+}
+
+function handleLoadTestDataEscape(event) {
+    if (event.key === 'Escape') {
+        closeLoadTestDataModal();
+    }
+}
+
+function handleLoadTestDataButtonClick() {
+    // Hide the button and show the spinner
+    const buttonContainer = document.getElementById('load-test-data-button-container');
+    const spinnerContainer = document.getElementById('load-test-data-spinner-container');
+    
+    buttonContainer.classList.add('hidden');
+    spinnerContainer.classList.remove('hidden');
+    
+    // Disable the cancel button
+    const cancelButton = document.querySelector('[data-testid="cancel-load-test-data-button"]');
+    cancelButton.disabled = true;
+    cancelButton.classList.add('opacity-50', 'cursor-not-allowed');
+    
+    // Make the request
+    fetch('{{ url_for("top_level.load_test_data") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        return response.json().then(data => {
+            throw new Error(data.message || 'Failed to load test data');
+        });
+    })
+    .then(data => {
+        // Show success message and redirect
+        if (data.success) {
+            window.location.href = data.redirect_url || '{{ url_for("top_level.dashboard") }}';
+        } else {
+            // Show button again and hide spinner on error
+            buttonContainer.classList.remove('hidden');
+            spinnerContainer.classList.add('hidden');
+            cancelButton.disabled = false;
+            cancelButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            alert('Error: ' + (data.message || 'Failed to load test data'));
+        }
+    })
+    .catch(error => {
+        // Show button again and hide spinner on error
+        buttonContainer.classList.remove('hidden');
+        spinnerContainer.classList.add('hidden');
+        cancelButton.disabled = false;
+        cancelButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        alert('Error: ' + error.message);
+    });
+}
+
 function openResetDatabaseModal() {
     const modal = document.getElementById('reset-database-modal');
     modal.classList.remove('hidden');
