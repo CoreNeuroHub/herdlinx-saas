@@ -145,55 +145,73 @@ def generate_pdf(manifest_data, output_buffer=None):
         'inspection_only': 'Inspection Only'
     }.get(purpose, 'Transport Only')
     
-    story.append(Paragraph(f"Purpose: {purpose_text}", styles['Normal']))
+    # Match HTML format - just show the purpose text without "Purpose:" label
+    purpose_style = ParagraphStyle(
+        'PurposeText',
+        parent=styles['Normal'],
+        fontSize=14,
+        spaceAfter=12
+    )
+    story.append(Paragraph(purpose_text, purpose_style))
     story.append(Spacer(1, 0.1*inch))
     
     # Part B - Transportation and Sale Details
     story.append(Paragraph("Part B - Transportation and Sale Details", part_a_style))
+    story.append(Spacer(1, 0.1*inch))
     
     part_b = manifest_data['part_b']
+    # Match HTML format - use 2-column grid layout
+    # Convert to Paragraph objects to support HTML formatting
     part_b_data = [
-        ['Date:', part_b['date']],
-        ['Owner Name:', part_b['owner_name']],
-        ['Owner Phone:', part_b['owner_phone']],
-        ['Owner Address:', part_b['owner_address']],
+        [Paragraph('<b>Date:</b>', styles['Normal']), Paragraph(str(part_b['date']), styles['Normal'])],
+        [Paragraph('<b>Owner Name:</b>', styles['Normal']), Paragraph(str(part_b['owner_name']), styles['Normal'])],
+        [Paragraph('<b>Owner Phone:</b>', styles['Normal']), Paragraph(str(part_b['owner_phone']), styles['Normal'])],
+        [Paragraph('<b>Owner Address:</b>', styles['Normal']), Paragraph(str(part_b['owner_address']), styles['Normal'])],
     ]
     
     if part_b.get('dealer_name'):
         part_b_data.extend([
-            ['Dealer Name:', part_b['dealer_name']],
-            ['Dealer Phone:', part_b['dealer_phone']],
-            ['Dealer Address:', part_b['dealer_address']],
-            ['On Account Of:', part_b['on_account_of']],
+            [Paragraph('<b>Dealer Name:</b>', styles['Normal']), Paragraph(str(part_b['dealer_name']), styles['Normal'])],
+            [Paragraph('<b>Dealer Phone:</b>', styles['Normal']), Paragraph(str(part_b['dealer_phone']), styles['Normal'])],
+            [Paragraph('<b>Dealer Address:</b>', styles['Normal']), Paragraph(str(part_b['dealer_address']), styles['Normal'])],
+            [Paragraph('<b>On Account Of:</b>', styles['Normal']), Paragraph(str(part_b['on_account_of']), styles['Normal'])],
         ])
     
     part_b_data.extend([
-        ['Location Before Transport:', part_b['location_before']],
-        ['Premises ID (Before):', part_b['premises_id_before']],
-        ['Reason for Transport:', part_b['reason_for_transport']],
-        ['Destination Name:', part_b['destination_name']],
-        ['Destination Address:', part_b['destination_address']],
+        [Paragraph('<b>Location Before Transport:</b>', styles['Normal']), Paragraph(str(part_b['location_before']), styles['Normal'])],
+        [Paragraph('<b>Premises ID (Before):</b>', styles['Normal']), Paragraph(str(part_b['premises_id_before']), styles['Normal'])],
+        [Paragraph('<b>Reason for Transport:</b>', styles['Normal']), Paragraph(str(part_b['reason_for_transport']), styles['Normal'])],
+        [Paragraph('<b>Destination Name:</b>', styles['Normal']), Paragraph(str(part_b['destination_name']), styles['Normal'])],
+        [Paragraph('<b>Destination Address:</b>', styles['Normal']), Paragraph(str(part_b['destination_address']), styles['Normal'])],
     ])
     
-    part_b_table = Table(part_b_data, colWidths=[2*inch, 4.5*inch])
+    # Use 2-column grid layout matching HTML
+    part_b_table = Table(part_b_data, colWidths=[3.25*inch, 3.25*inch])
     part_b_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#F5F5F5')),
         ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (0, -1), 0),
+        ('RIGHTPADDING', (0, 0), (0, -1), 12),
+        ('LEFTPADDING', (1, 0), (1, -1), 0),
+        ('RIGHTPADDING', (1, 0), (1, -1), 0),
     ]))
     story.append(part_b_table)
     story.append(Spacer(1, 0.2*inch))
     
     # Livestock Description
-    story.append(Paragraph("Description of Livestock", part_a_style))
-    story.append(Paragraph(f"Total Head: {part_b['total_head']}", styles['Normal']))
+    livestock_heading_style = ParagraphStyle(
+        'LivestockHeading',
+        parent=styles['Heading3'],
+        fontSize=14,
+        spaceAfter=6
+    )
+    story.append(Paragraph("Description of Livestock", livestock_heading_style))
+    story.append(Paragraph(f"<b>Total Head:</b> {part_b['total_head']}", styles['Normal']))
     story.append(Spacer(1, 0.1*inch))
     
     desc_data = [['Color', 'Kind (Breed)', 'Number of Head']]
@@ -204,79 +222,109 @@ def generate_pdf(manifest_data, output_buffer=None):
             str(group['count'])
         ])
     
+    # Match HTML format - gray header background instead of teal
     desc_table = Table(desc_data, colWidths=[2*inch, 2.5*inch, 2*inch])
     desc_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2D8B8B')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E5E7EB')),  # Gray background matching HTML bg-gray-200
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 11),
         ('FONTSIZE', (0, 1), (-1, -1), 10),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#9CA3AF')),  # Gray border matching HTML border-gray-400
     ]))
     story.append(desc_table)
     story.append(Spacer(1, 0.2*inch))
     
     # Part C - Owner Signature
     story.append(Paragraph("Part C - Owner Signature", part_a_style))
-    story.append(Paragraph(f"Signature: {manifest_data['part_c']['owner_signature']}", styles['Normal']))
-    story.append(Paragraph(f"Date: {manifest_data['part_c']['owner_signature_date']}", styles['Normal']))
+    story.append(Spacer(1, 0.1*inch))
+    
+    # Match HTML format - use 2-column grid layout
+    part_c_data = [
+        [Paragraph('<b>Signature:</b>', styles['Normal']), Paragraph(str(manifest_data['part_c']['owner_signature']), styles['Normal'])],
+        [Paragraph('<b>Date:</b>', styles['Normal']), Paragraph(str(manifest_data['part_c']['owner_signature_date']), styles['Normal'])],
+    ]
+    
+    part_c_table = Table(part_c_data, colWidths=[3.25*inch, 3.25*inch])
+    part_c_table.setStyle(TableStyle([
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (0, -1), 0),
+        ('RIGHTPADDING', (0, 0), (0, -1), 12),
+        ('LEFTPADDING', (1, 0), (1, -1), 0),
+        ('RIGHTPADDING', (1, 0), (1, -1), 0),
+    ]))
+    story.append(part_c_table)
     story.append(Spacer(1, 0.2*inch))
     
     # Part E - Transporter
     story.append(Paragraph("Part E - Transporter", part_a_style))
+    story.append(Spacer(1, 0.1*inch))
+    
     part_e = manifest_data['part_e']
+    # Match HTML format - use 2-column grid layout
     part_e_data = [
-        ['Transporter Name:', part_e['transporter_name']],
-        ['Trailer/Conveyance Number:', part_e['transporter_trailer']],
-        ['Transporter Phone:', part_e['transporter_phone']],
-        ['Signature:', part_e['transporter_signature']],
-        ['Date:', part_e['transporter_signature_date']],
+        [Paragraph('<b>Transporter Name:</b>', styles['Normal']), Paragraph(str(part_e['transporter_name']), styles['Normal'])],
+        [Paragraph('<b>Trailer/Conveyance Number:</b>', styles['Normal']), Paragraph(str(part_e['transporter_trailer']), styles['Normal'])],
+        [Paragraph('<b>Transporter Phone:</b>', styles['Normal']), Paragraph(str(part_e['transporter_phone']), styles['Normal'])],
+        [Paragraph('<b>Signature:</b>', styles['Normal']), Paragraph(str(part_e['transporter_signature']), styles['Normal'])],
+        [Paragraph('<b>Date:</b>', styles['Normal']), Paragraph(str(part_e['transporter_signature_date']), styles['Normal'])],
     ]
     
-    part_e_table = Table(part_e_data, colWidths=[2*inch, 4.5*inch])
+    part_e_table = Table(part_e_data, colWidths=[3.25*inch, 3.25*inch])
     part_e_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#F5F5F5')),
         ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (0, -1), 0),
+        ('RIGHTPADDING', (0, 0), (0, -1), 12),
+        ('LEFTPADDING', (1, 0), (1, -1), 0),
+        ('RIGHTPADDING', (1, 0), (1, -1), 0),
     ]))
     story.append(part_e_table)
     story.append(Spacer(1, 0.2*inch))
     
     # Part G - Destination
     story.append(Paragraph("Part G - Destination/Receiver", part_a_style))
+    story.append(Spacer(1, 0.1*inch))
+    
     part_g = manifest_data['part_g']
+    # Match HTML format - use 2-column grid layout
     part_g_data = [
-        ['Destination Name:', part_g['destination_name']],
-        ['Date Received:', part_g['received_date']],
-        ['Time Received:', part_g['received_time']],
-        ['Number of Head Received:', str(part_g['head_received'])],
-        ['Receiver Name:', part_g['receiver_name']],
-        ['Receiver Signature:', part_g['receiver_signature']],
-        ['Premises ID (Destination):', part_g['premises_id_destination']],
+        [Paragraph('<b>Destination Name:</b>', styles['Normal']), Paragraph(str(part_g['destination_name']), styles['Normal'])],
+        [Paragraph('<b>Date Received:</b>', styles['Normal']), Paragraph(str(part_g['received_date']), styles['Normal'])],
+        [Paragraph('<b>Time Received:</b>', styles['Normal']), Paragraph(str(part_g['received_time']), styles['Normal'])],
+        [Paragraph('<b>Number of Head Received:</b>', styles['Normal']), Paragraph(str(part_g['head_received']), styles['Normal'])],
+        [Paragraph('<b>Receiver Name:</b>', styles['Normal']), Paragraph(str(part_g['receiver_name']), styles['Normal'])],
+        [Paragraph('<b>Receiver Signature:</b>', styles['Normal']), Paragraph(str(part_g['receiver_signature']), styles['Normal'])],
+        [Paragraph('<b>Premises ID (Destination):</b>', styles['Normal']), Paragraph(str(part_g['premises_id_destination']), styles['Normal'])],
     ]
     
-    part_g_table = Table(part_g_data, colWidths=[2*inch, 4.5*inch])
+    part_g_table = Table(part_g_data, colWidths=[3.25*inch, 3.25*inch])
     part_g_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#F5F5F5')),
         ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
         ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (0, -1), 0),
+        ('RIGHTPADDING', (0, 0), (0, -1), 12),
+        ('LEFTPADDING', (1, 0), (1, -1), 0),
+        ('RIGHTPADDING', (1, 0), (1, -1), 0),
     ]))
     story.append(part_g_table)
     
