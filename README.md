@@ -181,7 +181,7 @@ herdlinx-saas/
 2. Add pens for cattle housing
 3. Add cattle to the batch
 4. Assign cattle to pens (optional)
-5. Monitor capacity and health status
+5. Monitor capacity and cattle status
 
 ## Security Features
 

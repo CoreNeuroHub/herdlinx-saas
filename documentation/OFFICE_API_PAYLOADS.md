@@ -41,45 +41,15 @@ Content-Type: application/json
 
 ## Endpoints and Payloads
 
-### 1. Sync Batches
+### 1. ~~Sync Batches~~ (REMOVED)
 
-**Endpoint**: `POST /api/v1/feedlot/batches`
+**Endpoint**: ~~`POST /api/v1/feedlot/batches`~~ **REMOVED**
 
-**Description**: Syncs batch data from the office SQLite database to SaaS.
+**Status**: ✅ **ENDPOINT REMOVED**
 
-**Payload Structure**:
+**Note**: Batches are now automatically created from the `induction-events` endpoint. The batch information (name, funder, notes, pen, pen_location) is included in each induction event payload, and batches are created/updated automatically when processing induction events.
 
-```json
-{
-  "feedlot_code": "FEEDLOT001",
-  "data": [
-    {
-      "id": 1,
-      "name": "Batch A - Oct 30",
-      "funder": "Funding Source",
-      "notes": "Additional notes",
-      "created_at": "2024-10-30T10:00:00"
-    }
-  ]
-}
-```
-
-**Field Descriptions**:
-
-| Field | Type | Required | Description | Source |
-|-------|------|----------|-------------|--------|
-| `id` | integer | Yes | Office database batch ID | `batches.id` |
-| `name` | string | Yes | Batch name/identifier | `batches.batch_name` |
-| `funder` | string | No | Funding source | `batches.funder` |
-| `notes` | string | No | Additional notes | `batches.notes` |
-| `created_at` | string | No | ISO timestamp | `batches.created_at` |
-
-**Notes**:
-- The `id` field is sent but not used by SaaS (for tracking purposes)
-- Empty strings are sent for optional fields if database value is NULL
-- Batches are synced without filtering (all batches are sent, not just unsynced ones)
-
-**Code Reference**: `office/scripts/api_sync.py` lines 157-170, 225-250
+**Code Reference**: Batch creation logic is now in `app/routes/api_routes.py` in the `sync_induction_events()` function.
 
 ---
 
@@ -87,20 +57,32 @@ Content-Type: application/json
 
 **Endpoint**: `POST /api/v1/feedlot/induction-events`
 
-**Description**: Syncs induction events that create cattle records in SaaS.
+**Description**: Syncs induction events that create cattle records in SaaS. **Now also creates/updates batches automatically from event data.**
 
 **Payload Structure**:
 
 ```json
 {
-  "feedlot_code": "FEEDLOT001",
+  "feedlot_code": "jfmurray",
   "data": [
     {
-      "id": 1,
+      "id": 7,
       "event_id": "hxbind000001",
-      "livestock_id": 123,
-      "batch_name": "Batch A - Oct 30",
-      "timestamp": "2024-10-30T10:00:00"
+      "livestock_id": 3,
+      "funder": "None",
+      "lot": "6",
+      "pen": "6",
+      "lot_group": "6",
+      "pen_location": "6",
+      "sex": "Steer",
+      "tag_color": "",
+      "visual_id": "",
+      "notes": "",
+      "batch_name": "BATCH_2025-12-04_7325",
+      "lf_id": "124000224161433",
+      "epc": "0900000000000003",
+      "weight": 0,
+      "timestamp": "2025-12-04 14:18:11.265273"
     }
   ]
 }
@@ -108,19 +90,40 @@ Content-Type: application/json
 
 **Field Descriptions**:
 
-| Field | Type | Required | Description | Source |
-|-------|------|----------|-------------|--------|
-| `id` | integer | Yes | Office database event ID | `events.id` |
-| `event_id` | string | Yes | Unique event identifier | `events.event_id` |
-| `livestock_id` | integer | Yes | Office livestock ID | `events.livestock_id` |
-| `batch_name` | string | Yes | Batch name for mapping | `events.parsed_data.batch` |
-| `timestamp` | string | Yes | Event timestamp | `events.received_at` |
+| Field | Type | Required | Processed | Description | Source |
+|-------|------|----------|-----------|-------------|--------|
+| `livestock_id` | integer | Yes | Yes | Office livestock ID (used as cattle_id) | `events.livestock_id` |
+| `batch_name` | string | Yes | Yes | Batch name (creates/finds batch) | `events.parsed_data.batch` |
+| `id` | integer | No | No | Office database event ID (accepted but not used) | `events.id` |
+| `event_id` | string | No | Yes | Unique event identifier (used in audit logs) | `events.event_id` |
+| `timestamp` | string | No | Yes | Event timestamp (or use `created_at`) | `events.received_at` |
+| `created_at` | string | No | Yes | Alternative timestamp field | `events.created_at` |
+| `funder` | string | No | Yes | Batch funder (empty if "None") | `events.parsed_data.funder` |
+| `pen` | string | No | Yes | Pen number (creates/updates pen) | `events.parsed_data.pen` |
+| `pen_location` | string | No | Yes | Pen location/description | `events.parsed_data.pen_location` |
+| `sex` | string | No | Yes | Cattle sex (defaults to "Unknown") | `events.parsed_data.sex` |
+| `lf_id` | string | No | Yes | Low frequency tag ID | `events.parsed_data.lf_id` |
+| `epc` | string | No | Yes | UHF/EPC tag ID | `events.parsed_data.epc` |
+| `weight` | float | No | Yes | Initial weight (must be >= 0) | `events.parsed_data.weight` |
+| `notes` | string | No | Yes | Notes (for batch or cattle) | `events.parsed_data.notes` |
+| `lot` | string | No | Yes | Lot identifier (stored on cattle record) | `events.parsed_data.lot` |
+| `lot_group` | string | No | Yes | Lot group identifier (stored on cattle record) | `events.parsed_data.lot_group` |
+| `tag_color` | string | No | Yes | Tag color (mapped to `color` field on cattle record) | `events.parsed_data.tag_color` |
+| `visual_id` | string | No | Yes | Visual ID (stored on cattle record) | `events.parsed_data.visual_id` |
 
 **Notes**:
-- Only events with `event_type = 'induction'` and `synced_at IS NULL` are synced
-- `batch_name` is extracted from `parsed_data` JSON field
-- Events are ordered by `received_at ASC` (oldest first)
-- **IMPORTANT**: SaaS API currently requires `batch_id` field, but office does not send it. This may cause sync failures. See known issues below.
+- **API Required Fields**: `livestock_id`, `batch_name` (these will cause errors if missing)
+- **Timestamp Handling**: Accepts `timestamp` or `created_at` in formats: `"YYYY-MM-DD HH:MM:SS"`, ISO format with `T`, or `"YYYY-MM-DD"`. Defaults to current UTC time if missing or invalid.
+- **Batch Creation**: Batches are automatically created from `batch_name` if they don't exist. Batch fields (`funder`, `notes`, `pen`, `pen_location`) are used to create/update batches.
+- **Pen Creation**: Pens are automatically created/updated when `pen` field is provided. Default capacity is 100.
+- **Cattle Creation**: Cattle records are created with all provided fields (`sex`, `weight`, `lf_id`, `epc`, `notes`, `tag_color`, `visual_id`, `lot`, `lot_group`). Existing cattle are matched by `livestock_id` and updated if fields differ.
+- **Field Mappings**: 
+  - `tag_color` → stored as `color` field on cattle record
+  - `visual_id` → stored as `visual_id` field on cattle record
+  - `lot` → stored as `lot` field on cattle record
+  - `lot_group` → stored as `lot_group` field on cattle record
+- **Unused Fields**: `id` is accepted in the payload but not processed by the API (used for office app tracking only).
+- The `funder` field value "None" (case-insensitive) is treated as empty string.
 
 **Code Reference**: `office/scripts/api_sync.py` lines 172-184, 252-286
 

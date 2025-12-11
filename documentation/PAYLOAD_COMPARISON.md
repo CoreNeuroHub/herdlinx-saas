@@ -6,9 +6,9 @@ This document compares the payloads sent from the Office application with what t
 
 | Endpoint | Issue | Severity | Status |
 |----------|-------|----------|--------|
-| `/api/v1/feedlot/induction-events` | API requires `batch_id` but office only sends `batch_name` | **CRITICAL** | Needs Fix |
+| `/api/v1/feedlot/induction-events` | ~~API requires `batch_id` but office only sends `batch_name`~~ | ~~**CRITICAL**~~ | ✅ **FIXED** - Batches now created automatically from `batch_name` |
 | `/api/v1/feedlot/checkin-events` | Office defaults `weight_kg` to 0, but API requires `weight_kg > 0` | **HIGH** | Known Issue |
-| `/api/v1/feedlot/batches` | Office sends `id` field (not used by API) | Low | Expected |
+| ~~`/api/v1/feedlot/batches`~~ | ~~Endpoint removed~~ | - | ✅ **REMOVED** - Batches now created via induction-events |
 | `/api/v1/feedlot/pairing-events` | No issues found | - | OK |
 | `/api/v1/feedlot/repair-events` | No issues found | - | OK |
 
@@ -16,36 +16,11 @@ This document compares the payloads sent from the Office application with what t
 
 ## Detailed Comparison
 
-### 1. Sync Batches
+### 1. ~~Sync Batches~~ (REMOVED)
 
-**Endpoint**: `POST /api/v1/feedlot/batches`
+**Endpoint**: ~~`POST /api/v1/feedlot/batches`~~ **REMOVED**
 
-#### Office Payload
-```json
-{
-  "feedlot_code": "FEEDLOT001",
-  "data": [
-    {
-      "id": 1,
-      "name": "Batch A - Oct 30",
-      "funder": "Funding Source",
-      "notes": "Additional notes",
-      "created_at": "2024-10-30T10:00:00"
-    }
-  ]
-}
-```
-
-#### API Expectations
-- **Required**: `name` (mapped to `batch_number`)
-- **Optional**: `funder`, `notes`, `created_at` (mapped to `induction_date`)
-- **Optional**: `pen`, `pen_location` (for pen creation/linking)
-- **Not Used**: `id` (sent by office but ignored by API)
-
-#### Status: ✅ COMPATIBLE
-- All required fields are present
-- Optional fields are handled correctly
-- The `id` field is ignored (as documented)
+**Status**: ✅ **ENDPOINT REMOVED** - Batches are now automatically created from the `induction-events` endpoint. No separate batches sync is needed.
 
 ---
 
@@ -56,69 +31,44 @@ This document compares the payloads sent from the Office application with what t
 #### Office Payload
 ```json
 {
-  "feedlot_code": "FEEDLOT001",
+  "feedlot_code": "jfmurray",
   "data": [
     {
-      "id": 1,
+      "id": 7,
       "event_id": "hxbind000001",
-      "livestock_id": 123,
-      "batch_name": "Batch A - Oct 30",
-      "timestamp": "2024-10-30T10:00:00"
+      "livestock_id": 3,
+      "funder": "None",
+      "lot": "6",
+      "pen": "6",
+      "lot_group": "6",
+      "pen_location": "6",
+      "sex": "Steer",
+      "tag_color": "",
+      "visual_id": "",
+      "notes": "",
+      "batch_name": "BATCH_2025-12-04_7325",
+      "lf_id": "124000224161433",
+      "epc": "0900000000000003",
+      "weight": 0,
+      "timestamp": "2025-12-04 14:18:11.265273"
     }
   ]
 }
 ```
 
-#### API Expectations (from code analysis)
-Looking at `app/routes/api_routes.py` lines 375-398:
+#### API Expectations
+- **Required**: `livestock_id`, `batch_name`
+- **Optional**: `funder`, `pen`, `pen_location`, `sex`, `lf_id`, `epc`, `weight`, `notes`, `timestamp`
+- **Batch Creation**: Batches are automatically created from `batch_name` if they don't exist
+- **Pen Creation**: Pens are automatically created/updated from `pen` and `pen_location` fields
+- **Cattle Creation**: Cattle records are created with all provided fields
 
-1. **Line 375**: Checks for `livestock_id` ✅ (office sends this)
-2. **Line 376**: Gets `batch_id` from payload (office does NOT send this)
-3. **Line 383-386**: **REQUIRES `batch_id`** - This will cause the request to fail!
-4. **Line 392**: Checks for `batch_name` ✅ (office sends this)
-5. **Line 393-398**: Uses `batch_name` to find SaaS batch ✅
-
-#### The Problem
-The API code has a logic error:
-- It requires `batch_id` at line 383-386, but office doesn't send it
-- It then uses `batch_name` at line 392-398, which office does send
-- The code will fail before it reaches the `batch_name` check
-
-#### Code Reference
-```375:398:app/routes/api_routes.py
-                livestock_id = event_item.get('livestock_id')
-                batch_id_office = event_item.get('batch_id')  # Office app batch ID
-                
-                if not livestock_id:
-                    errors.append(f'Record {records_processed}: livestock_id is required')
-                    records_skipped += 1
-                    continue
-                
-                if not batch_id_office:
-                    errors.append(f'Record {records_processed}: batch_id is required')
-                    records_skipped += 1
-                    continue
-                
-                # Find batch in SaaS system
-                # We need to map office batch_id to SaaS batch
-                # For now, we'll need the office app to send batch name or we'll need a mapping
-                # Let's assume the office app sends batch_name or we look it up
-                batch_name = event_item.get('batch_name')
-                if not batch_name:
-                    # Try to find batch by office batch_id if we have a mapping
-                    # For now, skip if no batch_name
-                    errors.append(f'Record {records_processed}: batch_name is required to map to SaaS batch')
-                    records_skipped += 1
-                    continue
-```
-
-#### Status: ❌ **INCOMPATIBLE - CRITICAL ISSUE**
-- Office sends: `batch_name` ✅
-- Office does NOT send: `batch_id` ❌
-- API requires: `batch_id` (line 383-386) ❌
-- API then uses: `batch_name` (line 392-398) ✅
-
-**Fix Required**: Remove the `batch_id` requirement check (lines 383-386) since the API actually uses `batch_name` to find the batch.
+#### Status: ✅ **COMPATIBLE - FIXED**
+- ✅ `batch_name` is required and used to create/find batches automatically
+- ✅ All batch-related fields (`funder`, `pen`, `pen_location`, `notes`) are handled
+- ✅ All cattle-related fields (`sex`, `weight`, `lf_id`, `epc`, `notes`) are handled
+- ✅ Batches are created automatically - no separate batches endpoint needed
+- ✅ Pens are created automatically when `pen` field is provided
 
 ---
 
@@ -259,36 +209,26 @@ Looking at `app/routes/api_routes.py` lines 767-803:
 
 ---
 
-## Recommended Fixes
+## Fixes Applied
 
-### Fix 1: Remove `batch_id` Requirement from Induction Events (CRITICAL)
+### Fix 1: ✅ Removed `batch_id` Requirement from Induction Events (COMPLETED)
 
 **File**: `app/routes/api_routes.py`
 
-**Current Code** (lines 383-386):
-```python
-if not batch_id_office:
-    errors.append(f'Record {records_processed}: batch_id is required')
-    records_skipped += 1
-    continue
-```
+**Status**: ✅ **FIXED**
+- Removed `batch_id` requirement check
+- Batches are now automatically created from `batch_name` field
+- All batch-related fields from induction events are used to create/update batches
+- Pens are automatically created/updated from `pen` and `pen_location` fields
 
-**Recommended Fix**:
-Remove this check entirely since:
-1. Office doesn't send `batch_id`
-2. The API uses `batch_name` to find the batch anyway
-3. The `batch_name` check at line 392-398 is sufficient
+### Fix 2: ✅ Removed Separate Batches Endpoint (COMPLETED)
 
-**Updated Code**:
-```python
-# Remove lines 376, 383-386
-# Keep only the batch_name check (lines 392-398)
-batch_name = event_item.get('batch_name')
-if not batch_name:
-    errors.append(f'Record {records_processed}: batch_name is required to map to SaaS batch')
-    records_skipped += 1
-    continue
-```
+**File**: `app/routes/api_routes.py`
+
+**Status**: ✅ **COMPLETED**
+- Removed `/api/v1/feedlot/batches` endpoint
+- Batch creation is now handled automatically by the `induction-events` endpoint
+- All batch information comes from induction event payloads
 
 ---
 
@@ -315,7 +255,11 @@ After applying the fix, test the following scenarios:
 
 ## Conclusion
 
-The main issue is in the **Induction Events** endpoint where the API incorrectly requires `batch_id` which the office application doesn't send. The API should only require `batch_name`, which it already uses to find the batch. This is a critical bug that will cause all induction event syncs to fail.
+✅ **All critical issues have been resolved:**
 
-The checkin events issue with `weight_kg = 0` is expected behavior (invalid data should be skipped) and is already documented.
+1. **Induction Events**: Fixed - Now only requires `batch_name` and automatically creates batches
+2. **Batches Endpoint**: Removed - Batches are now created automatically from induction events
+3. **Checkin Events**: The `weight_kg = 0` issue is expected behavior (invalid data should be skipped) and is already documented
+
+The API is now fully compatible with the office application payloads.
 

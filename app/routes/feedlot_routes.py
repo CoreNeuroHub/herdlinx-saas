@@ -47,8 +47,29 @@ def dashboard(feedlot_id):
     
     statistics = Feedlot.get_statistics(feedlot_id)
     
-    # Get recent batches
-    recent_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)[-5:]
+    # Get all batches
+    all_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
+    
+    # Normalize batch data: ensure event_date exists (for backward compatibility with induction_date)
+    # Also add cattle count and ensure event_type exists
+    for batch in all_batches:
+        if 'event_date' not in batch and 'induction_date' in batch:
+            batch['event_date'] = batch['induction_date']
+        # Add cattle count
+        batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
+        # Ensure event_type exists (default to 'induction' if not set)
+        if 'event_type' not in batch:
+            batch['event_type'] = 'induction'
+        # Ensure event_date exists for sorting (use created_at as fallback)
+        if 'event_date' not in batch:
+            batch['event_date'] = batch.get('created_at')
+    
+    # Sort by event_date descending (latest first), then take top 5
+    recent_batches = sorted(
+        all_batches,
+        key=lambda b: b.get('event_date') or b.get('created_at') or datetime.min,
+        reverse=True
+    )[:5]
     
     user_type = session.get('user_type')
     
@@ -74,11 +95,11 @@ def list_pens(feedlot_id):
         flash('Feedlot code not found.', 'error')
         return redirect(url_for('auth.login'))
     
-    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_id)
     
     # Add current cattle count to each pen
     for pen in pens:
-        pen['current_count'] = Pen.get_current_cattle_count(feedlot_code, str(pen['_id']))
+        pen['current_count'] = Pen.get_current_cattle_count(str(pen['_id']), feedlot_code)
     
     # Get pen map configuration
     pen_map = Feedlot.get_pen_map(feedlot_id)
@@ -118,7 +139,7 @@ def create_pen(feedlot_id):
         capacity = int(request.form.get('capacity'))
         description = request.form.get('description')
         
-        pen_id = Pen.create_pen(feedlot_code, feedlot_id, pen_number, capacity, description)
+        pen_id = Pen.create_pen(feedlot_id, pen_number, capacity, description)
         flash('Pen created successfully.', 'success')
         return redirect(url_for('feedlot.list_pens', feedlot_id=feedlot_id))
     
@@ -139,7 +160,7 @@ def view_pen(feedlot_id, pen_id):
         flash('Feedlot code not found.', 'error')
         return redirect(url_for('auth.login'))
     
-    pen = Pen.find_by_id(feedlot_code, pen_id)
+    pen = Pen.find_by_id(pen_id)
     
     if not pen:
         flash('Pen not found.', 'error')
@@ -165,7 +186,7 @@ def edit_pen(feedlot_id, pen_id):
         flash('Feedlot code not found.', 'error')
         return redirect(url_for('auth.login'))
     
-    pen = Pen.find_by_id(feedlot_code, pen_id)
+    pen = Pen.find_by_id(pen_id)
     
     if not pen:
         flash('Pen not found.', 'error')
@@ -178,7 +199,7 @@ def edit_pen(feedlot_id, pen_id):
             'description': request.form.get('description')
         }
         
-        Pen.update_pen(feedlot_code, pen_id, update_data)
+        Pen.update_pen(pen_id, update_data)
         flash('Pen updated successfully.', 'success')
         return redirect(url_for('feedlot.view_pen', feedlot_id=feedlot_id, pen_id=pen_id))
     
@@ -199,7 +220,7 @@ def delete_pen(feedlot_id, pen_id):
         flash('Feedlot code not found.', 'error')
         return redirect(url_for('auth.login'))
     
-    Pen.delete_pen(feedlot_code, pen_id)
+    Pen.delete_pen(pen_id)
     flash('Pen deleted successfully.', 'success')
     return redirect(url_for('feedlot.list_pens', feedlot_id=feedlot_id))
 
@@ -218,7 +239,7 @@ def map_pens(feedlot_id):
         flash('Feedlot code not found.', 'error')
         return redirect(url_for('auth.login'))
     
-    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_id)
     
     if request.method == 'POST':
         data = request.get_json()
@@ -252,7 +273,7 @@ def view_pen_map(feedlot_id):
         flash('Feedlot code not found.', 'error')
         return redirect(url_for('auth.login'))
     
-    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_id)
     pen_map = Feedlot.get_pen_map(feedlot_id)
     
     # Create pen lookup dictionary (convert ObjectId to string for JSON serialization)
@@ -287,9 +308,12 @@ def list_batches(feedlot_id):
     
     batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
     
-    # Add cattle count to each batch
+    # Add cattle count to each batch and normalize event_date (for backward compatibility)
     for batch in batches:
         batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
+        # Normalize: ensure event_date exists (for backward compatibility with induction_date)
+        if 'event_date' not in batch and 'induction_date' in batch:
+            batch['event_date'] = batch['induction_date']
     
     return render_template('feedlot/batches/list.html', feedlot=feedlot, batches=batches)
 
@@ -310,14 +334,20 @@ def create_batch(feedlot_id):
     
     if request.method == 'POST':
         batch_number = request.form.get('batch_number')
-        induction_date_str = request.form.get('induction_date')
+        event_date_str = request.form.get('event_date')
         funder = request.form.get('funder')
         notes = request.form.get('notes')
+        event_type = request.form.get('event_type', 'induction')
+        
+        # Validate event_type
+        valid_event_types = ['induction', 'pairing', 'checkin', 'repair', 'export']
+        if event_type not in valid_event_types:
+            event_type = 'induction'
         
         # Convert date string to datetime object
-        induction_date = datetime.strptime(induction_date_str, '%Y-%m-%d') if induction_date_str else None
+        event_date = datetime.strptime(event_date_str, '%Y-%m-%d') if event_date_str else None
         
-        batch_id = Batch.create_batch(feedlot_code, feedlot_id, batch_number, induction_date, funder, notes)
+        batch_id = Batch.create_batch(feedlot_code, feedlot_id, batch_number, event_date, funder, notes, event_type)
         flash('Batch created successfully.', 'success')
         return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
     
@@ -344,10 +374,93 @@ def view_batch(feedlot_id, batch_id):
         flash('Batch not found.', 'error')
         return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
     
+    # Normalize: ensure event_date exists (for backward compatibility with induction_date)
+    if 'event_date' not in batch and 'induction_date' in batch:
+        batch['event_date'] = batch['induction_date']
+    
     cattle = Cattle.find_by_batch(feedlot_code, batch_id)
     batch['cattle_count'] = len(cattle)
     
     return render_template('feedlot/batches/view.html', feedlot=feedlot, batch=batch, cattle=cattle)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/batches/<batch_id>/edit', methods=['GET', 'POST'])
+@login_required
+@feedlot_access_required()
+def edit_batch(feedlot_id, batch_id):
+    """Edit batch details"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    batch = Batch.find_by_id(feedlot_code, batch_id)
+    
+    if not batch:
+        flash('Batch not found.', 'error')
+        return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
+    
+    # Normalize: ensure event_date exists (for backward compatibility with induction_date)
+    if 'event_date' not in batch and 'induction_date' in batch:
+        batch['event_date'] = batch['induction_date']
+    
+    if request.method == 'POST':
+        batch_number = request.form.get('batch_number')
+        event_date_str = request.form.get('event_date')
+        funder = request.form.get('funder')
+        notes = request.form.get('notes')
+        event_type = request.form.get('event_type', 'induction')
+        
+        # Validate event_type
+        valid_event_types = ['induction', 'pairing', 'checkin', 'repair', 'export']
+        if event_type not in valid_event_types:
+            event_type = 'induction'
+        
+        # Convert date string to datetime object
+        event_date = datetime.strptime(event_date_str, '%Y-%m-%d') if event_date_str else None
+        
+        update_data = {
+            'batch_number': batch_number,
+            'event_date': event_date,
+            'funder': funder,
+            'notes': notes or '',
+            'event_type': event_type
+        }
+        
+        Batch.update_batch(feedlot_code, batch_id, update_data)
+        flash('Batch updated successfully.', 'success')
+        return redirect(url_for('feedlot.view_batch', feedlot_id=feedlot_id, batch_id=batch_id))
+    
+    return render_template('feedlot/batches/edit.html', feedlot=feedlot, batch=batch)
+
+@feedlot_bp.route('/feedlot/<feedlot_id>/batches/<batch_id>/delete', methods=['POST'])
+@login_required
+@feedlot_access_required()
+def delete_batch(feedlot_id, batch_id):
+    """Delete a batch"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    batch = Batch.find_by_id(feedlot_code, batch_id)
+    
+    if not batch:
+        flash('Batch not found.', 'error')
+        return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
+    
+    Batch.delete_batch(feedlot_code, batch_id)
+    flash('Batch deleted successfully.', 'success')
+    return redirect(url_for('feedlot.list_batches', feedlot_id=feedlot_id))
 
 # Cattle Management Routes
 @feedlot_bp.route('/feedlot/<feedlot_id>/cattle')
@@ -367,7 +480,7 @@ def list_cattle(feedlot_id):
     
     # Get filter parameters
     search = request.args.get('search', '').strip()
-    health_status_filter = request.args.get('health_status', '')
+    cattle_status_filter = request.args.get('cattle_status', '')
     sex_filter = request.args.get('sex', '')
     pen_filter = request.args.get('pen_id', '')
     sort_by = request.args.get('sort_by', 'cattle_id')
@@ -378,7 +491,7 @@ def list_cattle(feedlot_id):
         feedlot_code,
         feedlot_id,
         search=search if search else None,
-        health_status=health_status_filter if health_status_filter else None,
+        cattle_status=cattle_status_filter if cattle_status_filter else None,
         sex=sex_filter if sex_filter else None,
         pen_id=pen_filter if pen_filter else None,
         sort_by=sort_by,
@@ -386,14 +499,14 @@ def list_cattle(feedlot_id):
     )
     
     # Get all pens for filter dropdown
-    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_id)
     
     # Create pen lookup dictionary for efficient template access
     pen_map = {str(pen['_id']): pen for pen in pens}
     
     # Get unique values for filter dropdowns
     all_cattle = Cattle.find_by_feedlot(feedlot_code, feedlot_id)
-    unique_health_statuses = list(set(c.get('health_status', '') for c in all_cattle if c.get('health_status')))
+    unique_cattle_statuses = list(set(c.get('cattle_status', '') for c in all_cattle if c.get('cattle_status')))
     unique_sexes = list(set(c.get('sex', '') for c in all_cattle if c.get('sex')))
     
     return render_template('feedlot/cattle/list.html', 
@@ -401,10 +514,10 @@ def list_cattle(feedlot_id):
                          cattle=cattle,
                          pens=pens,
                          pen_map=pen_map,
-                         unique_health_statuses=sorted(unique_health_statuses),
+                         unique_cattle_statuses=sorted(unique_cattle_statuses),
                          unique_sexes=sorted(unique_sexes),
                          current_search=search,
-                         current_health_status=health_status_filter,
+                         current_cattle_status=cattle_status_filter,
                          current_sex=sex_filter,
                          current_pen=pen_filter,
                          current_sort_by=sort_by,
@@ -426,11 +539,11 @@ def create_cattle(feedlot_id):
         return redirect(url_for('auth.login'))
     
     if request.method == 'POST':
-        batch_id = request.form.get('batch_id')
+        batch_id = request.form.get('batch_id') or None
         cattle_id = request.form.get('cattle_id')
         sex = request.form.get('sex')
         weight = float(request.form.get('weight'))
-        health_status = request.form.get('health_status')
+        cattle_status = request.form.get('cattle_status')
         lf_tag = request.form.get('lf_tag')
         uhf_tag = request.form.get('uhf_tag')
         pen_id = request.form.get('pen_id') or None
@@ -442,24 +555,24 @@ def create_cattle(feedlot_id):
         other_marks = request.form.get('other_marks')
         
         # Check pen capacity if pen is assigned
-        if pen_id and not Pen.is_capacity_available(feedlot_code, pen_id):
+        if pen_id and not Pen.is_capacity_available(pen_id, feedlot_code):
             flash('Pen is at full capacity.', 'error')
             batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
-            pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
+            pens = Pen.find_by_feedlot(feedlot_id)
             return render_template('feedlot/cattle/create.html', 
                                  feedlot=feedlot, 
                                  batches=batches, 
                                  pens=pens)
         
         created_by = session.get('username', 'user')
-        cattle_record_id = Cattle.create_cattle(feedlot_code, feedlot_id, batch_id, cattle_id, sex, 
-                                               weight, health_status, lf_tag, uhf_tag, pen_id, notes,
-                                               color, breed, brand_drawings, brand_locations, other_marks, created_by=created_by)
+        cattle_record_id = Cattle.create_cattle(feedlot_code, feedlot_id, cattle_id, sex, 
+                                               weight, cattle_status, batch_id=batch_id, lf_tag=lf_tag, uhf_tag=uhf_tag, pen_id=pen_id, notes=notes,
+                                               color=color, breed=breed, brand_drawings=brand_drawings, brand_locations=brand_locations, other_marks=other_marks, created_by=created_by)
         flash('Cattle record created successfully.', 'success')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
     batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
-    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_id)
     
     return render_template('feedlot/cattle/create.html', feedlot=feedlot, batches=batches, pens=pens)
 
@@ -484,8 +597,8 @@ def view_cattle(feedlot_id, cattle_id):
         flash('Cattle record not found.', 'error')
         return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
     
-    pen = Pen.find_by_id(feedlot_code, cattle['pen_id']) if cattle.get('pen_id') else None
-    batch = Batch.find_by_id(feedlot_code, cattle['batch_id'])
+    pen = Pen.find_by_id(cattle['pen_id']) if cattle.get('pen_id') else None
+    batch = Batch.find_by_id(feedlot_code, cattle['batch_id']) if cattle.get('batch_id') else None
     
     return render_template('feedlot/cattle/view.html', 
                          feedlot=feedlot, 
@@ -518,9 +631,9 @@ def move_cattle(feedlot_id, cattle_id):
         new_pen_id = request.form.get('pen_id')
         moved_by = session.get('username', 'user')
         
-        if new_pen_id and not Pen.is_capacity_available(feedlot_code, new_pen_id):
+        if new_pen_id and not Pen.is_capacity_available(new_pen_id, feedlot_code):
             flash('Selected pen is at full capacity.', 'error')
-            pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
+            pens = Pen.find_by_feedlot(feedlot_id)
             return render_template('feedlot/cattle/move.html', 
                                  feedlot=feedlot, 
                                  cattle=cattle, 
@@ -530,7 +643,7 @@ def move_cattle(feedlot_id, cattle_id):
         flash('Cattle moved successfully.', 'success')
         return redirect(url_for('feedlot.view_cattle', feedlot_id=feedlot_id, cattle_id=cattle_id))
     
-    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_id)
     return render_template('feedlot/cattle/move.html', feedlot=feedlot, cattle=cattle, pens=pens)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/add_weight', methods=['GET', 'POST'])
@@ -631,6 +744,32 @@ def update_tags(feedlot_id, cattle_id):
     
     return render_template('feedlot/cattle/update_tags.html', feedlot=feedlot, cattle=cattle)
 
+@feedlot_bp.route('/feedlot/<feedlot_id>/cattle/<cattle_id>/delete', methods=['POST'])
+@login_required
+@feedlot_access_required()
+def delete_cattle(feedlot_id, cattle_id):
+    """Delete a cattle record"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    feedlot_code = feedlot.get('feedlot_code')
+    if not feedlot_code:
+        flash('Feedlot code not found.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    cattle = Cattle.find_by_id(feedlot_code, cattle_id)
+    
+    if not cattle:
+        flash('Cattle record not found.', 'error')
+        return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
+    
+    deleted_by = session.get('username', 'user')
+    Cattle.delete_cattle(feedlot_code, cattle_id, deleted_by)
+    flash('Cattle record deleted successfully.', 'success')
+    return redirect(url_for('feedlot.list_cattle', feedlot_id=feedlot_id))
+
 # Manifest Export Routes
 @feedlot_bp.route('/feedlot/<feedlot_id>/manifest/export', methods=['GET', 'POST'])
 @login_required
@@ -643,26 +782,19 @@ def export_manifest(feedlot_id):
         return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
     
     if request.method == 'POST':
-        # Get selection method
-        selection_method = request.form.get('selection_method', 'pen')
-        
         # Get selected cattle
         feedlot_code = feedlot.get('feedlot_code')
         if not feedlot_code:
             flash('Feedlot code not found.', 'error')
             return redirect(url_for('feedlot.export_manifest', feedlot_id=feedlot_id))
         
+        # Get selected cattle IDs from form
+        cattle_ids = request.form.getlist('cattle_ids')
         cattle_list = []
-        if selection_method == 'pen':
-            pen_ids = request.form.getlist('pen_ids')
-            for pen_id in pen_ids:
-                cattle_list.extend(Cattle.find_by_pen(feedlot_code, pen_id))
-        else:  # manual selection
-            cattle_ids = request.form.getlist('cattle_ids')
-            for cattle_id in cattle_ids:
-                cattle = Cattle.find_by_id(feedlot_code, cattle_id)
-                if cattle:
-                    cattle_list.append(cattle)
+        for cattle_id in cattle_ids:
+            cattle = Cattle.find_by_id(feedlot_code, cattle_id)
+            if cattle:
+                cattle_list.append(cattle)
         
         if not cattle_list:
             flash('No cattle selected for export.', 'error')
@@ -732,25 +864,11 @@ def export_manifest(feedlot_id):
             created_by=created_by
         )
         
-        # Get export format
-        export_format = request.form.get('export_format', 'pdf')
-        
-        if export_format == 'pdf' or export_format == 'both':
-            # Generate PDF
-            pdf_buffer = generate_pdf(manifest_data)
-            if export_format == 'pdf':
-                return Response(
-                    pdf_buffer.getvalue(),
-                    mimetype='application/pdf',
-                    headers={'Content-Disposition': f'attachment; filename=manifest_{feedlot_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'}
-                )
-        
-        if export_format == 'html' or export_format == 'both':
-            # Render HTML template
-            return render_template('feedlot/manifest/manifest_html.html', manifest_data=manifest_data)
-        
-        flash('Invalid export format.', 'error')
-        return redirect(url_for('feedlot.export_manifest', feedlot_id=feedlot_id))
+        # Always generate HTML format
+        return render_template('feedlot/manifest/manifest_html.html', 
+                             manifest_data=manifest_data,
+                             feedlot_id=feedlot_id,
+                             manifest_id=manifest_record_id)
     
     # GET request - show export form
     feedlot_code = feedlot.get('feedlot_code')
@@ -758,18 +876,43 @@ def export_manifest(feedlot_id):
         flash('Feedlot code not found.', 'error')
         return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
     
-    pens = Pen.find_by_feedlot(feedlot_code, feedlot_id)
-    all_cattle = Cattle.find_by_feedlot(feedlot_code, feedlot_id)
-    templates = ManifestTemplate.find_by_feedlot(feedlot_id)
+    pens = Pen.find_by_feedlot(feedlot_id)
     
-    # Add cattle count to pens
+    # Filter cattle by status = 'Export'
+    all_cattle = Cattle.find_by_feedlot_with_filters(
+        feedlot_code, 
+        feedlot_id, 
+        cattle_status='Export'
+    )
+    
+    # Convert ObjectIds to strings for cattle _id, batch_id and pen_id for easier template handling
+    for cattle in all_cattle:
+        cattle['_id'] = str(cattle['_id'])
+        if cattle.get('batch_id'):
+            cattle['batch_id'] = str(cattle['batch_id'])
+        if cattle.get('pen_id'):
+            cattle['pen_id'] = str(cattle['pen_id'])
+    
+    # Filter batches by event_type = 'export'
+    all_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
+    export_batches = [b for b in all_batches if b.get('event_type') == 'export']
+    
+    # Convert batch ObjectIds to strings
+    for batch in export_batches:
+        batch['_id'] = str(batch['_id'])
+    
+    # Convert pen ObjectIds to strings
     for pen in pens:
-        pen['cattle_count'] = Pen.get_current_cattle_count(feedlot_code, str(pen['_id']))
+        pen['_id'] = str(pen['_id'])
+        pen['cattle_count'] = Pen.get_current_cattle_count(pen['_id'], feedlot_code)
+    
+    templates = ManifestTemplate.find_by_feedlot(feedlot_id)
     
     return render_template('feedlot/manifest/export.html',
                          feedlot=feedlot,
                          pens=pens,
                          cattle=all_cattle,
+                         batches=export_batches,
                          templates=templates)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/manifest/templates')

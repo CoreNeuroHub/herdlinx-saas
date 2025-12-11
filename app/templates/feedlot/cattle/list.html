@@ -45,7 +45,7 @@
             <div>
                 <p class="text-xs lg:text-sm font-medium text-gray-600 mb-1">Healthy</p>
                 <p class="text-2xl lg:text-3xl font-bold text-green-600">
-                    {{ cattle|selectattr('health_status', 'equalto', 'healthy')|list|length }}
+                    {{ cattle|selectattr('cattle_status', 'equalto', 'Healthy')|list|length }}
                 </p>
             </div>
             <div class="w-10 h-10 lg:w-12 lg:h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -61,12 +61,28 @@
             <div>
                 <p class="text-xs lg:text-sm font-medium text-gray-600 mb-1">Sick</p>
                 <p class="text-2xl lg:text-3xl font-bold text-red-600">
-                    {{ cattle|selectattr('health_status', 'equalto', 'sick')|list|length }}
+                    {{ cattle|selectattr('cattle_status', 'equalto', 'Sick')|list|length }}
                 </p>
             </div>
             <div class="w-10 h-10 lg:w-12 lg:h-12 bg-red-100 rounded-xl flex items-center justify-center">
                 <svg class="w-5 h-5 lg:w-6 lg:h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl lg:rounded-2xl shadow-lg p-4 lg:p-6 border border-gray-100">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-xs lg:text-sm font-medium text-gray-600 mb-1">Export</p>
+                <p class="text-2xl lg:text-3xl font-bold text-blue-600">
+                    {{ cattle|selectattr('cattle_status', 'equalto', 'Export')|list|length }}
+                </p>
+            </div>
+            <div class="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <svg class="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                 </svg>
             </div>
         </div>
@@ -104,13 +120,13 @@
         
         <!-- Filter Controls -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <!-- Health Status Filter -->
+            <!-- Cattle Status Filter -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Health Status</label>
-                <select name="health_status" data-testid="filter-health-status-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent outline-none transition">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cattle Status</label>
+                <select name="cattle_status" data-testid="filter-cattle-status-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent outline-none transition">
                     <option value="">All</option>
-                    {% for status in unique_health_statuses %}
-                    <option value="{{ status }}" {% if current_health_status == status %}selected{% endif %}>{{ status|title }}</option>
+                    {% for status in unique_cattle_statuses %}
+                    <option value="{{ status }}" {% if current_cattle_status == status %}selected{% endif %}>{{ status }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -145,7 +161,7 @@
                         <option value="cattle_id" {% if current_sort_by == 'cattle_id' %}selected{% endif %}>Cattle ID</option>
                         <option value="weight" {% if current_sort_by == 'weight' %}selected{% endif %}>Weight</option>
                         <option value="induction_date" {% if current_sort_by == 'induction_date' %}selected{% endif %}>Induction Date</option>
-                        <option value="health_status" {% if current_sort_by == 'health_status' %}selected{% endif %}>Health Status</option>
+                        <option value="cattle_status" {% if current_sort_by == 'cattle_status' %}selected{% endif %}>Cattle Status</option>
                         <option value="sex" {% if current_sort_by == 'sex' %}selected{% endif %}>Sex</option>
                     </select>
                     <select name="sort_order" class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent outline-none transition">
@@ -178,7 +194,7 @@
                     <th class="px-4 py-4 lg:px-6 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Cattle ID</th>
                     <th class="px-4 py-4 lg:px-6 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Sex</th>
                     <th class="px-4 py-4 lg:px-6 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Weight</th>
-                    <th class="px-4 py-4 lg:px-6 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Health Status</th>
+                    <th class="px-4 py-4 lg:px-6 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Cattle Status</th>
                     <th class="px-4 py-4 lg:px-6 text-left text-xs font-bold text-gray-900 uppercase tracking-wider hidden md:table-cell">Pen</th>
                     <th class="px-4 py-4 lg:px-6 text-left text-xs font-bold text-gray-900 uppercase tracking-wider hidden lg:table-cell">Induction Date</th>
                     <th class="px-4 py-4 lg:px-6 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">Actions</th>
@@ -210,10 +226,11 @@
                     </td>
                     <td class="px-4 py-4 lg:px-6 whitespace-nowrap">
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs lg:text-sm font-semibold 
-                            {% if c.health_status == 'healthy' %}bg-green-100 text-green-800
-                            {% elif c.health_status == 'sick' %}bg-red-100 text-red-800
-                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                            {{ c.health_status|title }}
+                            {% if c.cattle_status == 'Healthy' %}bg-green-100 text-green-800
+                            {% elif c.cattle_status == 'Sick' %}bg-red-100 text-red-800
+                            {% elif c.cattle_status == 'Export' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ c.cattle_status }}
                         </span>
                     </td>
                     <td class="px-4 py-4 lg:px-6 whitespace-nowrap hidden md:table-cell">
@@ -231,15 +248,26 @@
                         <span class="text-sm lg:text-base text-gray-600">{{ c.induction_date | strftime }}</span>
                     </td>
                     <td class="px-4 py-4 lg:px-6 whitespace-nowrap">
-                        <a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=c._id) }}" 
-                           data-testid="view-cattle-link-{{ c._id }}"
-                           style="background-color: #2D8B8B;" class="inline-flex items-center px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition-all duration-200">
-                            <svg class="w-4 h-4 mr-1 hidden lg:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            <span>View</span>
-                        </a>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ url_for('feedlot.view_cattle', feedlot_id=feedlot._id, cattle_id=c._id) }}" 
+                               data-testid="view-cattle-link-{{ c._id }}"
+                               style="background-color: #2D8B8B;" class="inline-flex items-center px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-xs lg:text-sm font-semibold text-white hover:opacity-90 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-1 hidden lg:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                <span>View</span>
+                            </a>
+                            <button type="button"
+                                    onclick="openDeleteCattleModal('{{ c._id }}', '{{ c.cattle_id }}')"
+                                    data-testid="delete-cattle-button-{{ c._id }}"
+                                    class="inline-flex items-center px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg text-xs lg:text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-1 hidden lg:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                <span>Delete</span>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -292,5 +320,78 @@
     </div>
     {% endblock %}
 </div>
+
+<!-- Delete Cattle Confirmation Modal -->
+<div id="delete-cattle-modal" data-testid="delete-cattle-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Delete Cattle</h2>
+                <button onclick="closeDeleteCattleModal()" data-testid="close-delete-cattle-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <p class="text-gray-700 mb-4">Are you sure you want to delete cattle <strong id="delete-cattle-id"></strong>? This action cannot be undone.</p>
+            
+            <form method="POST" 
+                  id="delete-cattle-form"
+                  data-testid="delete-cattle-form"
+                  class="flex space-x-4">
+                <button type="submit" 
+                        data-testid="confirm-delete-cattle-button"
+                        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Delete
+                </button>
+                <button type="button" 
+                        onclick="closeDeleteCattleModal()"
+                        data-testid="cancel-delete-cattle-button"
+                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Cancel
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCattleId = null;
+let currentFeedlotId = '{{ feedlot._id }}';
+
+function openDeleteCattleModal(cattleId, cattleIdDisplay) {
+    currentCattleId = cattleId;
+    document.getElementById('delete-cattle-id').textContent = cattleIdDisplay;
+    document.getElementById('delete-cattle-form').action = `/feedlot/${currentFeedlotId}/cattle/${cattleId}/delete`;
+    document.getElementById('delete-cattle-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteCattleModal() {
+    document.getElementById('delete-cattle-modal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    currentCattleId = null;
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('delete-cattle-modal');
+        if (!modal.classList.contains('hidden')) {
+            closeDeleteCattleModal();
+        }
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('delete-cattle-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteCattleModal();
+    }
+});
+</script>
 {% endblock %}
 

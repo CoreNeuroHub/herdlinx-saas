@@ -27,16 +27,15 @@ This document summarizes the changes made to the test cases document to reflect 
 - **TC-U-042**: Edit Manifest Template
 - **TC-U-043**: Delete Manifest Template
 
-### Cross-User Type (9 new test cases)
+### Cross-User Type (8 new test cases)
 - **TC-X-011**: API Key Authentication
 - **TC-X-012**: Sync Batches API Endpoint
-- **TC-X-013**: Sync Livestock API Endpoint
-- **TC-X-014**: Sync Induction Events API Endpoint
-- **TC-X-015**: Sync Pairing Events API Endpoint
-- **TC-X-016**: Sync Checkin Events API Endpoint
-- **TC-X-017**: Sync Repair Events API Endpoint
-- **TC-X-018**: API Feedlot Code Validation
-- **TC-X-019**: API Error Handling
+- **TC-X-013**: Sync Induction Events API Endpoint
+- **TC-X-014**: Sync Pairing Events API Endpoint
+- **TC-X-015**: Sync Checkin Events API Endpoint
+- **TC-X-016**: Sync Repair Events API Endpoint
+- **TC-X-017**: API Feedlot Code Validation
+- **TC-X-018**: API Error Handling
 
 **Total New Test Cases: 21**
 

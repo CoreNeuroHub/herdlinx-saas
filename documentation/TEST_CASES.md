@@ -993,7 +993,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Cattle ID: "CATTLE-001"
 - Sex: "Male"
 - Weight: 500.0
-- Health Status: "Healthy"
+- Cattle Status: "Healthy"
 - LF Tag: "LF123456"
 - UHF Tag: "UHF123456"
 - Color: "Black"
@@ -1012,7 +1012,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 2. Navigate to cattle list
 3. Use search functionality
 4. Apply filters:
-   - Health status
+   - Cattle status
    - Sex
    - Pen
 5. Sort by different fields
@@ -1401,7 +1401,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Shows all cattle in feedlot
 - Displays:
   - Cattle ID
-  - Sex, weight, health status
+  - Sex, weight, cattle status
   - Current pen
   - Tags (LF, UHF)
 - Can search and filter
@@ -1434,7 +1434,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 1. Log in as regular user
 2. Navigate to cattle list
 3. Apply filters:
-   - Health status: "Healthy"
+   - Cattle status: "Healthy"
    - Sex: "Male"
    - Pen: (select pen)
 4. Apply filters
@@ -1474,7 +1474,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
    - Cattle ID: "CATTLE-001"
    - Sex: "Male"
    - Weight: 500.0
-   - Health Status: "Healthy"
+   - Cattle Status: "Healthy"
    - LF Tag: "LF123456"
    - UHF Tag: "UHF123456"
    - Pen: (select pen or leave empty)
@@ -1498,7 +1498,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Cattle ID: "CATTLE-001"
 - Sex: "Male"
 - Weight: 500.0
-- Health Status: "Healthy"
+- Cattle Status: "Healthy"
 - LF Tag: "LF123456"
 - UHF Tag: "UHF123456"
 - Pen: (existing pen or None)
@@ -1539,7 +1539,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 - Cattle details page loads
 - Shows:
   - Cattle ID, sex, weight
-  - Health status
+  - Cattle status
   - Current pen
   - Batch information
   - Tags (LF, UHF)
@@ -2169,37 +2169,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
-#### TC-X-013: Sync Livestock API Endpoint
-**Objective:** Verify livestock can be synced via API
-
-**Steps:**
-1. Send POST request to `/api/v1/feedlot/livestock`
-2. Include valid API key
-3. Send livestock data
-
-**Expected Result:**
-- Livestock records are updated successfully
-- Tag updates work correctly
-- Errors are reported for missing livestock
-
-**Test Data:**
-- Request Body:
-```json
-{
-  "feedlot_code": "FEEDLOT001",
-  "data": [
-    {
-      "id": 123,
-      "current_lf_id": "LF123456",
-      "current_epc": "UHF123456"
-    }
-  ]
-}
-```
-
----
-
-#### TC-X-014: Sync Induction Events API Endpoint
+#### TC-X-013: Sync Induction Events API Endpoint
 **Objective:** Verify induction events can be synced via API
 
 **Steps:**
@@ -2230,7 +2200,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
-#### TC-X-015: Sync Pairing Events API Endpoint
+#### TC-X-014: Sync Pairing Events API Endpoint
 **Objective:** Verify pairing events can be synced via API
 
 **Steps:**
@@ -2261,7 +2231,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
-#### TC-X-016: Sync Checkin Events API Endpoint
+#### TC-X-015: Sync Checkin Events API Endpoint
 **Objective:** Verify checkin events can be synced via API
 
 **Steps:**
@@ -2289,7 +2259,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
-#### TC-X-017: Sync Repair Events API Endpoint
+#### TC-X-016: Sync Repair Events API Endpoint
 **Objective:** Verify repair events can be synced via API
 
 **Steps:**
@@ -2322,7 +2292,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
-#### TC-X-018: API Feedlot Code Validation
+#### TC-X-017: API Feedlot Code Validation
 **Objective:** Verify API validates feedlot code matches API key
 
 **Steps:**
@@ -2337,7 +2307,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
-#### TC-X-019: API Error Handling
+#### TC-X-018: API Error Handling
 **Objective:** Verify API handles errors gracefully
 
 **Steps:**

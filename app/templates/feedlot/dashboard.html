@@ -58,16 +58,28 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Batch Number</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Induction Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Event Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Event Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cattle Count</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Funder</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                {% for batch in recent_batches|reverse %}
+                {% for batch in recent_batches %}
                 <tr class="hover:bg-gray-50" data-testid="recent-batch-row-{{ batch._id }}">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ batch.batch_number }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.induction_date | strftime }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <span class="px-2 py-1 bg-teal bg-opacity-10 text-teal rounded-full text-xs font-semibold uppercase">
+                            {{ batch.event_type or 'induction' }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.event_date | strftime }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <span class="px-2 py-1 bg-teal bg-opacity-10 text-teal rounded-full text-xs font-semibold">
+                            {{ batch.cattle_count }} cattle
+                        </span>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.funder }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <a href="{{ url_for('feedlot.view_batch', feedlot_id=feedlot._id, batch_id=batch._id) }}" 

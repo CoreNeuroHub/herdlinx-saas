@@ -129,151 +129,72 @@ All endpoints return JSON responses with the following structure:
 
 ## Endpoints
 
-### 1. Sync Batches
-
-**Endpoint**: `POST /api/v1/feedlot/batches`
-
-**Description**: Syncs batch data from the office app to the SaaS system.
-
-**Request Body**:
-```json
-{
-  "feedlot_code": "FEEDLOT001",
-  "data": [
-    {
-      "name": "Batch A - Oct 30",
-      "funder": "Funding Source",
-      "lot": "LOT123",
-      "pen": "PEN01",
-      "lot_group": "GROUP1",
-      "pen_location": "North Section",
-      "sex": "Mixed",
-      "tag_color": "Red",
-      "visual_id": "VIS001",
-      "notes": "Additional notes",
-      "created_at": "2024-10-30T10:00:00Z",
-      "active": 1
-    }
-  ]
-}
-```
-
-**Field Mapping**:
-- `name` → `batch_number` (required)
-- `funder` → `source`
-- `notes` → `notes`
-- `created_at` → `induction_date`
-- `pen` → Creates/updates pen with `pen_number` (optional)
-- `pen_location` → Pen `description` (optional)
-
-**Pen Mapping**:
-When `pen` is provided in the batch data:
-- If a pen with the same `pen_number` exists for the feedlot, it will be updated (description updated if `pen_location` is provided)
-- If no pen exists, a new pen will be created with:
-  - `pen_number`: Value from `pen` field
-  - `description`: Value from `pen_location` field (or default "Pen {pen_number}" if not provided)
-  - `capacity`: Default capacity of 100 (can be updated later via web UI)
-- The batch will be linked to the pen via `pen_id`
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Processed 1 batch records",
-  "records_processed": 1,
-  "records_created": 1,
-  "records_updated": 0,
-  "records_skipped": 0,
-  "errors": []
-}
-```
-
-**Notes**:
-- Batches are matched by name within the same feedlot
-- If a batch with the same name exists, it will be updated
-- `created_at` is parsed as ISO format or `YYYY-MM-DD` format
-- Pens are automatically created or updated when `pen` field is provided in batch data
-- If `pen` is provided, the batch will be linked to the pen (created if it doesn't exist)
-- Pen capacity defaults to 100 and can be updated later via the web UI
-
----
-
-### 2. Sync Livestock (Current State)
-
-**Endpoint**: `POST /api/v1/feedlot/livestock`
-
-**Description**: Syncs current livestock state, primarily updating tag information.
-
-**Request Body**:
-```json
-{
-  "feedlot_code": "FEEDLOT001",
-  "data": [
-    {
-      "id": 123,
-      "induction_event_id": 45,
-      "current_lf_id": "LF123456",
-      "current_epc": "EPC789012",
-      "metadata": "Additional metadata",
-      "created_at": "2024-10-30T10:00:00Z",
-      "updated_at": "2024-10-30T10:00:00Z"
-    }
-  ]
-}
-```
-
-**Field Mapping**:
-- `id` → Used to find existing cattle (stored as `cattle_id`)
-- `current_lf_id` → `lf_tag`
-- `current_epc` → `uhf_tag`
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Processed 1 livestock records",
-  "records_processed": 1,
-  "records_created": 0,
-  "records_updated": 1,
-  "records_skipped": 0,
-  "errors": []
-}
-```
-
-**Notes**:
-- Livestock records must be created via `induction-events` endpoint first
-- This endpoint only updates existing cattle records
-- Tags are updated if they differ from current values
-- If livestock ID is not found, the record is skipped with an error message
-
----
-
-### 3. Sync Induction Events
+### 1. Sync Induction Events
 
 **Endpoint**: `POST /api/v1/feedlot/induction-events`
 
-**Description**: Creates cattle records when animals are inducted into the system.
+**Description**: Creates cattle records when animals are inducted into the system. **Now also creates/updates batches automatically from the event data.**
 
 **Request Body**:
 ```json
 {
-  "feedlot_code": "FEEDLOT001",
+  "feedlot_code": "jfmurray",
   "data": [
     {
-      "id": 1,
-      "livestock_id": 123,
-      "batch_id": 5,
-      "batch_name": "Batch A - Oct 30",
-      "timestamp": "2024-10-30T10:00:00Z"
+      "id": 7,
+      "event_id": "hxbind000001",
+      "livestock_id": 3,
+      "funder": "None",
+      "lot": "6",
+      "pen": "6",
+      "lot_group": "6",
+      "pen_location": "6",
+      "sex": "Steer",
+      "tag_color": "",
+      "visual_id": "",
+      "notes": "",
+      "batch_name": "BATCH_2025-12-04_7325",
+      "lf_id": "124000224161433",
+      "epc": "0900000000000003",
+      "weight": 0,
+      "timestamp": "2025-12-04 14:18:11.265273"
     }
   ]
 }
 ```
 
 **Field Mapping**:
-- `livestock_id` → Used to create cattle record (stored as `cattle_id`)
-- `batch_name` → Used to find SaaS batch (required for mapping)
-- `timestamp` → `induction_date`
+
+**Required Fields**:
+- `livestock_id` (required) - Office livestock ID, used as `cattle_id`
+- `batch_name` (required) - Batch name, creates or finds existing batch
+
+**Batch Fields** (used to create/update batches):
+- `batch_name` → `batch_number` (required) - Creates or finds existing batch
+- `funder` → `funder` (optional) - Batch funder information
+- `notes` → `notes` (optional) - Batch notes
+- `timestamp` or `created_at` → `induction_date` - Used for batch induction date
+- `pen` → Creates/updates pen with `pen_number` (optional)
+- `pen_location` → Pen `description` (optional)
+
+**Cattle Fields**:
+- `livestock_id` → Used to create cattle record (stored as `cattle_id`) (required)
+- `sex` → `sex` (optional, defaults to "Unknown")
+- `weight` → `weight` (optional, defaults to 0.0)
+- `lf_id` → `lf_tag` (optional)
+- `epc` → `uhf_tag` (optional)
+- `notes` → `notes` (optional)
+- `timestamp` or `created_at` → `induction_date` (optional, defaults to current time)
+- `event_id` → Used in audit logs (optional)
+
+**Additional Fields** (processed and stored):
+- `tag_color` → `color` - Tag color (mapped to color field)
+- `visual_id` → `visual_id` - Visual ID
+- `lot` → `lot` - Lot identifier
+- `lot_group` → `lot_group` - Lot group identifier
+
+**Unused Fields** (accepted but not processed):
+- `id` - Office database event ID (used for office app tracking only)
 
 **Response**:
 ```json
@@ -284,25 +205,34 @@ When `pen` is provided in the batch data:
   "records_created": 1,
   "records_updated": 0,
   "records_skipped": 0,
+  "batches_created": 1,
+  "batches_updated": 0,
   "errors": []
 }
 ```
 
 **Notes**:
-- `batch_name` is required to map office app batches to SaaS batches
-- Cattle records are created with default values:
-  - `sex`: "Unknown"
-  - `weight`: 0.0
-  - `health_status`: "Healthy"
-- **Pen Assignment**: Cattle are automatically assigned to the pen associated with the batch (if the batch has a `pen_id`). This happens when:
-  - A new cattle record is created via induction events
-  - An existing cattle record is updated and doesn't already have a pen assignment
-- If cattle already exists, the record is marked as updated
-- Default values should be updated via other endpoints as data becomes available
+- **Batch Creation**: Batches are automatically created from the `batch_name` field if they don't exist. If a batch with the same name exists, it may be updated with new information (funder, notes, pen).
+- **Pen Creation**: Pens are automatically created or updated when `pen` field is provided:
+  - If a pen with the same `pen_number` exists, it will be updated (description updated if `pen_location` is provided)
+  - If no pen exists, a new pen will be created with:
+    - `pen_number`: Value from `pen` field
+    - `description`: Value from `pen_location` field (or default "Pen {pen_number}" if not provided)
+    - `capacity`: Default capacity of 100 (can be updated later via web UI)
+  - The batch will be linked to the pen via `pen_id`
+- **Cattle Creation**: Cattle records are created with values from the event:
+  - If `sex` is provided, it's used; otherwise defaults to "Unknown"
+  - If `weight` is provided and valid (> 0), it's used; otherwise defaults to 0.0
+  - If `lf_id` or `epc` are provided, tags are set
+  - `cattle_status` defaults to "Healthy"
+- **Pen Assignment**: Cattle are automatically assigned to the pen from the event (if `pen` is provided) or from the batch's pen (if batch has a `pen_id`).
+- **Timestamp Format**: Supports formats like "2025-12-04 14:18:11.265273", ISO format with 'T', or "YYYY-MM-DD" format.
+- If cattle already exists, the record is updated with new information (sex, weight, tags, pen, notes) if provided.
+- The `funder` field value "None" (case-insensitive) is treated as empty string.
 
 ---
 
-### 4. Sync Pairing Events
+### 2. Sync Pairing Events
 
 **Endpoint**: `POST /api/v1/feedlot/pairing-events`
 
@@ -351,7 +281,7 @@ When `pen` is provided in the batch data:
 
 ---
 
-### 5. Sync Check-in Events
+### 3. Sync Check-in Events
 
 **Endpoint**: `POST /api/v1/feedlot/checkin-events`
 
@@ -399,7 +329,7 @@ When `pen` is provided in the batch data:
 
 ---
 
-### 6. Sync Repair Events
+### 4. Sync Repair Events
 
 **Endpoint**: `POST /api/v1/feedlot/repair-events`
 
@@ -448,6 +378,52 @@ When `pen` is provided in the batch data:
 - If only one tag type is being repaired, the other tag remains unchanged
 - Repair reason is appended to the cattle notes
 - Previous tag pairs are preserved in `tag_pair_history`
+
+---
+
+### 5. Sync Export Events
+
+**Endpoint**: `POST /api/v1/feedlot/export-events`
+
+**Description**: Marks cattle as exported (sets `cattle_status` to "Export") based on UHF tag (EPC).
+
+**Request Body**:
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "epc": "0900000000000003",
+      "timestamp": "2024-11-25T10:30:00Z"
+    }
+  ]
+}
+```
+
+**Field Mapping**:
+- `epc` (required) → Used to find cattle by UHF tag
+- `timestamp` (optional) → Export timestamp (defaults to current time if not provided)
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Processed 1 export event records",
+  "records_processed": 1,
+  "records_created": 0,
+  "records_updated": 1,
+  "records_skipped": 0,
+  "errors": []
+}
+```
+
+**Notes**:
+- `epc` (UHF tag) is required to identify the cattle
+- Cattle status is updated to "Export"
+- If cattle is already marked as Export, the record is skipped (not counted as an error)
+- Export timestamp is recorded in the audit log
+- If cattle with the specified UHF tag is not found, the record is skipped with an error message
+- Timestamp format supports: "2024-11-25 10:30:00.123456", ISO format with 'T', or "YYYY-MM-DD" format
 
 ---
 
@@ -528,20 +504,19 @@ Individual record errors are included in the `errors` array:
 
 ### Recommended Sync Order
 
-1. **Batches**: Sync batches first to establish batch references
-2. **Induction Events**: Create cattle records when animals are inducted
-3. **Pairing Events**: Pair tags and set initial weights
-4. **Livestock**: Update current state (optional, for reconciliation)
-5. **Check-in Events**: Add weight measurements over time
-6. **Repair Events**: Handle tag replacements as needed
+1. **Induction Events**: Create cattle records when animals are inducted (batches are automatically created from induction events)
+2. **Pairing Events**: Pair tags and set initial weights
+3. **Check-in Events**: Add weight measurements over time
+4. **Repair Events**: Handle tag replacements as needed
+5. **Export Events**: Mark cattle as exported when they leave the feedlot
 
 ### Idempotency
 
 All endpoints are designed to be idempotent:
-- **Batches**: Matched by name, updates existing if found
-- **Induction Events**: Checks if cattle exists before creating
+- **Induction Events**: Creates/updates batches automatically from event data; checks if cattle exists before creating
 - **Pairing/Repair Events**: Updates existing cattle records
 - **Check-in Events**: Always creates new weight history entries (multiple entries are expected)
+- **Export Events**: Updates cattle status to Export; skips if already exported
 
 ### Bulk Operations
 
@@ -568,45 +543,62 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Sync batches
-batches_data = {
+# Sync induction events (batches are automatically created)
+induction_data = {
     "feedlot_code": FEEDLOT_CODE,
     "data": [
         {
-            "name": "Batch A - Oct 30",
+            "id": 1,
+            "event_id": "hxbind000001",
+            "livestock_id": 3,
             "funder": "Funding Source",
-            "notes": "Initial batch",
-            "created_at": "2024-10-30T10:00:00Z"
+            "pen": "6",
+            "pen_location": "North Section",
+            "sex": "Steer",
+            "batch_name": "BATCH_2025-12-04_7325",
+            "lf_id": "124000224161433",
+            "epc": "0900000000000003",
+            "weight": 250.5,
+            "timestamp": "2025-12-04 14:18:11.265273"
         }
     ]
 }
 
 response = requests.post(
-    f"{API_BASE_URL}/batches",
+    f"{API_BASE_URL}/induction-events",
     headers=headers,
-    json=batches_data
+    json=induction_data
 )
 
 result = response.json()
 print(f"Success: {result['success']}")
-print(f"Created: {result['records_created']}")
+print(f"Cattle Created: {result['records_created']}")
+print(f"Batches Created: {result['batches_created']}")
 print(f"Errors: {result['errors']}")
 ```
 
 ### cURL Example
 
 ```bash
-curl -X POST https://your-domain.com/api/v1/feedlot/batches \
+curl -X POST https://your-domain.com/api/v1/feedlot/induction-events \
   -H "X-API-Key: your_api_key_here" \
   -H "Content-Type: application/json" \
   -d '{
-    "feedlot_code": "FEEDLOT001",
+    "feedlot_code": "jfmurray",
     "data": [
       {
-        "name": "Batch A - Oct 30",
+        "id": 7,
+        "event_id": "hxbind000001",
+        "livestock_id": 3,
         "funder": "Funding Source",
-        "notes": "Initial batch",
-        "created_at": "2024-10-30T10:00:00Z"
+        "pen": "6",
+        "pen_location": "North Section",
+        "sex": "Steer",
+        "batch_name": "BATCH_2025-12-04_7325",
+        "lf_id": "124000224161433",
+        "epc": "0900000000000003",
+        "weight": 250.5,
+        "timestamp": "2025-12-04 14:18:11.265273"
       }
     ]
   }'
@@ -641,11 +633,13 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 
 1. **"feedlot_code does not match"**: Ensure the `feedlot_code` in your request matches the feedlot associated with your API key.
 
-2. **"Livestock ID not found"**: Make sure to sync `induction-events` before syncing other livestock-related endpoints.
+2. **"Livestock ID not found"**: Make sure to sync `induction-events` before syncing other endpoints that reference livestock.
 
-3. **"Batch not found"**: Ensure batches are synced before syncing `induction-events` that reference them.
+3. **"Batch not found"**: This should no longer occur as batches are automatically created from `induction-events`. If you see this error, check that `batch_name` is provided in the induction event data.
 
 4. **"Invalid weight_kg value"**: Weight must be a positive number greater than 0.
+
+5. **"Cattle with UHF tag not found"**: Ensure the UHF tag (epc) exists in the system. Cattle must be created via `induction-events` first.
 
 ### Debugging Tips
 
@@ -666,7 +660,11 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 
 ## Changelog
 
-### Version 1.1 (Current)
+### Version 1.2 (Current)
+- Added export-events endpoint to mark cattle as exported based on UHF tag
+- Export events update cattle_status to "Export" and record export timestamp in audit log
+
+### Version 1.1
 - Added web UI for API key management (Settings → API Keys)
 - Enhanced API key management with visual interface
 - Added key status tracking (Active/Inactive)

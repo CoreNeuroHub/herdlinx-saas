@@ -5,38 +5,42 @@ from app.models.pen import Pen
 
 class Cattle:
     @staticmethod
-    def create_cattle(feedlot_code, feedlot_id, batch_id, cattle_id, sex, weight, 
-                     health_status, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
-                     color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None, created_by='system'):
+    def create_cattle(feedlot_code, feedlot_id, cattle_id, sex, weight, 
+                     cattle_status, batch_id=None, lf_tag=None, uhf_tag=None, pen_id=None, notes=None,
+                     color=None, breed=None, brand_drawings=None, brand_locations=None, other_marks=None, 
+                     visual_id=None, lot=None, lot_group=None, created_by='system'):
         """Create a new cattle record
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
             feedlot_id: The feedlot ID
-            batch_id: The batch ID
             cattle_id: Cattle ID
             sex: Sex of cattle
             weight: Weight
-            health_status: Health status
+            cattle_status: Cattle status
+            batch_id: Optional batch ID (cattle can exist without a batch)
             lf_tag: Optional LF tag
             uhf_tag: Optional UHF tag
             pen_id: Optional pen ID
             notes: Optional notes
-            color: Optional color
+            color: Optional color (also accepts tag_color from API)
             breed: Optional breed
             brand_drawings: Optional brand drawings
             brand_locations: Optional brand locations
             other_marks: Optional other marks
+            visual_id: Optional visual ID
+            lot: Optional lot identifier
+            lot_group: Optional lot group identifier
             created_by: User who created the record
         """
         feedlot_db = get_feedlot_db(feedlot_code)
         cattle_data = {
             'feedlot_id': ObjectId(feedlot_id),
-            'batch_id': ObjectId(batch_id),
+            'batch_id': ObjectId(batch_id) if batch_id else None,
             'cattle_id': cattle_id,
             'sex': sex,
             'weight': weight,
-            'health_status': health_status,
+            'cattle_status': cattle_status,
             'lf_tag': lf_tag or '',
             'uhf_tag': uhf_tag or '',
             'pen_id': ObjectId(pen_id) if pen_id else None,
@@ -46,6 +50,9 @@ class Cattle:
             'brand_drawings': brand_drawings or '',
             'brand_locations': brand_locations or '',
             'other_marks': other_marks or '',
+            'visual_id': visual_id or '',
+            'lot': lot or '',
+            'lot_group': lot_group or '',
             'status': 'active',
             'induction_date': datetime.utcnow(),
             'created_at': datetime.utcnow(),
@@ -69,63 +76,102 @@ class Cattle:
         return cattle_record_id
     
     @staticmethod
-    def find_by_id(feedlot_code, cattle_record_id):
+    def find_by_id(feedlot_code, cattle_record_id, include_deleted=False):
         """Find cattle by ID
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
             cattle_record_id: The cattle record ID
+            include_deleted: If True, include soft-deleted cattle. Defaults to False.
         """
         feedlot_db = get_feedlot_db(feedlot_code)
-        return feedlot_db.cattle.find_one({'_id': ObjectId(cattle_record_id)})
+        query = {'_id': ObjectId(cattle_record_id)}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return feedlot_db.cattle.find_one(query)
     
     @staticmethod
-    def find_by_cattle_id(feedlot_code, feedlot_id, cattle_id):
+    def find_by_cattle_id(feedlot_code, feedlot_id, cattle_id, include_deleted=False):
         """Find cattle by cattle ID
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
             feedlot_id: The feedlot ID
             cattle_id: The cattle ID
+            include_deleted: If True, include soft-deleted cattle. Defaults to False.
         """
         feedlot_db = get_feedlot_db(feedlot_code)
-        return feedlot_db.cattle.find_one({
+        query = {
             'feedlot_id': ObjectId(feedlot_id),
             'cattle_id': cattle_id
-        })
+        }
+        if not include_deleted:
+            query['deleted_at'] = None
+        return feedlot_db.cattle.find_one(query)
     
     @staticmethod
-    def find_by_feedlot(feedlot_code, feedlot_id):
+    def find_by_uhf_tag(feedlot_code, feedlot_id, uhf_tag, include_deleted=False):
+        """Find cattle by UHF tag (EPC)
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            feedlot_id: The feedlot ID
+            uhf_tag: The UHF tag (EPC)
+            include_deleted: If True, include soft-deleted cattle. Defaults to False.
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        query = {
+            'feedlot_id': ObjectId(feedlot_id),
+            'uhf_tag': uhf_tag
+        }
+        if not include_deleted:
+            query['deleted_at'] = None
+        return feedlot_db.cattle.find_one(query)
+    
+    @staticmethod
+    def find_by_feedlot(feedlot_code, feedlot_id, include_deleted=False):
         """Find all cattle for a feedlot
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
             feedlot_id: The feedlot ID
+            include_deleted: If True, include soft-deleted cattle. Defaults to False.
         """
         feedlot_db = get_feedlot_db(feedlot_code)
-        return list(feedlot_db.cattle.find({'feedlot_id': ObjectId(feedlot_id)}))
+        query = {'feedlot_id': ObjectId(feedlot_id)}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return list(feedlot_db.cattle.find(query))
     
     @staticmethod
-    def find_by_batch(feedlot_code, batch_id):
+    def find_by_batch(feedlot_code, batch_id, include_deleted=False):
         """Find all cattle in a batch
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
             batch_id: The batch ID
+            include_deleted: If True, include soft-deleted cattle. Defaults to False.
         """
         feedlot_db = get_feedlot_db(feedlot_code)
-        return list(feedlot_db.cattle.find({'batch_id': ObjectId(batch_id)}))
+        query = {'batch_id': ObjectId(batch_id)}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return list(feedlot_db.cattle.find(query))
     
     @staticmethod
-    def find_by_pen(feedlot_code, pen_id):
+    def find_by_pen(feedlot_code, pen_id, include_deleted=False):
         """Find all cattle in a pen
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
             pen_id: The pen ID
+            include_deleted: If True, include soft-deleted cattle. Defaults to False.
         """
         feedlot_db = get_feedlot_db(feedlot_code)
-        return list(feedlot_db.cattle.find({'pen_id': ObjectId(pen_id), 'status': 'active'}))
+        query = {'pen_id': ObjectId(pen_id), 'status': 'active'}
+        if not include_deleted:
+            query['deleted_at'] = None
+        return list(feedlot_db.cattle.find(query))
     
     @staticmethod
     def update_cattle(feedlot_code, cattle_record_id, update_data, updated_by='system'):
@@ -147,8 +193,9 @@ class Cattle:
         new_values = {}
         
         # Fields to track (excluding internal fields)
-        trackable_fields = ['sex', 'health_status', 'color', 'breed', 'brand_drawings', 
-                          'brand_locations', 'other_marks', 'notes', 'induction_date', 'pen_id']
+        trackable_fields = ['sex', 'cattle_status', 'color', 'breed', 'brand_drawings', 
+                          'brand_locations', 'other_marks', 'notes', 'induction_date', 'pen_id',
+                          'visual_id', 'lot', 'lot_group']
         
         for field in trackable_fields:
             if field in update_data:
@@ -162,8 +209,8 @@ class Cattle:
                     
                     # Format change description
                     if field == 'pen_id':
-                        old_pen = Pen.find_by_id(feedlot_code, old_value) if old_value else None
-                        new_pen = Pen.find_by_id(feedlot_code, new_value) if new_value else None
+                        old_pen = Pen.find_by_id(str(old_value)) if old_value else None
+                        new_pen = Pen.find_by_id(str(new_value)) if new_value else None
                         old_name = old_pen.get('pen_number', str(old_value)) if old_pen else None
                         new_name = new_pen.get('pen_number', str(new_value)) if new_pen else None
                         changes.append(f"{field}: {old_name or 'none'} → {new_name or 'none'}")
@@ -207,8 +254,8 @@ class Cattle:
         old_pen_id = cattle.get('pen_id') if cattle else None
         
         # Get pen names for audit log
-        old_pen = Pen.find_by_id(feedlot_code, old_pen_id) if old_pen_id else None
-        new_pen = Pen.find_by_id(feedlot_code, new_pen_id) if new_pen_id else None
+        old_pen = Pen.find_by_id(str(old_pen_id)) if old_pen_id else None
+        new_pen = Pen.find_by_id(str(new_pen_id)) if new_pen_id else None
         
         old_pen_name = old_pen.get('pen_number', str(old_pen_id)) if old_pen else None
         new_pen_name = new_pen.get('pen_number', str(new_pen_id)) if new_pen else None
@@ -261,6 +308,34 @@ class Cattle:
             'Cattle record marked as removed',
             removed_by,
             {'status': 'removed'}
+        )
+    
+    @staticmethod
+    def delete_cattle(feedlot_code, cattle_record_id, deleted_by='system'):
+        """Soft delete cattle (marks as deleted but doesn't remove from database)
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            cattle_record_id: The cattle record ID
+            deleted_by: User who deleted the cattle
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        feedlot_db.cattle.update_one(
+            {'_id': ObjectId(cattle_record_id)},
+            {'$set': {
+                'deleted_at': datetime.utcnow(),
+                'updated_at': datetime.utcnow()
+            }}
+        )
+        
+        # Add audit log entry for deletion
+        Cattle.add_audit_log_entry(
+            feedlot_code,
+            cattle_record_id,
+            'deleted',
+            'Cattle record soft deleted',
+            deleted_by,
+            {'deleted_at': datetime.utcnow().isoformat()}
         )
     
     @staticmethod
@@ -405,29 +480,34 @@ class Cattle:
         return cattle.get('movement_history', [])
     
     @staticmethod
-    def find_by_feedlot_with_filters(feedlot_code, feedlot_id, search=None, health_status=None, sex=None, pen_id=None, sort_by='cattle_id', sort_order='asc'):
+    def find_by_feedlot_with_filters(feedlot_code, feedlot_id, search=None, cattle_status=None, sex=None, pen_id=None, sort_by='cattle_id', sort_order='asc', include_deleted=False):
         """Find cattle with filtering and sorting
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
             feedlot_id: The feedlot ID
             search: Optional search term for cattle_id
-            health_status: Optional health status filter
+            cattle_status: Optional cattle status filter
             sex: Optional sex filter
             pen_id: Optional pen ID filter
             sort_by: Field to sort by
             sort_order: Sort order ('asc' or 'desc')
+            include_deleted: If True, include soft-deleted cattle. Defaults to False.
         """
         feedlot_db = get_feedlot_db(feedlot_code)
         query = {'feedlot_id': ObjectId(feedlot_id)}
+        
+        # Exclude soft-deleted records by default
+        if not include_deleted:
+            query['deleted_at'] = None
         
         # Add search filter for cattle_id
         if search:
             query['cattle_id'] = {'$regex': search, '$options': 'i'}
         
-        # Add health status filter
-        if health_status:
-            query['health_status'] = health_status
+        # Add cattle status filter
+        if cattle_status:
+            query['cattle_status'] = cattle_status
         
         # Add sex filter
         if sex:
@@ -445,7 +525,7 @@ class Cattle:
             'cattle_id': 'cattle_id',
             'weight': 'weight',
             'induction_date': 'induction_date',
-            'health_status': 'health_status',
+            'cattle_status': 'cattle_status',
             'sex': 'sex'
         }
         

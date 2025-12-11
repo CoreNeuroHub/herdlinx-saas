@@ -12,91 +12,197 @@
             <p class="text-gray-600">{{ feedlot.name }}</p>
         </div>
 
-        <form method="POST" class="space-y-8">
-            <input type="hidden" name="selection_method" id="selection_method" value="pen">
-            
-            <!-- Selection Method Tabs -->
+        <form method="POST" class="space-y-8" id="export-form">
+            <!-- Select Cattle Section -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Select Cattle</h2>
                 
-                <div class="border-b border-gray-200 mb-6">
-                    <nav class="-mb-px flex space-x-8">
-                        <button type="button" onclick="switchTab('pen')" id="tab-pen" 
-                                class="py-4 px-1 border-b-2 font-medium text-sm tab-button active">
-                            Select by Pen
-                        </button>
-                        <button type="button" onclick="switchTab('manual')" id="tab-manual"
-                                class="py-4 px-1 border-b-2 font-medium text-sm tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                            Select Individual Cattle
-                        </button>
-                    </nav>
-                </div>
-                
-                <!-- Pen Selection Tab -->
-                <div id="pen-selection" class="tab-content">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Pen(s)</label>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
-                            {% for pen in pens %}
-                            <label class="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" name="pen_ids" value="{{ pen._id }}" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
-                                <div class="flex-1">
-                                    <div class="font-semibold text-gray-900">Pen {{ pen.pen_number }}</div>
-                                    <div class="text-sm text-gray-500">{{ pen.cattle_count }} cattle</div>
+                <!-- Filter Form -->
+                <div class="mb-6 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Batches Multiselect -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Batch(es)</label>
+                            <div class="relative">
+                                <!-- Selected Batches Chips -->
+                                <div id="batch-chips" class="flex flex-wrap gap-2 mb-2 min-h-[2rem]"></div>
+                                
+                                <!-- Searchable Dropdown -->
+                                <div class="relative">
+                                    <input type="text" 
+                                           id="batch-search" 
+                                           placeholder="Search batches..."
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                           autocomplete="off"
+                                           data-testid="filter-batch-search-input">
+                                    <svg class="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                    </svg>
+                                    
+                                    <!-- Dropdown Options -->
+                                    <div id="batch-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto" data-testid="batch-dropdown">
+                                        {% for batch in batches %}
+                                        <div class="batch-option px-4 py-2 hover:bg-gray-100 cursor-pointer" 
+                                             data-batch-id="{{ batch._id }}" 
+                                             data-batch-number="{{ batch.batch_number }}"
+                                             data-testid="batch-option-{{ batch._id }}">
+                                            Batch {{ batch.batch_number }}
+                                        </div>
+                                        {% endfor %}
+                                        {% if not batches %}
+                                        <div class="px-4 py-2 text-gray-500">No export batches available.</div>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            </label>
-                            {% endfor %}
-                            {% if not pens %}
-                            <p class="text-gray-500 col-span-full">No pens available. Create pens first.</p>
-                            {% endif %}
+                            </div>
                         </div>
+                        
+                        <!-- Pens Multiselect -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Pen(s)</label>
+                            <div class="relative">
+                                <!-- Selected Pens Chips -->
+                                <div id="pen-chips" class="flex flex-wrap gap-2 mb-2 min-h-[2rem]"></div>
+                                
+                                <!-- Searchable Dropdown -->
+                                <div class="relative">
+                                    <input type="text" 
+                                           id="pen-search" 
+                                           placeholder="Search pens..."
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                           autocomplete="off"
+                                           data-testid="filter-pen-search-input">
+                                    <svg class="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                    </svg>
+                                    
+                                    <!-- Dropdown Options -->
+                                    <div id="pen-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto" data-testid="pen-dropdown">
+                                        {% for pen in pens %}
+                                        <div class="pen-option px-4 py-2 hover:bg-gray-100 cursor-pointer" 
+                                             data-pen-id="{{ pen._id }}" 
+                                             data-pen-number="{{ pen.pen_number }}"
+                                             data-testid="pen-option-{{ pen._id }}">
+                                            Pen {{ pen.pen_number }}
+                                        </div>
+                                        {% endfor %}
+                                        {% if not pens %}
+                                        <div class="px-4 py-2 text-gray-500">No pens available.</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Apply Filters and Reset Buttons -->
+                    <div class="flex gap-3">
+                        <button type="button" 
+                                onclick="applyFilters()" 
+                                style="background-color: #2D8B8B;"
+                                class="hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                                data-testid="apply-filters-button">
+                            Apply Filters
+                        </button>
+                        <button type="button" 
+                                onclick="resetFilters()" 
+                                class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                                data-testid="reset-filter-button">
+                            Reset
+                        </button>
                     </div>
                 </div>
                 
-                <!-- Manual Selection Tab -->
-                <div id="manual-selection" class="tab-content hidden">
-                    <div class="mb-4">
-                        <input type="text" id="cattle-search" placeholder="Search cattle by ID..." 
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
-                               onkeyup="filterCattle()">
-                        <div class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-4">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                            <input type="checkbox" id="select-all" onclick="toggleAllCattle()" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
-                                        </th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cattle ID</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">LF Tag</th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pen</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200" id="cattle-list">
-                                    {% for c in cattle %}
-                                    <tr class="cattle-row" data-cattle-id="{{ c.cattle_id|lower }}">
-                                        <td class="px-4 py-3">
-                                            <input type="checkbox" name="cattle_ids" value="{{ c._id }}" class="cattle-checkbox rounded border-gray-300 text-teal-600 focus:ring-teal-500">
-                                        </td>
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ c.cattle_id }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-500">{{ c.lf_tag or '-' }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-500">
-                                            {% if c.pen_id %}
-                                            Pen {{ c.pen_id }}
-                                            {% else %}
-                                            -
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                    {% if not cattle %}
-                                    <tr>
-                                        <td colspan="4" class="px-4 py-3 text-center text-gray-500">No cattle available.</td>
-                                    </tr>
+                <!-- Selected Count -->
+                <div class="mb-4">
+                    <p id="selected-count" class="text-sm font-medium text-gray-700" data-testid="selected-cattle-count">0 cattles selected</p>
+                </div>
+                
+                <!-- Cattle Table -->
+                <div class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                                    <input type="checkbox" id="select-all" onclick="toggleAllCattle()" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500" data-testid="select-all-cattle-checkbox">
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors" onclick="sortTable('cattle-id')" data-testid="sort-cattle-id-header">
+                                    Cattle ID <span class="sort-indicator" data-field="cattle-id"></span>
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors" onclick="sortTable('lf-tag')" data-testid="sort-lf-tag-header">
+                                    LF Tag <span class="sort-indicator" data-field="lf-tag"></span>
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors" onclick="sortTable('uhf-tag')" data-testid="sort-uhf-tag-header">
+                                    UHF Tag <span class="sort-indicator" data-field="uhf-tag"></span>
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors" onclick="sortTable('pen')" data-testid="sort-pen-header">
+                                    Pen <span class="sort-indicator" data-field="pen"></span>
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100 transition-colors" onclick="sortTable('batch')" data-testid="sort-batch-header">
+                                    Batch <span class="sort-indicator" data-field="batch"></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="cattle-list">
+                            {% for c in cattle %}
+                            {% set pen_number = '' %}
+                            {% if c.pen_id %}
+                                {% for pen in pens %}
+                                    {% if pen._id == c.pen_id %}
+                                        {% set pen_number = pen.pen_number %}
                                     {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            {% set batch_number = '' %}
+                            {% if c.batch_id %}
+                                {% for batch in batches %}
+                                    {% if batch._id == c.batch_id %}
+                                        {% set batch_number = batch.batch_number %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            <tr class="cattle-row" 
+                                data-cattle-id="{{ c.cattle_id|lower }}"
+                                data-batch-id="{{ c.batch_id if c.batch_id else '' }}"
+                                data-pen-id="{{ c.pen_id if c.pen_id else '' }}"
+                                data-lf-tag="{{ (c.lf_tag or '')|lower }}"
+                                data-uhf-tag="{{ (c.uhf_tag or '')|lower }}"
+                                data-pen-number="{{ pen_number or '0' }}"
+                                data-batch-number="{{ batch_number or '0' }}">
+                                <td class="px-4 py-3">
+                                    <input type="checkbox" 
+                                           name="cattle_ids" 
+                                           value="{{ c._id }}" 
+                                           class="cattle-checkbox rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                           onchange="updateSelectedCount()"
+                                           data-testid="cattle-checkbox-{{ c._id }}">
+                                </td>
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ c.cattle_id }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">{{ c.lf_tag or '-' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">{{ c.uhf_tag or '-' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">
+                                    {% if pen_number %}
+                                    Pen {{ pen_number }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-500">
+                                    {% if batch_number %}
+                                    Batch {{ batch_number }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not cattle %}
+                            <tr>
+                                <td colspan="6" class="px-4 py-3 text-center text-gray-500">No cattle with export status available.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
@@ -108,11 +214,12 @@
                     <label for="template_id" class="block text-sm font-medium text-gray-700 mb-2">
                         Use Template (Optional)
                     </label>
-                    <select id="template_id" name="template_id" onchange="toggleManualFields()"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                    <select id="template_id" name="template_id" onchange="fillFormFromTemplate()"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                            data-testid="template-select">
                         <option value="none">No Template - Enter Manually</option>
                         {% for template in templates %}
-                        <option value="{{ template._id }}">{{ template.name }}{% if template.is_default %} (Default){% endif %}</option>
+                        <option value="{{ template._id|string }}">{{ template.name }}{% if template.is_default %} (Default){% endif %}</option>
                         {% endfor %}
                     </select>
                     <div class="mt-2">
@@ -121,18 +228,20 @@
                     </div>
                 </div>
                 
-                <!-- Manual Entry Fields (shown when no template selected) -->
+                <!-- Manual Entry Fields (always visible, pre-filled when template selected) -->
                 <div id="manual-fields">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <label for="date" class="block text-sm font-medium text-gray-700 mb-2">Date</label>
                             <input type="date" id="date" name="date"
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                   data-testid="manifest-date-input">
                         </div>
                         <div>
                             <label for="purpose" class="block text-sm font-medium text-gray-700 mb-2">Purpose</label>
                             <select id="purpose" name="purpose"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                    data-testid="manifest-purpose-select">
                                 <option value="transport_only">Transport Only</option>
                                 <option value="transport_for_sale_owner">Transport for Sale - By Owner</option>
                                 <option value="transport_for_sale_dealer">Transport for Sale - By Dealer</option>
@@ -147,17 +256,20 @@
                             <div>
                                 <label for="owner_name" class="block text-sm font-medium text-gray-700 mb-2">Owner Name</label>
                                 <input type="text" id="owner_name" name="owner_name"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-owner-name-input">
                             </div>
                             <div>
                                 <label for="owner_phone" class="block text-sm font-medium text-gray-700 mb-2">Owner Phone</label>
                                 <input type="text" id="owner_phone" name="owner_phone"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-owner-phone-input">
                             </div>
                             <div class="md:col-span-2">
                                 <label for="owner_address" class="block text-sm font-medium text-gray-700 mb-2">Owner Address</label>
                                 <textarea id="owner_address" name="owner_address" rows="2"
-                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"></textarea>
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                          data-testid="manifest-owner-address-textarea"></textarea>
                             </div>
                         </div>
                     </div>
@@ -168,27 +280,32 @@
                             <div>
                                 <label for="location_before" class="block text-sm font-medium text-gray-700 mb-2">Location Before Transport</label>
                                 <input type="text" id="location_before" name="location_before" value="{{ feedlot.name }}"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-location-before-input">
                             </div>
                             <div>
                                 <label for="premises_id_before" class="block text-sm font-medium text-gray-700 mb-2">Premises ID (Before)</label>
                                 <input type="text" id="premises_id_before" name="premises_id_before"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-premises-id-before-input">
                             </div>
                             <div>
                                 <label for="destination_name" class="block text-sm font-medium text-gray-700 mb-2">Destination Name</label>
                                 <input type="text" id="destination_name" name="destination_name"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-destination-name-input">
                             </div>
                             <div>
                                 <label for="destination_address" class="block text-sm font-medium text-gray-700 mb-2">Destination Address</label>
                                 <input type="text" id="destination_address" name="destination_address"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-destination-address-input">
                             </div>
                             <div>
                                 <label for="premises_id_destination" class="block text-sm font-medium text-gray-700 mb-2">Premises ID (Destination)</label>
                                 <input type="text" id="premises_id_destination" name="premises_id_destination"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-premises-id-destination-input">
                             </div>
                         </div>
                     </div>
@@ -199,39 +316,23 @@
                             <div>
                                 <label for="transporter_name" class="block text-sm font-medium text-gray-700 mb-2">Transporter Name</label>
                                 <input type="text" id="transporter_name" name="transporter_name"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-transporter-name-input">
                             </div>
                             <div>
                                 <label for="transporter_phone" class="block text-sm font-medium text-gray-700 mb-2">Transporter Phone</label>
                                 <input type="text" id="transporter_phone" name="transporter_phone"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-transporter-phone-input">
                             </div>
                             <div>
                                 <label for="transporter_trailer" class="block text-sm font-medium text-gray-700 mb-2">Trailer/Conveyance Number</label>
                                 <input type="text" id="transporter_trailer" name="transporter_trailer"
-                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                       data-testid="manifest-transporter-trailer-input">
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Export Format -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Export Format</h2>
-                <div class="space-y-2">
-                    <label class="flex items-center">
-                        <input type="radio" name="export_format" value="pdf" checked class="mr-2">
-                        <span>PDF</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="export_format" value="html" class="mr-2">
-                        <span>HTML (Printable)</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="export_format" value="both" class="mr-2">
-                        <span>Both</span>
-                    </label>
                 </div>
             </div>
             
@@ -266,63 +367,441 @@
 </div>
 
 <script>
-function switchTab(tab) {
-    document.getElementById('selection_method').value = tab;
-    
-    // Update tab buttons
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('active', 'border-teal-500', 'text-teal-600');
-        btn.classList.add('border-transparent', 'text-gray-500');
-    });
-    
-    if (tab === 'pen') {
-        document.getElementById('tab-pen').classList.add('active', 'border-teal-500', 'text-teal-600');
-        document.getElementById('tab-pen').classList.remove('border-transparent', 'text-gray-500');
-        document.getElementById('pen-selection').classList.remove('hidden');
-        document.getElementById('manual-selection').classList.add('hidden');
-    } else {
-        document.getElementById('tab-manual').classList.add('active', 'border-teal-500', 'text-teal-600');
-        document.getElementById('tab-manual').classList.remove('border-transparent', 'text-gray-500');
-        document.getElementById('pen-selection').classList.add('hidden');
-        document.getElementById('manual-selection').classList.remove('hidden');
-    }
-}
+// Multiselect state
+let batchSelections = [];
+let penSelections = [];
 
-function toggleManualFields() {
-    const templateId = document.getElementById('template_id').value;
-    const manualFields = document.getElementById('manual-fields');
-    if (templateId === 'none') {
-        manualFields.style.display = 'block';
-    } else {
-        manualFields.style.display = 'none';
-    }
-}
+// Sorting state
+let currentSortField = null;
+let currentSortOrder = 'asc';
 
-function filterCattle() {
-    const search = document.getElementById('cattle-search').value.toLowerCase();
-    const rows = document.querySelectorAll('.cattle-row');
-    rows.forEach(row => {
-        const cattleId = row.getAttribute('data-cattle-id');
-        if (cattleId.includes(search)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
+// Initialize multiselect dropdowns
+document.addEventListener('DOMContentLoaded', function() {
+    // Batch dropdown handlers
+    const batchSearch = document.getElementById('batch-search');
+    const batchDropdown = document.getElementById('batch-dropdown');
+    
+    if (batchSearch) {
+        batchSearch.addEventListener('focus', function() {
+            filterBatchOptions(batchSearch.value);
+            batchDropdown.classList.remove('hidden');
+        });
+        
+        batchSearch.addEventListener('input', function(e) {
+            filterBatchOptions(e.target.value);
+            batchDropdown.classList.remove('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!batchSearch.contains(e.target) && !batchDropdown.contains(e.target)) {
+                batchDropdown.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Pen dropdown handlers
+    const penSearch = document.getElementById('pen-search');
+    const penDropdown = document.getElementById('pen-dropdown');
+    
+    if (penSearch) {
+        penSearch.addEventListener('focus', function() {
+            filterPenOptions(penSearch.value);
+            penDropdown.classList.remove('hidden');
+        });
+        
+        penSearch.addEventListener('input', function(e) {
+            filterPenOptions(e.target.value);
+            penDropdown.classList.remove('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!penSearch.contains(e.target) && !penDropdown.contains(e.target)) {
+                penDropdown.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Handle batch option clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('batch-option')) {
+            const batchId = e.target.getAttribute('data-batch-id');
+            const batchNumber = e.target.getAttribute('data-batch-number');
+            toggleBatchSelection(batchId, batchNumber);
+        }
+        
+        if (e.target.classList.contains('pen-option')) {
+            const penId = e.target.getAttribute('data-pen-id');
+            const penNumber = e.target.getAttribute('data-pen-number');
+            togglePenSelection(penId, penNumber);
         }
     });
+    
+    // Initialize
+    updateSelectedCount();
+    updateSortIndicators();
+    
+    // Set default date to today
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        dateInput.valueAsDate = new Date();
+    }
+});
+
+function toggleBatchSelection(batchId, batchNumber) {
+    const index = batchSelections.findIndex(s => s.id === batchId);
+    if (index > -1) {
+        batchSelections.splice(index, 1);
+    } else {
+        batchSelections.push({ id: batchId, number: batchNumber });
+    }
+    renderBatchChips();
+    filterBatchOptions(document.getElementById('batch-search').value);
+}
+
+function togglePenSelection(penId, penNumber) {
+    const index = penSelections.findIndex(s => s.id === penId);
+    if (index > -1) {
+        penSelections.splice(index, 1);
+    } else {
+        penSelections.push({ id: penId, number: penNumber });
+    }
+    renderPenChips();
+    filterPenOptions(document.getElementById('pen-search').value);
+}
+
+function renderBatchChips() {
+    const container = document.getElementById('batch-chips');
+    container.innerHTML = '';
+    batchSelections.forEach(selection => {
+        const chip = document.createElement('div');
+        chip.className = 'inline-flex items-center gap-1 px-2 py-1 bg-teal-100 text-teal-800 rounded text-sm';
+        chip.innerHTML = `
+            <span>Batch ${selection.number}</span>
+            <button type="button" onclick="removeBatchSelection('${selection.id}')" class="text-teal-800 hover:text-teal-900" data-testid="remove-batch-chip-${selection.id}">×</button>
+        `;
+        container.appendChild(chip);
+    });
+}
+
+function renderPenChips() {
+    const container = document.getElementById('pen-chips');
+    container.innerHTML = '';
+    penSelections.forEach(selection => {
+        const chip = document.createElement('div');
+        chip.className = 'inline-flex items-center gap-1 px-2 py-1 bg-teal-100 text-teal-800 rounded text-sm';
+        chip.innerHTML = `
+            <span>Pen ${selection.number}</span>
+            <button type="button" onclick="removePenSelection('${selection.id}')" class="text-teal-800 hover:text-teal-900" data-testid="remove-pen-chip-${selection.id}">×</button>
+        `;
+        container.appendChild(chip);
+    });
+}
+
+function removeBatchSelection(batchId) {
+    batchSelections = batchSelections.filter(s => s.id !== batchId);
+    renderBatchChips();
+    filterBatchOptions(document.getElementById('batch-search').value);
+}
+
+function removePenSelection(penId) {
+    penSelections = penSelections.filter(s => s.id !== penId);
+    renderPenChips();
+    filterPenOptions(document.getElementById('pen-search').value);
+}
+
+function filterBatchOptions(searchTerm) {
+    const options = document.querySelectorAll('.batch-option');
+    const searchLower = (searchTerm || '').toLowerCase();
+    
+    options.forEach(option => {
+        const batchNumber = option.getAttribute('data-batch-number') || '';
+        const batchId = option.getAttribute('data-batch-id');
+        const text = `batch ${batchNumber}`.toLowerCase();
+        
+        const isSelected = batchSelections.find(s => s.id === batchId);
+        
+        if ((!searchLower || text.includes(searchLower)) && !isSelected) {
+            option.style.display = 'block';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+}
+
+function filterPenOptions(searchTerm) {
+    const options = document.querySelectorAll('.pen-option');
+    const searchLower = (searchTerm || '').toLowerCase();
+    
+    options.forEach(option => {
+        const penNumber = option.getAttribute('data-pen-number') || '';
+        const penId = option.getAttribute('data-pen-id');
+        const text = `pen ${penNumber}`.toLowerCase();
+        
+        const isSelected = penSelections.find(s => s.id === penId);
+        
+        if ((!searchLower || text.includes(searchLower)) && !isSelected) {
+            option.style.display = 'block';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+}
+
+function applyFilters() {
+    const rows = document.querySelectorAll('.cattle-row');
+    const selectedBatchIds = batchSelections.map(s => s.id);
+    const selectedPenIds = penSelections.map(s => s.id);
+    
+    rows.forEach(row => {
+        const batchId = row.getAttribute('data-batch-id') || '';
+        const penId = row.getAttribute('data-pen-id') || '';
+        
+        let show = true;
+        
+        // If batches are selected, cattle must be in one of them
+        if (selectedBatchIds.length > 0) {
+            show = show && (batchId && selectedBatchIds.includes(batchId));
+        }
+        
+        // If pens are selected, cattle must be in one of them
+        if (selectedPenIds.length > 0) {
+            show = show && (penId && selectedPenIds.includes(penId));
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+    
+    // Uncheck all when filtering
+    document.getElementById('select-all').checked = false;
+    document.querySelectorAll('.cattle-checkbox').forEach(cb => {
+        if (cb.closest('tr').style.display === 'none') {
+            cb.checked = false;
+        }
+    });
+    
+    // Reapply sorting if a sort is active
+    if (currentSortField) {
+        sortTable(currentSortField, true);
+    }
+    
+    updateSelectedCount();
+}
+
+function resetFilters() {
+    batchSelections = [];
+    penSelections = [];
+    renderBatchChips();
+    renderPenChips();
+    document.getElementById('batch-search').value = '';
+    document.getElementById('pen-search').value = '';
+    
+    // Show all rows
+    const rows = document.querySelectorAll('.cattle-row');
+    rows.forEach(row => {
+        row.style.display = '';
+    });
+    
+    // Uncheck all
+    document.getElementById('select-all').checked = false;
+    document.querySelectorAll('.cattle-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+    
+    updateSelectedCount();
 }
 
 function toggleAllCattle() {
     const selectAll = document.getElementById('select-all');
     const checkboxes = document.querySelectorAll('.cattle-checkbox');
-    checkboxes.forEach(cb => {
+    const visibleRows = Array.from(checkboxes).filter(cb => {
+        return cb.closest('tr').style.display !== 'none';
+    });
+    
+    visibleRows.forEach(cb => {
         cb.checked = selectAll.checked;
     });
+    
+    updateSelectedCount();
 }
 
-// Initialize
-toggleManualFields();
-// Set default date to today
-document.getElementById('date').valueAsDate = new Date();
+function updateSelectedCount() {
+    const checkedBoxes = document.querySelectorAll('.cattle-checkbox:checked');
+    const count = checkedBoxes.length;
+    const countElement = document.getElementById('selected-count');
+    countElement.textContent = `${count} cattles selected`;
+}
+
+// Template data embedded in page
+const templateData = {
+    {% for template in templates %}
+    "{{ template._id|string }}": {
+        "owner_name": {{ (template.owner_name or '')|tojson }},
+        "owner_phone": {{ (template.owner_phone or '')|tojson }},
+        "owner_address": {{ (template.owner_address or '')|tojson }},
+        "destination_name": {{ (template.default_destination_name or '')|tojson }},
+        "destination_address": {{ (template.default_destination_address or '')|tojson }},
+        "transporter_name": {{ (template.default_transporter_name or '')|tojson }},
+        "transporter_phone": {{ (template.default_transporter_phone or '')|tojson }},
+        "transporter_trailer": {{ (template.default_transporter_trailer or '')|tojson }},
+        "purpose": {{ (template.default_purpose or 'transport_only')|tojson }},
+        "premises_id_before": {{ (template.default_premises_id_before or '')|tojson }},
+        "premises_id_destination": {{ (template.default_premises_id_destination or '')|tojson }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+};
+
+function fillFormFromTemplate() {
+    const templateId = document.getElementById('template_id').value;
+    const manualFields = document.getElementById('manual-fields');
+    
+    // Always show the form fields
+    manualFields.style.display = 'block';
+    
+    if (templateId === 'none' || !templateData[templateId]) {
+        // Clear all fields when no template is selected
+        document.getElementById('owner_name').value = '';
+        document.getElementById('owner_phone').value = '';
+        document.getElementById('owner_address').value = '';
+        document.getElementById('destination_name').value = '';
+        document.getElementById('destination_address').value = '';
+        document.getElementById('transporter_name').value = '';
+        document.getElementById('transporter_phone').value = '';
+        document.getElementById('transporter_trailer').value = '';
+        document.getElementById('purpose').value = 'transport_only';
+        document.getElementById('premises_id_before').value = '';
+        document.getElementById('premises_id_destination').value = '';
+        
+        // Reset date to today
+        const dateInput = document.getElementById('date');
+        if (dateInput) {
+            dateInput.valueAsDate = new Date();
+        }
+    } else {
+        // Pre-fill form with template data
+        const template = templateData[templateId];
+        
+        document.getElementById('owner_name').value = template.owner_name || '';
+        document.getElementById('owner_phone').value = template.owner_phone || '';
+        document.getElementById('owner_address').value = template.owner_address || '';
+        document.getElementById('destination_name').value = template.destination_name || '';
+        document.getElementById('destination_address').value = template.destination_address || '';
+        document.getElementById('transporter_name').value = template.transporter_name || '';
+        document.getElementById('transporter_phone').value = template.transporter_phone || '';
+        document.getElementById('transporter_trailer').value = template.transporter_trailer || '';
+        document.getElementById('purpose').value = template.purpose || 'transport_only';
+        document.getElementById('premises_id_before').value = template.premises_id_before || '';
+        document.getElementById('premises_id_destination').value = template.premises_id_destination || '';
+        
+        // Set date to today (templates don't have dates)
+        const dateInput = document.getElementById('date');
+        if (dateInput) {
+            dateInput.valueAsDate = new Date();
+        }
+    }
+}
+
+function sortTable(field, preserveOrder = false) {
+    // Toggle sort order if clicking the same field (unless preserving order)
+    if (!preserveOrder) {
+        if (currentSortField === field) {
+            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortField = field;
+            currentSortOrder = 'asc';
+        }
+    } else if (!currentSortField) {
+        // If no sort is active, don't sort
+        return;
+    }
+    
+    const tbody = document.getElementById('cattle-list');
+    const rows = Array.from(tbody.querySelectorAll('.cattle-row'));
+    
+    // Filter out hidden rows (from batch/pen filters)
+    const visibleRows = rows.filter(row => row.style.display !== 'none');
+    
+    // Use current sort field if preserving order
+    const sortField = preserveOrder ? currentSortField : field;
+    
+    // Sort the visible rows
+    visibleRows.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch(sortField) {
+            case 'cattle-id':
+                aValue = a.getAttribute('data-cattle-id') || '';
+                bValue = b.getAttribute('data-cattle-id') || '';
+                break;
+            case 'lf-tag':
+                aValue = a.getAttribute('data-lf-tag') || '';
+                bValue = b.getAttribute('data-lf-tag') || '';
+                break;
+            case 'uhf-tag':
+                aValue = a.getAttribute('data-uhf-tag') || '';
+                bValue = b.getAttribute('data-uhf-tag') || '';
+                break;
+            case 'pen':
+                // Get pen number from row's data attribute
+                aValue = parseInt(a.getAttribute('data-pen-number')) || 0;
+                bValue = parseInt(b.getAttribute('data-pen-number')) || 0;
+                break;
+            case 'batch':
+                // Get batch number from row's data attribute
+                aValue = parseInt(a.getAttribute('data-batch-number')) || 0;
+                bValue = parseInt(b.getAttribute('data-batch-number')) || 0;
+                break;
+            default:
+                return 0;
+        }
+        
+        // Handle numeric sorting for pen and batch
+        if (sortField === 'pen' || sortField === 'batch') {
+            return currentSortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+        
+        // String comparison for other fields
+        aValue = (aValue || '').toLowerCase();
+        bValue = (bValue || '').toLowerCase();
+        
+        let comparison = 0;
+        if (aValue < bValue) {
+            comparison = -1;
+        } else if (aValue > bValue) {
+            comparison = 1;
+        }
+        
+        return currentSortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    // Reorder rows in the DOM
+    // First, remove all rows
+    rows.forEach(row => tbody.removeChild(row));
+    
+    // Add sorted visible rows first
+    visibleRows.forEach(row => tbody.appendChild(row));
+    
+    // Add hidden rows at the end
+    rows.forEach(row => {
+        if (row.style.display === 'none') {
+            tbody.appendChild(row);
+        }
+    });
+    
+    updateSortIndicators();
+}
+
+function updateSortIndicators() {
+    const indicators = document.querySelectorAll('.sort-indicator');
+    indicators.forEach(indicator => {
+        const field = indicator.getAttribute('data-field');
+        indicator.innerHTML = '';
+        if (field === currentSortField) {
+            indicator.innerHTML = currentSortOrder === 'asc' ? ' ↑' : ' ↓';
+        }
+    });
+}
 </script>
 {% endblock %}
 

@@ -4,6 +4,10 @@ from datetime import datetime
 from app.models.feedlot import Feedlot
 from app.models.user import User
 from app.models.api_key import APIKey
+from app.models.pen import Pen
+from app.models.batch import Batch
+from app.models.cattle import Cattle
+from app.models.manifest_template import ManifestTemplate
 from app.routes.auth_routes import login_required, super_admin_required, admin_access_required
 from app import db
 import bcrypt
@@ -915,4 +919,398 @@ def delete_api_key(key_id):
     
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error deleting API key: {str(e)}'}), 500
+
+@top_level_bp.route('/settings/load-test-data', methods=['POST'])
+@login_required
+@super_admin_required
+def load_test_data():
+    """Load test data - generate sample feedlots, batches, pens, and cattle (top-level users only)"""
+    user_type = session.get('user_type')
+    
+    # Only allow top-level users
+    if user_type not in ['super_owner', 'super_admin']:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': False, 'message': 'Access denied.'}), 403
+        flash('Access denied. Load test data is only available for top-level users.', 'error')
+        return redirect(url_for('top_level.settings'))
+    
+    try:
+        import random
+        from datetime import datetime, timedelta
+        
+        # Sample data lists
+        feedlot_names = [
+            "High River Feeders",
+            "Lethbridge Cattle Co.",
+            "Calgary Feedlot Services",
+            "Red Deer Valley Feeders",
+            "Medicine Hat Feedlot"
+        ]
+        
+        locations = [
+            "High River, AB",
+            "Lethbridge, AB",
+            "Calgary, AB",
+            "Red Deer, AB",
+            "Medicine Hat, AB"
+        ]
+        
+        funders = [
+            "Alberta Beef Producers",
+            "Canadian Cattle Association",
+            "Feedlot Financing Inc.",
+            "Western Livestock Co.",
+            "Prairie Feedlot Partners"
+        ]
+        
+        breeds = [
+            "Angus", "Hereford", "Charolais", "Simmental", "Limousin",
+            "Red Angus", "Black Angus", "Gelbvieh", "Maine-Anjou", "Shorthorn"
+        ]
+        
+        tag_colors = ["Red", "Yellow", "Blue", "Green", "White", "Orange"]
+        
+        # Generate 1-5 feedlots
+        num_feedlots = random.randint(1, 5)
+        created_feedlots = []
+        
+        for i in range(num_feedlots):
+            # Generate unique feedlot code
+            feedlot_code = f"test{random.randint(1000, 9999)}"
+            # Ensure uniqueness
+            while Feedlot.find_by_code(feedlot_code):
+                feedlot_code = f"test{random.randint(1000, 9999)}"
+            
+            name = feedlot_names[i] if i < len(feedlot_names) else f"Test Feedlot {i+1}"
+            location = locations[i] if i < len(locations) else f"Location {i+1}, AB"
+            
+            contact_info = {
+                'phone': f"403-{random.randint(200, 999)}-{random.randint(1000, 9999)}",
+                'email': f"contact@{feedlot_code.lower()}.com",
+                'contact_person': f"Manager {i+1}"
+            }
+            
+            feedlot_id = Feedlot.create_feedlot(
+                name=name,
+                location=location,
+                feedlot_code=feedlot_code,
+                contact_info=contact_info,
+                owner_id=None,
+                land_description=f"Test land description for {name}",
+                premises_id=f"PID{random.randint(100000, 999999)}"
+            )
+            
+            feedlot_code_normalized = feedlot_code.lower().strip()
+            # Get the feedlot object for later use
+            feedlot = Feedlot.find_by_id(feedlot_id)
+            created_feedlots.append({
+                'id': feedlot_id,
+                'code': feedlot_code_normalized,
+                'name': name
+            })
+            
+            # Generate 1-10 pens per feedlot
+            num_pens = random.randint(1, 10)
+            created_pens = []
+            existing_pens = Pen.find_by_feedlot(feedlot_id)
+            existing_pen_numbers = {pen.get('pen_number') for pen in existing_pens}
+            
+            pen_counter = 1
+            for pen_num in range(1, num_pens + 1):
+                # Generate unique pen number
+                pen_number = f"P{pen_counter:02d}"
+                while pen_number in existing_pen_numbers:
+                    pen_counter += 1
+                    pen_number = f"P{pen_counter:02d}"
+                existing_pen_numbers.add(pen_number)
+                
+                capacity = random.randint(50, 200)
+                description = f"Pen {pen_number} - Test pen"
+                pen_id = Pen.create_pen(feedlot_id, pen_number, capacity, description)
+                created_pens.append({
+                    'id': pen_id,
+                    'number': pen_number,
+                    'capacity': capacity
+                })
+                pen_counter += 1
+            
+            # Generate 1-10 batches per feedlot
+            num_batches = random.randint(1, 10)
+            created_batches = []
+            existing_batches = Batch.find_by_feedlot(feedlot_code_normalized, feedlot_id)
+            existing_batch_numbers = {batch.get('batch_number') for batch in existing_batches}
+            
+            base_date = datetime.utcnow() - timedelta(days=random.randint(30, 180))
+            batch_counter = 1
+            
+            for batch_num in range(1, num_batches + 1):
+                # Generate unique batch number
+                batch_number = f"B{batch_counter:03d}"
+                while batch_number in existing_batch_numbers:
+                    batch_counter += 1
+                    batch_number = f"B{batch_counter:03d}"
+                existing_batch_numbers.add(batch_number)
+                
+                event_date = base_date + timedelta(days=random.randint(0, 30))
+                funder = random.choice(funders)
+                batch_id = Batch.create_batch(
+                    feedlot_code=feedlot_code_normalized,
+                    feedlot_id=feedlot_id,
+                    batch_number=batch_number,
+                    event_date=event_date,
+                    funder=funder,
+                    notes=f"Test batch {batch_number}",
+                    event_type='induction'
+                )
+                created_batches.append({
+                    'id': batch_id,
+                    'number': batch_number
+                })
+                batch_counter += 1
+            
+            # Generate 50-300 cattle per feedlot
+            num_cattle = random.randint(50, 300)
+            created_cattle = 0
+            existing_cattle = Cattle.find_by_feedlot(feedlot_code_normalized, feedlot_id)
+            existing_cattle_ids = {cattle.get('cattle_id') for cattle in existing_cattle}
+            
+            # Sample notes for random addition
+            sample_notes = [
+                "Good health, active",
+                "Requires monitoring",
+                "Excellent condition",
+                "Recent weight gain",
+                "Standard processing",
+                "No issues observed",
+                "Healthy appetite",
+                "Normal behavior",
+                "Regular checkup completed",
+                "Feeding schedule maintained"
+            ]
+            
+            for cattle_num in range(1, num_cattle + 1):
+                # Generate unique cattle ID
+                cattle_id = f"C{feedlot_code_normalized.upper()}{cattle_num:04d}"
+                while cattle_id in existing_cattle_ids:
+                    cattle_num += 1
+                    cattle_id = f"C{feedlot_code_normalized.upper()}{cattle_num:04d}"
+                existing_cattle_ids.add(cattle_id)
+                
+                # Randomly assign to batch (70% chance) or leave unassigned
+                batch_id = None
+                if random.random() < 0.7 and created_batches:
+                    batch_id = random.choice(created_batches)['id']
+                
+                # Randomly assign to pen (60% chance) or leave unassigned
+                pen_id = None
+                if random.random() < 0.6 and created_pens:
+                    pen_id = random.choice(created_pens)['id']
+                
+                # Generate cattle data
+                sex = random.choice(['Heifer', 'Steer', 'Unknown'])
+                initial_weight = round(random.uniform(200.0, 400.0), 2)
+                cattle_status = random.choice(['Healthy', 'Export'])
+                breed = random.choice(breeds)
+                color = random.choice(tag_colors)
+                
+                # Always generate both LF and UHF tags
+                lf_tag = f"LF{random.randint(1000000, 9999999)}"
+                uhf_tag = f"EPC{''.join(random.choices('0123456789ABCDEF', k=20))}"
+                
+                # Initial notes (50% chance of having notes)
+                initial_notes = ""
+                if random.random() < 0.5:
+                    initial_notes = random.choice(sample_notes)
+                
+                # Create cattle record
+                cattle_record_id = Cattle.create_cattle(
+                    feedlot_code=feedlot_code_normalized,
+                    feedlot_id=feedlot_id,
+                    cattle_id=cattle_id,
+                    sex=sex,
+                    weight=initial_weight,
+                    cattle_status=cattle_status,
+                    batch_id=batch_id,
+                    lf_tag=lf_tag,
+                    uhf_tag=uhf_tag,
+                    pen_id=pen_id,
+                    notes=initial_notes,
+                    color=color,
+                    breed=breed,
+                    created_by='test_data_generator'
+                )
+                
+                # Randomly add weight history (30% chance, 1-3 additional entries)
+                if random.random() < 0.3:
+                    num_weight_entries = random.randint(1, 3)
+                    current_weight = initial_weight
+                    
+                    for _ in range(num_weight_entries):
+                        # Weight gain: 2-10 kg per entry
+                        weight_gain = random.uniform(2.0, 10.0)
+                        current_weight = round(current_weight + weight_gain, 2)
+                        
+                        # Use add_weight_record method (will use current timestamp)
+                        Cattle.add_weight_record(
+                            feedlot_code=feedlot_code_normalized,
+                            cattle_record_id=cattle_record_id,
+                            weight=current_weight,
+                            recorded_by='test_data_generator'
+                        )
+                
+                # Randomly add notes (40% chance, 1-2 additional notes)
+                if random.random() < 0.4:
+                    num_note_entries = random.randint(1, 2)
+                    for _ in range(num_note_entries):
+                        note = random.choice(sample_notes)
+                        Cattle.add_note(
+                            feedlot_code=feedlot_code_normalized,
+                            cattle_record_id=cattle_record_id,
+                            note=note,
+                            recorded_by='test_data_generator'
+                        )
+                
+                created_cattle += 1
+            
+            # Generate 2-5 manifest templates per feedlot
+            num_templates = random.randint(2, 5)
+            template_names = [
+                "Standard Export Template",
+                "Local Transport Template",
+                "Dealer Transfer Template",
+                "Processing Plant Template",
+                "Custom Template"
+            ]
+            
+            owners = [
+                {"name": "Alberta Beef Producers", "phone": "403-555-0100", "address": "123 Main St, Calgary, AB"},
+                {"name": "Western Livestock Co.", "phone": "403-555-0200", "address": "456 Ranch Rd, Lethbridge, AB"},
+                {"name": "Prairie Feedlot Partners", "phone": "403-555-0300", "address": "789 Farm Ave, Red Deer, AB"}
+            ]
+            
+            dealers = [
+                {"name": "Canadian Cattle Dealers", "phone": "403-555-1000", "address": "321 Market St, Calgary, AB"},
+                {"name": "Alberta Livestock Exchange", "phone": "403-555-1100", "address": "654 Trade Blvd, Edmonton, AB"}
+            ]
+            
+            destinations = [
+                {"name": "Calgary Processing Plant", "address": "1000 Industrial Way, Calgary, AB", "premises_id": f"PID{random.randint(100000, 999999)}"},
+                {"name": "Lethbridge Export Facility", "address": "2000 Export Dr, Lethbridge, AB", "premises_id": f"PID{random.randint(100000, 999999)}"},
+                {"name": "Red Deer Distribution Center", "address": "3000 Distribution Ave, Red Deer, AB", "premises_id": f"PID{random.randint(100000, 999999)}"}
+            ]
+            
+            transporters = [
+                {"name": "Alberta Transport Services", "phone": "403-555-2000", "trailer": f"TRL-{random.randint(1000, 9999)}"},
+                {"name": "Western Hauling Co.", "phone": "403-555-2100", "trailer": f"TRL-{random.randint(1000, 9999)}"},
+                {"name": "Prairie Logistics", "phone": "403-555-2200", "trailer": f"TRL-{random.randint(1000, 9999)}"}
+            ]
+            
+            purposes = ['transport_only', 'sale', 'slaughter', 'breeding', 'exhibition']
+            
+            for template_num in range(1, num_templates + 1):
+                template_name = template_names[template_num - 1] if template_num <= len(template_names) else f"Template {template_num}"
+                
+                owner = random.choice(owners)
+                dealer = random.choice(dealers) if random.random() < 0.7 else None
+                destination = random.choice(destinations)
+                transporter = random.choice(transporters)
+                purpose = random.choice(purposes)
+                
+                # First template is set as default
+                is_default = (template_num == 1)
+                
+                ManifestTemplate.create_template(
+                    feedlot_id=feedlot_id,
+                    name=template_name,
+                    owner_name=owner['name'],
+                    owner_phone=owner['phone'],
+                    owner_address=owner['address'],
+                    dealer_name=dealer['name'] if dealer else None,
+                    dealer_phone=dealer['phone'] if dealer else None,
+                    dealer_address=dealer['address'] if dealer else None,
+                    default_destination_name=destination['name'],
+                    default_destination_address=destination['address'],
+                    default_transporter_name=transporter['name'],
+                    default_transporter_phone=transporter['phone'],
+                    default_transporter_trailer=transporter['trailer'],
+                    default_purpose=purpose,
+                    default_premises_id_before=feedlot.get('premises_id', ''),
+                    default_premises_id_destination=destination['premises_id'],
+                    is_default=is_default
+                )
+        
+        success_msg = f'Test data loaded successfully: {num_feedlots} feedlots, {created_cattle} cattle created.'
+        
+        # Always return JSON for this endpoint (called via fetch)
+        return jsonify({
+            'success': True,
+            'message': success_msg,
+            'redirect_url': url_for('top_level.dashboard')
+        }), 200
+    
+    except Exception as e:
+        current_app.logger.error(f"Error loading test data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        error_msg = f'Failed to load test data: {str(e)}'
+        
+        # Always return JSON for this endpoint (called via fetch)
+        return jsonify({'success': False, 'message': error_msg}), 500
+
+@top_level_bp.route('/settings/reset-database', methods=['POST'])
+@login_required
+@super_admin_required
+def reset_database():
+    """Reset the database - delete all data except users (top-level users only)"""
+    user_type = session.get('user_type')
+    
+    # Only allow top-level users
+    if user_type not in ['super_owner', 'super_admin']:
+        flash('Access denied. Database reset is only available for top-level users.', 'error')
+        return redirect(url_for('top_level.settings'))
+    
+    try:
+        from pymongo import MongoClient
+        from config import Config
+        
+        # Get MongoDB client to drop databases
+        client = MongoClient(Config.MONGODB_URI)
+        
+        # Get all feedlots before deleting them
+        feedlots = Feedlot.find_all()
+        
+        # Drop each feedlot-specific database
+        for feedlot in feedlots:
+            feedlot_code = feedlot.get('feedlot_code')
+            if feedlot_code:
+                try:
+                    # Normalize feedlot_code to lowercase for consistency
+                    normalized_code = feedlot_code.lower().strip()
+                    db_name = f"feedlot_{normalized_code}"
+                    
+                    # Drop the entire feedlot database
+                    client.drop_database(db_name)
+                    
+                except Exception as e:
+                    # Log error but continue with other feedlots
+                    current_app.logger.error(f"Error dropping feedlot database {db_name}: {str(e)}")
+        
+        # Delete all feedlots from main database
+        db.feedlots.delete_many({})
+        
+        # Delete all API keys from main database
+        db.api_keys.delete_many({})
+        
+        # Also check for pens in main database (in case they exist there)
+        if hasattr(db, 'pens'):
+            db.pens.delete_many({})
+        
+        flash('Database reset successfully. All data and feedlot databases have been deleted except users.', 'success')
+        return redirect(url_for('top_level.settings'))
+    
+    except Exception as e:
+        current_app.logger.error(f"Error resetting database: {str(e)}")
+        flash(f'Failed to reset database: {str(e)}', 'error')
+        return redirect(url_for('top_level.settings'))
 

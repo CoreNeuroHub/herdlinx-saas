@@ -85,56 +85,8 @@ class APISyncer:
         # This should never be reached, but just in case
         raise Exception(f"Failed to make request to {endpoint} after {max_retries} attempts")
     
-    def sync_batches(self) -> Dict:
-        """Sync batches from database to API."""
-        print("\nSyncing batches...")
-        
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT id, name, funder, lot, pen, lot_group, pen_location, 
-                   sex, tag_color, visual_id, notes, created_at, active
-            FROM batches
-            ORDER BY created_at
-        """)
-        
-        batches = []
-        for row in cursor.fetchall():
-            batches.append({
-                "name": row["name"],
-                "funder": row["funder"],
-                "lot": row["lot"],
-                "pen": row["pen"],
-                "lot_group": row["lot_group"],
-                "pen_location": row["pen_location"],
-                "sex": row["sex"],
-                "tag_color": row["tag_color"],
-                "visual_id": row["visual_id"],
-                "notes": row["notes"],
-                "created_at": row["created_at"],
-                "active": row["active"]
-            })
-        
-        conn.close()
-        
-        if not batches:
-            print("  No batches to sync.")
-            return {"success": True, "records_processed": 0}
-        
-        print(f"  Found {len(batches)} batches to sync...")
-        data = {
-            "feedlot_code": self.feedlot_code,
-            "data": batches
-        }
-        
-        result = self._make_request("/batches", data)
-        print(f"  Processed {result.get('records_processed', 0)} batches")
-        if result.get('errors'):
-            print(f"  Errors: {result['errors']}")
-        
-        return result
+    # Note: Batches are now automatically created from induction-events endpoint
+    # No separate batches sync is needed
     
     def sync_induction_events(self) -> Dict:
         """Sync induction events from database to API."""
@@ -218,51 +170,6 @@ class APISyncer:
         
         result = self._make_request("/pairing-events", data)
         print(f"  Processed {result.get('records_processed', 0)} pairing events")
-        if result.get('errors'):
-            print(f"  Errors: {result['errors']}")
-        
-        return result
-    
-    def sync_livestock(self) -> Dict:
-        """Sync current livestock state from database to API."""
-        print("\nSyncing livestock (current state)...")
-        
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT id, induction_event_id, current_lf_id, current_epc, 
-                   metadata, created_at, updated_at
-            FROM livestock
-            ORDER BY id
-        """)
-        
-        livestock = []
-        for row in cursor.fetchall():
-            livestock.append({
-                "id": row["id"],
-                "induction_event_id": row["induction_event_id"],
-                "current_lf_id": row["current_lf_id"],
-                "current_epc": row["current_epc"],
-                "metadata": row["metadata"],
-                "created_at": row["created_at"],
-                "updated_at": row["updated_at"]
-            })
-        
-        conn.close()
-        
-        if not livestock:
-            print("  No livestock to sync.")
-            return {"success": True, "records_processed": 0}
-        
-        data = {
-            "feedlot_code": self.feedlot_code,
-            "data": livestock
-        }
-        
-        result = self._make_request("/livestock", data)
-        print(f"  Processed {result.get('records_processed', 0)} livestock records")
         if result.get('errors'):
             print(f"  Errors: {result['errors']}")
         
@@ -371,10 +278,9 @@ class APISyncer:
         
         try:
             # Recommended sync order per API documentation
-            results["batches"] = self.sync_batches()
+            # Note: Batches are automatically created from induction-events, no separate sync needed
             results["induction_events"] = self.sync_induction_events()
             results["pairing_events"] = self.sync_pairing_events()
-            results["livestock"] = self.sync_livestock()
             results["checkin_events"] = self.sync_checkin_events()
             results["repair_events"] = self.sync_repair_events()
             
