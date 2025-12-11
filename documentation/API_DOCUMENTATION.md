@@ -129,57 +129,7 @@ All endpoints return JSON responses with the following structure:
 
 ## Endpoints
 
-### 1. Sync Livestock (Current State)
-
-**Endpoint**: `POST /api/v1/feedlot/livestock`
-
-**Description**: Syncs current livestock state, primarily updating tag information.
-
-**Request Body**:
-```json
-{
-  "feedlot_code": "FEEDLOT001",
-  "data": [
-    {
-      "id": 123,
-      "induction_event_id": 45,
-      "current_lf_id": "LF123456",
-      "current_epc": "EPC789012",
-      "metadata": "Additional metadata",
-      "created_at": "2024-10-30T10:00:00Z",
-      "updated_at": "2024-10-30T10:00:00Z"
-    }
-  ]
-}
-```
-
-**Field Mapping**:
-- `id` → Used to find existing cattle (stored as `cattle_id`)
-- `current_lf_id` → `lf_tag`
-- `current_epc` → `uhf_tag`
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Processed 1 livestock records",
-  "records_processed": 1,
-  "records_created": 0,
-  "records_updated": 1,
-  "records_skipped": 0,
-  "errors": []
-}
-```
-
-**Notes**:
-- Livestock records must be created via `induction-events` endpoint first
-- This endpoint only updates existing cattle records
-- Tags are updated if they differ from current values
-- If livestock ID is not found, the record is skipped with an error message
-
----
-
-### 2. Sync Induction Events
+### 1. Sync Induction Events
 
 **Endpoint**: `POST /api/v1/feedlot/induction-events`
 
@@ -282,7 +232,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 3. Sync Pairing Events
+### 2. Sync Pairing Events
 
 **Endpoint**: `POST /api/v1/feedlot/pairing-events`
 
@@ -331,7 +281,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 4. Sync Check-in Events
+### 3. Sync Check-in Events
 
 **Endpoint**: `POST /api/v1/feedlot/checkin-events`
 
@@ -379,7 +329,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 5. Sync Repair Events
+### 4. Sync Repair Events
 
 **Endpoint**: `POST /api/v1/feedlot/repair-events`
 
@@ -431,7 +381,7 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
-### 6. Sync Export Events
+### 5. Sync Export Events
 
 **Endpoint**: `POST /api/v1/feedlot/export-events`
 
@@ -556,10 +506,9 @@ Individual record errors are included in the `errors` array:
 
 1. **Induction Events**: Create cattle records when animals are inducted (batches are automatically created from induction events)
 2. **Pairing Events**: Pair tags and set initial weights
-3. **Livestock**: Update current state (optional, for reconciliation)
-4. **Check-in Events**: Add weight measurements over time
-5. **Repair Events**: Handle tag replacements as needed
-6. **Export Events**: Mark cattle as exported when they leave the feedlot
+3. **Check-in Events**: Add weight measurements over time
+4. **Repair Events**: Handle tag replacements as needed
+5. **Export Events**: Mark cattle as exported when they leave the feedlot
 
 ### Idempotency
 
@@ -684,7 +633,7 @@ Currently, there are no rate limits enforced. However, for optimal performance:
 
 1. **"feedlot_code does not match"**: Ensure the `feedlot_code` in your request matches the feedlot associated with your API key.
 
-2. **"Livestock ID not found"**: Make sure to sync `induction-events` before syncing other livestock-related endpoints.
+2. **"Livestock ID not found"**: Make sure to sync `induction-events` before syncing other endpoints that reference livestock.
 
 3. **"Batch not found"**: This should no longer occur as batches are automatically created from `induction-events`. If you see this error, check that `batch_name` is provided in the induction event data.
 

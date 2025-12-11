@@ -175,51 +175,6 @@ class APISyncer:
         
         return result
     
-    def sync_livestock(self) -> Dict:
-        """Sync current livestock state from database to API."""
-        print("\nSyncing livestock (current state)...")
-        
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT id, induction_event_id, current_lf_id, current_epc, 
-                   metadata, created_at, updated_at
-            FROM livestock
-            ORDER BY id
-        """)
-        
-        livestock = []
-        for row in cursor.fetchall():
-            livestock.append({
-                "id": row["id"],
-                "induction_event_id": row["induction_event_id"],
-                "current_lf_id": row["current_lf_id"],
-                "current_epc": row["current_epc"],
-                "metadata": row["metadata"],
-                "created_at": row["created_at"],
-                "updated_at": row["updated_at"]
-            })
-        
-        conn.close()
-        
-        if not livestock:
-            print("  No livestock to sync.")
-            return {"success": True, "records_processed": 0}
-        
-        data = {
-            "feedlot_code": self.feedlot_code,
-            "data": livestock
-        }
-        
-        result = self._make_request("/livestock", data)
-        print(f"  Processed {result.get('records_processed', 0)} livestock records")
-        if result.get('errors'):
-            print(f"  Errors: {result['errors']}")
-        
-        return result
-    
     def sync_checkin_events(self) -> Dict:
         """Sync check-in events from database to API."""
         print("\nSyncing check-in events...")
@@ -326,7 +281,6 @@ class APISyncer:
             # Note: Batches are automatically created from induction-events, no separate sync needed
             results["induction_events"] = self.sync_induction_events()
             results["pairing_events"] = self.sync_pairing_events()
-            results["livestock"] = self.sync_livestock()
             results["checkin_events"] = self.sync_checkin_events()
             results["repair_events"] = self.sync_repair_events()
             

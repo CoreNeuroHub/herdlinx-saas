@@ -206,12 +206,11 @@ Quick reference checklist for executing test cases. Use this alongside the detai
 ### API Endpoints
 - [ ] TC-X-011: API Key Authentication
 - [ ] TC-X-012: Sync Batches API Endpoint
-- [ ] TC-X-013: Sync Livestock API Endpoint
-- [ ] TC-X-014: Sync Induction Events API Endpoint
-- [ ] TC-X-015: Sync Pairing Events API Endpoint
-- [ ] TC-X-016: Sync Checkin Events API Endpoint
-- [ ] TC-X-017: Sync Repair Events API Endpoint
-- [ ] TC-X-018: API Feedlot Code Validation
+- [ ] TC-X-013: Sync Induction Events API Endpoint
+- [ ] TC-X-014: Sync Pairing Events API Endpoint
+- [ ] TC-X-015: Sync Checkin Events API Endpoint
+- [ ] TC-X-016: Sync Repair Events API Endpoint
+- [ ] TC-X-017: API Feedlot Code Validation
 - [ ] TC-X-019: API Error Handling
 
 ---

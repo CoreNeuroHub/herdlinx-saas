@@ -202,7 +202,6 @@ def create_api_app():
             'endpoints': {
                 'health': '/health',
                 'batches': '/api/v1/feedlot/batches',
-                'livestock': '/api/v1/feedlot/livestock',
                 'induction_events': '/api/v1/feedlot/induction-events',
                 'pairing_events': '/api/v1/feedlot/pairing-events',
                 'checkin_events': '/api/v1/feedlot/checkin-events',
@@ -225,7 +224,6 @@ if __name__ == '__main__':
     print("\nAvailable Endpoints:")
     print("  GET  /health                          - Health check")
     print("  POST /api/v1/feedlot/batches          - Sync batches")
-    print("  POST /api/v1/feedlot/livestock        - Sync livestock")
     print("  POST /api/v1/feedlot/induction-events - Sync induction events")
     print("  POST /api/v1/feedlot/pairing-events   - Sync pairing events")
     print("  POST /api/v1/feedlot/checkin-events   - Sync check-in events")
