@@ -14,7 +14,7 @@ class Batch:
             event_date: Event date
             funder: Funder information
             notes: Optional notes
-            event_type: Event type (induction, pairing, checkin, repair). Defaults to 'induction'
+            event_type: Event type (induction, pairing, checkin, repair, export). Defaults to 'induction'
         """
         feedlot_db = get_feedlot_db(feedlot_code)
         batch_data = {

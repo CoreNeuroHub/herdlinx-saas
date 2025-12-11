@@ -7,6 +7,7 @@ from app.models.api_key import APIKey
 from app.models.pen import Pen
 from app.models.batch import Batch
 from app.models.cattle import Cattle
+from app.models.manifest_template import ManifestTemplate
 from app.routes.auth_routes import login_required, super_admin_required, admin_access_required
 from app import db
 import bcrypt
@@ -1000,6 +1001,8 @@ def load_test_data():
             )
             
             feedlot_code_normalized = feedlot_code.lower().strip()
+            # Get the feedlot object for later use
+            feedlot = Feedlot.find_by_id(feedlot_id)
             created_feedlots.append({
                 'id': feedlot_id,
                 'code': feedlot_code_normalized,
@@ -1168,6 +1171,73 @@ def load_test_data():
                         )
                 
                 created_cattle += 1
+            
+            # Generate 2-5 manifest templates per feedlot
+            num_templates = random.randint(2, 5)
+            template_names = [
+                "Standard Export Template",
+                "Local Transport Template",
+                "Dealer Transfer Template",
+                "Processing Plant Template",
+                "Custom Template"
+            ]
+            
+            owners = [
+                {"name": "Alberta Beef Producers", "phone": "403-555-0100", "address": "123 Main St, Calgary, AB"},
+                {"name": "Western Livestock Co.", "phone": "403-555-0200", "address": "456 Ranch Rd, Lethbridge, AB"},
+                {"name": "Prairie Feedlot Partners", "phone": "403-555-0300", "address": "789 Farm Ave, Red Deer, AB"}
+            ]
+            
+            dealers = [
+                {"name": "Canadian Cattle Dealers", "phone": "403-555-1000", "address": "321 Market St, Calgary, AB"},
+                {"name": "Alberta Livestock Exchange", "phone": "403-555-1100", "address": "654 Trade Blvd, Edmonton, AB"}
+            ]
+            
+            destinations = [
+                {"name": "Calgary Processing Plant", "address": "1000 Industrial Way, Calgary, AB", "premises_id": f"PID{random.randint(100000, 999999)}"},
+                {"name": "Lethbridge Export Facility", "address": "2000 Export Dr, Lethbridge, AB", "premises_id": f"PID{random.randint(100000, 999999)}"},
+                {"name": "Red Deer Distribution Center", "address": "3000 Distribution Ave, Red Deer, AB", "premises_id": f"PID{random.randint(100000, 999999)}"}
+            ]
+            
+            transporters = [
+                {"name": "Alberta Transport Services", "phone": "403-555-2000", "trailer": f"TRL-{random.randint(1000, 9999)}"},
+                {"name": "Western Hauling Co.", "phone": "403-555-2100", "trailer": f"TRL-{random.randint(1000, 9999)}"},
+                {"name": "Prairie Logistics", "phone": "403-555-2200", "trailer": f"TRL-{random.randint(1000, 9999)}"}
+            ]
+            
+            purposes = ['transport_only', 'sale', 'slaughter', 'breeding', 'exhibition']
+            
+            for template_num in range(1, num_templates + 1):
+                template_name = template_names[template_num - 1] if template_num <= len(template_names) else f"Template {template_num}"
+                
+                owner = random.choice(owners)
+                dealer = random.choice(dealers) if random.random() < 0.7 else None
+                destination = random.choice(destinations)
+                transporter = random.choice(transporters)
+                purpose = random.choice(purposes)
+                
+                # First template is set as default
+                is_default = (template_num == 1)
+                
+                ManifestTemplate.create_template(
+                    feedlot_id=feedlot_id,
+                    name=template_name,
+                    owner_name=owner['name'],
+                    owner_phone=owner['phone'],
+                    owner_address=owner['address'],
+                    dealer_name=dealer['name'] if dealer else None,
+                    dealer_phone=dealer['phone'] if dealer else None,
+                    dealer_address=dealer['address'] if dealer else None,
+                    default_destination_name=destination['name'],
+                    default_destination_address=destination['address'],
+                    default_transporter_name=transporter['name'],
+                    default_transporter_phone=transporter['phone'],
+                    default_transporter_trailer=transporter['trailer'],
+                    default_purpose=purpose,
+                    default_premises_id_before=feedlot.get('premises_id', ''),
+                    default_premises_id_destination=destination['premises_id'],
+                    is_default=is_default
+                )
         
         success_msg = f'Test data loaded successfully: {num_feedlots} feedlots, {created_cattle} cattle created.'
         

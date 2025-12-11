@@ -172,9 +172,18 @@
 </div>
 
 <div class="max-w-4xl mx-auto mt-8 text-center">
-    <button onclick="window.print()" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
-        Print Manifest
-    </button>
+    <div class="flex justify-center space-x-4">
+        <a href="{{ url_for('feedlot.download_manifest_history', feedlot_id=feedlot_id, manifest_id=manifest_id) }}" 
+           data-testid="download-pdf-button"
+           class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Download PDF
+        </a>
+        <button onclick="window.print()" 
+                data-testid="print-manifest-button"
+                class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            Print
+        </button>
+    </div>
 </div>
 
 <style>

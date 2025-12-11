@@ -275,7 +275,7 @@ def sync_induction_events():
                     
                     # Extract event_type from event, default to 'induction' for induction-events endpoint
                     event_type = (event_item.get('event_type') or 'induction').strip().lower()
-                    valid_event_types = ['induction', 'pairing', 'checkin', 'repair']
+                    valid_event_types = ['induction', 'pairing', 'checkin', 'repair', 'export']
                     if event_type not in valid_event_types:
                         event_type = 'induction'
                     
@@ -338,7 +338,7 @@ def sync_induction_events():
                     # Update event_type if provided and different
                     event_type = (event_item.get('event_type') or '').strip().lower()
                     if event_type:
-                        valid_event_types = ['induction', 'pairing', 'checkin', 'repair']
+                        valid_event_types = ['induction', 'pairing', 'checkin', 'repair', 'export']
                         if event_type in valid_event_types and saas_batch.get('event_type') != event_type:
                             update_batch_data['event_type'] = event_type
                     

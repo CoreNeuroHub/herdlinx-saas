@@ -324,7 +324,7 @@ def create_batch(feedlot_id):
         event_type = request.form.get('event_type', 'induction')
         
         # Validate event_type
-        valid_event_types = ['induction', 'pairing', 'checkin', 'repair']
+        valid_event_types = ['induction', 'pairing', 'checkin', 'repair', 'export']
         if event_type not in valid_event_types:
             event_type = 'induction'
         
@@ -400,7 +400,7 @@ def edit_batch(feedlot_id, batch_id):
         event_type = request.form.get('event_type', 'induction')
         
         # Validate event_type
-        valid_event_types = ['induction', 'pairing', 'checkin', 'repair']
+        valid_event_types = ['induction', 'pairing', 'checkin', 'repair', 'export']
         if event_type not in valid_event_types:
             event_type = 'induction'
         
@@ -766,26 +766,19 @@ def export_manifest(feedlot_id):
         return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
     
     if request.method == 'POST':
-        # Get selection method
-        selection_method = request.form.get('selection_method', 'pen')
-        
         # Get selected cattle
         feedlot_code = feedlot.get('feedlot_code')
         if not feedlot_code:
             flash('Feedlot code not found.', 'error')
             return redirect(url_for('feedlot.export_manifest', feedlot_id=feedlot_id))
         
+        # Get selected cattle IDs from form
+        cattle_ids = request.form.getlist('cattle_ids')
         cattle_list = []
-        if selection_method == 'pen':
-            pen_ids = request.form.getlist('pen_ids')
-            for pen_id in pen_ids:
-                cattle_list.extend(Cattle.find_by_pen(feedlot_code, pen_id))
-        else:  # manual selection
-            cattle_ids = request.form.getlist('cattle_ids')
-            for cattle_id in cattle_ids:
-                cattle = Cattle.find_by_id(feedlot_code, cattle_id)
-                if cattle:
-                    cattle_list.append(cattle)
+        for cattle_id in cattle_ids:
+            cattle = Cattle.find_by_id(feedlot_code, cattle_id)
+            if cattle:
+                cattle_list.append(cattle)
         
         if not cattle_list:
             flash('No cattle selected for export.', 'error')
@@ -855,25 +848,11 @@ def export_manifest(feedlot_id):
             created_by=created_by
         )
         
-        # Get export format
-        export_format = request.form.get('export_format', 'pdf')
-        
-        if export_format == 'pdf' or export_format == 'both':
-            # Generate PDF
-            pdf_buffer = generate_pdf(manifest_data)
-            if export_format == 'pdf':
-                return Response(
-                    pdf_buffer.getvalue(),
-                    mimetype='application/pdf',
-                    headers={'Content-Disposition': f'attachment; filename=manifest_{feedlot_id}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'}
-                )
-        
-        if export_format == 'html' or export_format == 'both':
-            # Render HTML template
-            return render_template('feedlot/manifest/manifest_html.html', manifest_data=manifest_data)
-        
-        flash('Invalid export format.', 'error')
-        return redirect(url_for('feedlot.export_manifest', feedlot_id=feedlot_id))
+        # Always generate HTML format
+        return render_template('feedlot/manifest/manifest_html.html', 
+                             manifest_data=manifest_data,
+                             feedlot_id=feedlot_id,
+                             manifest_id=manifest_record_id)
     
     # GET request - show export form
     feedlot_code = feedlot.get('feedlot_code')
@@ -882,17 +861,42 @@ def export_manifest(feedlot_id):
         return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
     
     pens = Pen.find_by_feedlot(feedlot_id)
-    all_cattle = Cattle.find_by_feedlot(feedlot_code, feedlot_id)
-    templates = ManifestTemplate.find_by_feedlot(feedlot_id)
     
-    # Add cattle count to pens
+    # Filter cattle by status = 'Export'
+    all_cattle = Cattle.find_by_feedlot_with_filters(
+        feedlot_code, 
+        feedlot_id, 
+        cattle_status='Export'
+    )
+    
+    # Convert ObjectIds to strings for cattle _id, batch_id and pen_id for easier template handling
+    for cattle in all_cattle:
+        cattle['_id'] = str(cattle['_id'])
+        if cattle.get('batch_id'):
+            cattle['batch_id'] = str(cattle['batch_id'])
+        if cattle.get('pen_id'):
+            cattle['pen_id'] = str(cattle['pen_id'])
+    
+    # Filter batches by event_type = 'export'
+    all_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
+    export_batches = [b for b in all_batches if b.get('event_type') == 'export']
+    
+    # Convert batch ObjectIds to strings
+    for batch in export_batches:
+        batch['_id'] = str(batch['_id'])
+    
+    # Convert pen ObjectIds to strings
     for pen in pens:
-        pen['cattle_count'] = Pen.get_current_cattle_count(str(pen['_id']))
+        pen['_id'] = str(pen['_id'])
+        pen['cattle_count'] = Pen.get_current_cattle_count(pen['_id'])
+    
+    templates = ManifestTemplate.find_by_feedlot(feedlot_id)
     
     return render_template('feedlot/manifest/export.html',
                          feedlot=feedlot,
                          pens=pens,
                          cattle=all_cattle,
+                         batches=export_batches,
                          templates=templates)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/manifest/templates')
