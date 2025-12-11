@@ -325,6 +325,82 @@ def edit_feedlot(feedlot_id):
     
     return render_template('top_level/edit_feedlot.html', feedlot=feedlot, business_owners=business_owners, user_type=user_type)
 
+@top_level_bp.route('/feedlot/<feedlot_id>/delete', methods=['POST'])
+@login_required
+@admin_access_required
+def delete_feedlot(feedlot_id):
+    """Delete a feedlot and all associated data"""
+    feedlot = Feedlot.find_by_id(feedlot_id)
+    if not feedlot:
+        flash('Feedlot not found.', 'error')
+        return redirect(url_for('top_level.dashboard'))
+    
+    # Check access control
+    user_type = session.get('user_type')
+    user_feedlot_ids = session.get('feedlot_ids', [])
+    
+    if not can_edit_feedlot(feedlot_id, user_type, user_feedlot_ids):
+        flash('Access denied. You do not have permission to delete this feedlot.', 'error')
+        return redirect(url_for('top_level.dashboard'))
+    
+    try:
+        from pymongo import MongoClient
+        from config import Config
+        
+        feedlot_code = feedlot.get('feedlot_code')
+        feedlot_name = feedlot.get('name', 'Unknown')
+        
+        # Drop feedlot-specific database if feedlot_code exists
+        if feedlot_code:
+            try:
+                client = MongoClient(Config.MONGODB_URI)
+                normalized_code = feedlot_code.lower().strip()
+                db_name = f"feedlot_{normalized_code}"
+                client.drop_database(db_name)
+            except Exception as e:
+                current_app.logger.error(f"Error dropping feedlot database {db_name}: {str(e)}")
+        
+        # Delete all API keys for this feedlot
+        api_keys = APIKey.find_by_feedlot(feedlot_id)
+        for api_key in api_keys:
+            try:
+                APIKey.delete_key(str(api_key['_id']))
+            except Exception as e:
+                current_app.logger.error(f"Error deleting API key {api_key['_id']}: {str(e)}")
+        
+        # Delete all pens for this feedlot (pens are in main database)
+        pens = Pen.find_by_feedlot(feedlot_id)
+        for pen in pens:
+            try:
+                Pen.delete_pen(str(pen['_id']))
+            except Exception as e:
+                current_app.logger.error(f"Error deleting pen {pen['_id']}: {str(e)}")
+        
+        # Remove feedlot_id from users (both single feedlot_id and feedlot_ids array)
+        feedlot_object_id = ObjectId(feedlot_id)
+        db.users.update_many(
+            {'feedlot_id': feedlot_object_id},
+            {'$unset': {'feedlot_id': ''}}
+        )
+        db.users.update_many(
+            {'feedlot_ids': feedlot_object_id},
+            {'$pull': {'feedlot_ids': feedlot_object_id}}
+        )
+        
+        # Delete branding assets
+        Feedlot.delete_branding_assets(feedlot_id)
+        
+        # Delete the feedlot record
+        db.feedlots.delete_one({'_id': ObjectId(feedlot_id)})
+        
+        flash(f'Feedlot "{feedlot_name}" and all associated data have been deleted successfully.', 'success')
+        return redirect(url_for('top_level.dashboard'))
+    
+    except Exception as e:
+        current_app.logger.error(f"Error deleting feedlot {feedlot_id}: {str(e)}")
+        flash(f'Failed to delete feedlot: {str(e)}', 'error')
+        return redirect(url_for('top_level.edit_feedlot', feedlot_id=feedlot_id))
+
 @top_level_bp.route('/feedlot/<feedlot_id>/branding', methods=['GET', 'POST'])
 @login_required
 @admin_access_required
@@ -1053,6 +1129,8 @@ def load_test_data():
                 
                 event_date = base_date + timedelta(days=random.randint(0, 30))
                 funder = random.choice(funders)
+                # Randomly choose between 'induction' and 'export' event types
+                event_type = random.choice(['induction', 'export'])
                 batch_id = Batch.create_batch(
                     feedlot_code=feedlot_code_normalized,
                     feedlot_id=feedlot_id,
@@ -1060,11 +1138,12 @@ def load_test_data():
                     event_date=event_date,
                     funder=funder,
                     notes=f"Test batch {batch_number}",
-                    event_type='induction'
+                    event_type=event_type
                 )
                 created_batches.append({
                     'id': batch_id,
-                    'number': batch_number
+                    'number': batch_number,
+                    'event_type': event_type
                 })
                 batch_counter += 1
             
@@ -1098,8 +1177,11 @@ def load_test_data():
                 
                 # Randomly assign to batch (70% chance) or leave unassigned
                 batch_id = None
+                batch_event_type = None
                 if random.random() < 0.7 and created_batches:
-                    batch_id = random.choice(created_batches)['id']
+                    selected_batch = random.choice(created_batches)
+                    batch_id = selected_batch['id']
+                    batch_event_type = selected_batch['event_type']
                 
                 # Randomly assign to pen (60% chance) or leave unassigned
                 pen_id = None
@@ -1109,7 +1191,17 @@ def load_test_data():
                 # Generate cattle data
                 sex = random.choice(['Heifer', 'Steer', 'Unknown'])
                 initial_weight = round(random.uniform(200.0, 400.0), 2)
-                cattle_status = random.choice(['Healthy', 'Export'])
+                
+                # Set cattle status based on batch type
+                # If assigned to a batch: 'induction' -> 'Healthy', 'export' -> 'Export'
+                # If not assigned to a batch: random choice
+                if batch_event_type == 'induction':
+                    cattle_status = 'Healthy'
+                elif batch_event_type == 'export':
+                    cattle_status = 'Export'
+                else:
+                    cattle_status = random.choice(['Healthy', 'Export'])
+                
                 breed = random.choice(breeds)
                 color = random.choice(tag_colors)
                 
