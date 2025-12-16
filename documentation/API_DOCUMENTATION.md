@@ -385,7 +385,7 @@ All endpoints return JSON responses with the following structure:
 
 **Endpoint**: `POST /api/v1/feedlot/export-events`
 
-**Description**: Marks cattle as exported (sets `cattle_status` to "Export") based on UHF tag (EPC).
+**Description**: Marks cattle as exported (sets `cattle_status` to "Export") based on UHF tag (EPC). Optionally creates manifest records when manifest data is provided. Cattle with identical manifest data are automatically grouped into the same manifest.
 
 **Request Body**:
 ```json
@@ -394,36 +394,130 @@ All endpoints return JSON responses with the following structure:
   "data": [
     {
       "epc": "0900000000000003",
-      "timestamp": "2024-11-25T10:30:00Z"
+      "timestamp": "2024-11-25T10:30:00Z",
+      "purpose": "transport_only",
+      "transport_for_sale_by": "owner",
+      "date": "2024-11-25",
+      "owner_name": "John Doe",
+      "owner_phone": "555-1234",
+      "owner_address": "123 Farm Road",
+      "dealer_name": "",
+      "dealer_phone": "",
+      "dealer_address": "",
+      "on_account_of": "",
+      "location_before": "Feedlot ABC",
+      "premises_id_before": "AB123",
+      "reason_for_transport": "transport_to",
+      "destination_name": "Processing Plant XYZ",
+      "destination_address": "456 Industrial Blvd",
+      "owner_signature": "",
+      "owner_signature_date": "",
+      "inspector_name": "",
+      "inspector_number": "",
+      "inspection_date": "",
+      "inspection_time": "",
+      "inspection_notes": "",
+      "transporter_name": "ABC Transport",
+      "transporter_trailer": "TRL-12345",
+      "transporter_phone": "555-5678",
+      "transporter_signature": "",
+      "transporter_signature_date": "",
+      "security_interest_declared": false,
+      "security_interest_details": "",
+      "received_date": "",
+      "received_time": "",
+      "head_received": null,
+      "receiver_name": "",
+      "receiver_signature": "",
+      "premises_id_destination": "AB456"
     }
   ]
 }
 ```
 
-**Field Mapping**:
-- `epc` (required) → Used to find cattle by UHF tag
-- `timestamp` (optional) → Export timestamp (defaults to current time if not provided)
+**Required Fields**:
+- `epc` (string, required) → UHF tag to identify the cattle
+
+**Optional Fields**:
+- `timestamp` (string, optional) → Export timestamp (defaults to current time if not provided)
+
+**Manifest Fields** (all optional):
+- **Part A - Purpose**:
+  - `purpose` (string) → Purpose of transport: "transport_only", "transport_for_sale_owner", "transport_for_sale_dealer", "inspection_only"
+  - `transport_for_sale_by` (string) → Who is transporting for sale: "owner" or "dealer"
+
+- **Part B - Transportation and Sale Details**:
+  - `date` (string) → Manifest date (format: "YYYY-MM-DD")
+  - `owner_name` (string) → Owner name
+  - `owner_phone` (string) → Owner phone number
+  - `owner_address` (string) → Owner address
+  - `dealer_name` (string) → Dealer name (if applicable)
+  - `dealer_phone` (string) → Dealer phone number
+  - `dealer_address` (string) → Dealer address
+  - `on_account_of` (string) → On account of information
+  - `location_before` (string) → Location before transport (defaults to feedlot name if not provided)
+  - `premises_id_before` (string) → Premises ID before transport
+  - `reason_for_transport` (string) → Reason for transport (e.g., "transport_to")
+  - `destination_name` (string) → Destination name
+  - `destination_address` (string) → Destination address
+
+- **Part C - Owner Signature**:
+  - `owner_signature` (string) → Owner signature
+  - `owner_signature_date` (string) → Owner signature date
+
+- **Part D - Inspection**:
+  - `inspector_name` (string) → Inspector name
+  - `inspector_number` (string) → Inspector number
+  - `inspection_date` (string) → Inspection date
+  - `inspection_time` (string) → Inspection time
+  - `inspection_notes` (string) → Inspection notes
+
+- **Part E - Transporter**:
+  - `transporter_name` (string) → Transporter name
+  - `transporter_trailer` (string) → Trailer/conveyance number
+  - `transporter_phone` (string) → Transporter phone number
+  - `transporter_signature` (string) → Transporter signature
+  - `transporter_signature_date` (string) → Transporter signature date
+
+- **Part F - Security Interest**:
+  - `security_interest_declared` (boolean) → Whether security interest is declared (default: false)
+  - `security_interest_details` (string) → Security interest details
+
+- **Part G - Destination/Receiver**:
+  - `received_date` (string) → Date received at destination
+  - `received_time` (string) → Time received at destination
+  - `head_received` (integer) → Number of head received (defaults to total head if not provided)
+  - `receiver_name` (string) → Receiver name
+  - `receiver_signature` (string) → Receiver signature
+  - `premises_id_destination` (string) → Premises ID at destination
 
 **Response**:
 ```json
 {
   "success": true,
-  "message": "Processed 1 export event records",
-  "records_processed": 1,
+  "message": "Processed 2 export event records",
+  "records_processed": 2,
   "records_created": 0,
-  "records_updated": 1,
+  "records_updated": 2,
   "records_skipped": 0,
+  "manifests_created": 1,
+  "manifest_ids": ["507f1f77bcf86cd799439011"],
   "errors": []
 }
 ```
 
 **Notes**:
 - `epc` (UHF tag) is required to identify the cattle
-- Cattle status is updated to "Export"
+- All manifest fields are optional
+- Cattle status is updated to "Export" regardless of whether manifest data is provided
+- **Manifest Creation**: If manifest data is provided (at least one non-empty manifest field), a manifest record is automatically created
+- **Grouping**: Cattle with identical manifest data (excluding `epc` and `timestamp`) are grouped into the same manifest record
 - If cattle is already marked as Export, the record is skipped (not counted as an error)
 - Export timestamp is recorded in the audit log
 - If cattle with the specified UHF tag is not found, the record is skipped with an error message
 - Timestamp format supports: "2024-11-25 10:30:00.123456", ISO format with 'T', or "YYYY-MM-DD" format
+- Empty strings and null values are treated equivalently when grouping cattle for manifests
+- If manifest creation fails, the error is logged but the export operation continues
 
 ---
 
