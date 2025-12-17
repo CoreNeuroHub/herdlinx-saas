@@ -6,9 +6,12 @@ from app.models.feedlot import Feedlot
 from app.models.batch import Batch
 from app.models.cattle import Cattle
 from app.models.pen import Pen
+from app.models.manifest import Manifest
+from app.utils.manifest_generator import generate_manifest_data
 from app.routes.auth_routes import login_required, admin_access_required
 from app import db
 from bson import ObjectId
+import json
 
 api_bp = Blueprint('api', __name__)
 
@@ -785,7 +788,7 @@ def sync_repair_events():
 @api_bp.route('/v1/feedlot/export-events', methods=['POST'])
 @api_key_required
 def sync_export_events():
-    """Sync export events from office app - marks cattle as Export status"""
+    """Sync export events from office app - marks cattle as Export status and optionally creates manifest records"""
     try:
         data = request.get_json()
         if not data:
@@ -830,6 +833,75 @@ def sync_export_events():
         records_updated = 0
         records_skipped = 0
         errors = []
+        manifests_created = 0
+        manifest_ids = []
+        
+        # Helper function to extract manifest fields from event item
+        def extract_manifest_fields(event_item):
+            """Extract all manifest fields from event item, normalizing empty values"""
+            manifest_fields = {}
+            
+            # Part A
+            manifest_fields['purpose'] = (event_item.get('purpose') or '').strip()
+            manifest_fields['transport_for_sale_by'] = (event_item.get('transport_for_sale_by') or '').strip()
+            
+            # Part B
+            manifest_fields['date'] = (event_item.get('date') or '').strip()
+            manifest_fields['owner_name'] = (event_item.get('owner_name') or '').strip()
+            manifest_fields['owner_phone'] = (event_item.get('owner_phone') or '').strip()
+            manifest_fields['owner_address'] = (event_item.get('owner_address') or '').strip()
+            manifest_fields['dealer_name'] = (event_item.get('dealer_name') or '').strip()
+            manifest_fields['dealer_phone'] = (event_item.get('dealer_phone') or '').strip()
+            manifest_fields['dealer_address'] = (event_item.get('dealer_address') or '').strip()
+            manifest_fields['on_account_of'] = (event_item.get('on_account_of') or '').strip()
+            manifest_fields['location_before'] = (event_item.get('location_before') or '').strip()
+            manifest_fields['premises_id_before'] = (event_item.get('premises_id_before') or '').strip()
+            manifest_fields['reason_for_transport'] = (event_item.get('reason_for_transport') or '').strip()
+            manifest_fields['destination_name'] = (event_item.get('destination_name') or '').strip()
+            manifest_fields['destination_address'] = (event_item.get('destination_address') or '').strip()
+            
+            # Part C
+            manifest_fields['owner_signature'] = (event_item.get('owner_signature') or '').strip()
+            manifest_fields['owner_signature_date'] = (event_item.get('owner_signature_date') or '').strip()
+            
+            # Part D
+            manifest_fields['inspector_name'] = (event_item.get('inspector_name') or '').strip()
+            manifest_fields['inspector_number'] = (event_item.get('inspector_number') or '').strip()
+            manifest_fields['inspection_date'] = (event_item.get('inspection_date') or '').strip()
+            manifest_fields['inspection_time'] = (event_item.get('inspection_time') or '').strip()
+            manifest_fields['inspection_notes'] = (event_item.get('inspection_notes') or '').strip()
+            
+            # Part E
+            manifest_fields['transporter_name'] = (event_item.get('transporter_name') or '').strip()
+            manifest_fields['transporter_trailer'] = (event_item.get('transporter_trailer') or '').strip()
+            manifest_fields['transporter_phone'] = (event_item.get('transporter_phone') or '').strip()
+            manifest_fields['transporter_signature'] = (event_item.get('transporter_signature') or '').strip()
+            manifest_fields['transporter_signature_date'] = (event_item.get('transporter_signature_date') or '').strip()
+            
+            # Part F
+            manifest_fields['security_interest_declared'] = event_item.get('security_interest_declared', False)
+            manifest_fields['security_interest_details'] = (event_item.get('security_interest_details') or '').strip()
+            
+            # Part G
+            manifest_fields['received_date'] = (event_item.get('received_date') or '').strip()
+            manifest_fields['received_time'] = (event_item.get('received_time') or '').strip()
+            manifest_fields['head_received'] = event_item.get('head_received')
+            manifest_fields['receiver_name'] = (event_item.get('receiver_name') or '').strip()
+            manifest_fields['receiver_signature'] = (event_item.get('receiver_signature') or '').strip()
+            manifest_fields['premises_id_destination'] = (event_item.get('premises_id_destination') or '').strip()
+            
+            return manifest_fields
+        
+        # Helper function to create grouping key from manifest fields
+        def create_manifest_key(manifest_fields):
+            """Create a hashable key from manifest fields for grouping"""
+            # Convert to tuple of sorted items, excluding None/empty values for consistent grouping
+            key_dict = {k: v for k, v in manifest_fields.items() if v not in (None, '', False)}
+            return json.dumps(key_dict, sort_keys=True)
+        
+        # Process events and group by manifest data
+        processed_events = []  # Store successfully processed events with their cattle and manifest data
+        manifest_groups = {}  # Group events by manifest key
         
         for event_item in events_data:
             try:
@@ -860,13 +932,8 @@ def sync_export_events():
                     records_skipped += 1
                     continue
                 
-                # Update cattle status to Export
-                Cattle.update_cattle(
-                    feedlot_code_normalized,
-                    cattle_record_id,
-                    {'cattle_status': 'Export'},
-                    updated_by='api'
-                )
+                # Extract manifest fields
+                manifest_fields = extract_manifest_fields(event_item)
                 
                 # Parse timestamp if provided
                 export_timestamp = datetime.utcnow()
@@ -883,6 +950,14 @@ def sync_export_events():
                     except (ValueError, AttributeError):
                         export_timestamp = datetime.utcnow()
                 
+                # Update cattle status to Export
+                Cattle.update_cattle(
+                    feedlot_code_normalized,
+                    cattle_record_id,
+                    {'cattle_status': 'Export'},
+                    updated_by='api'
+                )
+                
                 # Add audit log entry for export
                 Cattle.add_audit_log_entry(
                     feedlot_code_normalized,
@@ -898,10 +973,72 @@ def sync_export_events():
                 )
                 
                 records_updated += 1
+                
+                # Store event for manifest creation
+                # Check if manifest data exists (at least one non-empty field)
+                has_manifest_data = any(v for v in manifest_fields.values() if v not in (None, '', False))
+                
+                if has_manifest_data:
+                    manifest_key = create_manifest_key(manifest_fields)
+                    if manifest_key not in manifest_groups:
+                        manifest_groups[manifest_key] = {
+                            'manifest_fields': manifest_fields,
+                            'cattle_ids': []
+                        }
+                    manifest_groups[manifest_key]['cattle_ids'].append(cattle_record_id)
+                
+                processed_events.append({
+                    'cattle_id': cattle_record_id,
+                    'cattle': existing_cattle,
+                    'manifest_fields': manifest_fields,
+                    'has_manifest_data': has_manifest_data
+                })
                     
             except Exception as e:
                 errors.append(f'Record {records_processed}: {str(e)}')
                 records_skipped += 1
+        
+        # Create manifest records for each group
+        for manifest_key, group_data in manifest_groups.items():
+            try:
+                if not group_data['cattle_ids']:
+                    continue
+                
+                # Fetch full cattle records for this group
+                cattle_list = []
+                for cattle_id in group_data['cattle_ids']:
+                    cattle = Cattle.find_by_id(feedlot_code_normalized, cattle_id)
+                    if cattle:
+                        cattle_list.append(cattle)
+                
+                if not cattle_list:
+                    continue
+                
+                # Prepare manifest data - convert manifest_fields dict to format expected by generate_manifest_data
+                manifest_fields = group_data['manifest_fields']
+                
+                # Use generate_manifest_data to create the manifest structure
+                manifest_data = generate_manifest_data(
+                    cattle_list=cattle_list,
+                    template_data=manifest_fields,
+                    feedlot_data=feedlot,
+                    manual_data=None
+                )
+                
+                # Create manifest record
+                manifest_id = Manifest.create_manifest(
+                    feedlot_id=str(feedlot_id),
+                    manifest_data=manifest_data,
+                    cattle_ids=group_data['cattle_ids'],
+                    template_id=None,
+                    created_by='api'
+                )
+                
+                manifests_created += 1
+                manifest_ids.append(manifest_id)
+                
+            except Exception as e:
+                errors.append(f'Manifest creation error: {str(e)}')
         
         return jsonify({
             'success': True,
@@ -910,6 +1047,8 @@ def sync_export_events():
             'records_created': records_created,
             'records_updated': records_updated,
             'records_skipped': records_skipped,
+            'manifests_created': manifests_created,
+            'manifest_ids': manifest_ids,
             'errors': errors
         }), 200
     
@@ -919,6 +1058,44 @@ def sync_export_events():
             'message': f'Error processing request: {str(e)}'
         }), 500
 
+
+@api_bp.route('/v2/event', methods=['POST'])
+@api_key_required
+def handle_event():
+    """Unified v2 event endpoint that routes to v1 handlers based on event code"""
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            'success': False,
+            'message': 'Request body must be JSON'
+        }), 400
+
+    event_code = (data.get('event') or '').strip().lower()
+    if not event_code:
+        return jsonify({
+            'success': False,
+            'message': 'event is required in request body'
+        }), 400
+
+    # Map event codes to existing handlers (reuse v1 logic)
+    handler_map = {
+        'induction': sync_induction_events.__wrapped__,
+        'repair': sync_repair_events.__wrapped__,
+        'checkin': sync_checkin_events.__wrapped__,
+        'export': sync_export_events.__wrapped__,
+        'pair': sync_pairing_events.__wrapped__,
+        'pairing': sync_pairing_events.__wrapped__,  # alias for backward compatibility
+    }
+
+    handler = handler_map.get(event_code)
+    if not handler:
+        return jsonify({
+            'success': False,
+            'message': 'Invalid event. Supported events: induction, repair, checkin, export, pair'
+        }), 400
+
+    # The decorators have already attached feedlot context; call underlying handler logic
+    return handler()
 # API key generation is now only available through the web UI (Settings → API Keys)
 # This endpoint has been removed to restrict key generation to the secure web interface
 # Use the Settings page in the web application to generate and manage API keys

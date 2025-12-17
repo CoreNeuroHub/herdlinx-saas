@@ -205,7 +205,8 @@ def create_api_app():
                 'induction_events': '/api/v1/feedlot/induction-events',
                 'pairing_events': '/api/v1/feedlot/pairing-events',
                 'checkin_events': '/api/v1/feedlot/checkin-events',
-                'repair_events': '/api/v1/feedlot/repair-events'
+                'repair_events': '/api/v1/feedlot/repair-events',
+                'v2_event': '/api/v2/event'
             },
             'authentication': 'API Key required (X-API-Key header)',
             'documentation': 'https://docs.herdlinx.com/api'
@@ -228,6 +229,7 @@ if __name__ == '__main__':
     print("  POST /api/v1/feedlot/pairing-events   - Sync pairing events")
     print("  POST /api/v1/feedlot/checkin-events   - Sync check-in events")
     print("  POST /api/v1/feedlot/repair-events    - Sync repair events")
+    print("  POST /api/v2/event                    - Unified event endpoint")
     print("=" * 60)
     print("\nAuthentication: X-API-Key header required\n")
 

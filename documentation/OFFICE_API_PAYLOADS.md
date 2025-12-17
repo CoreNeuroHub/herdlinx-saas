@@ -272,6 +272,119 @@ Content-Type: application/json
 
 ---
 
+### 6. Sync Export Events
+
+**Endpoint**: `POST /api/v1/feedlot/export-events`
+
+**Description**: Syncs export events that mark cattle as exported. Optionally includes manifest data to automatically create manifest records. Cattle with identical manifest data are grouped into the same manifest.
+
+**Payload Structure**:
+
+```json
+{
+  "feedlot_code": "FEEDLOT001",
+  "data": [
+    {
+      "epc": "0900000000000003",
+      "timestamp": "2024-11-25T10:30:00",
+      "purpose": "transport_only",
+      "transport_for_sale_by": "owner",
+      "date": "2024-11-25",
+      "owner_name": "John Doe",
+      "owner_phone": "555-1234",
+      "owner_address": "123 Farm Road",
+      "dealer_name": "",
+      "dealer_phone": "",
+      "dealer_address": "",
+      "on_account_of": "",
+      "location_before": "Feedlot ABC",
+      "premises_id_before": "AB123",
+      "reason_for_transport": "transport_to",
+      "destination_name": "Processing Plant XYZ",
+      "destination_address": "456 Industrial Blvd",
+      "owner_signature": "",
+      "owner_signature_date": "",
+      "inspector_name": "",
+      "inspector_number": "",
+      "inspection_date": "",
+      "inspection_time": "",
+      "inspection_notes": "",
+      "transporter_name": "ABC Transport",
+      "transporter_trailer": "TRL-12345",
+      "transporter_phone": "555-5678",
+      "transporter_signature": "",
+      "transporter_signature_date": "",
+      "security_interest_declared": false,
+      "security_interest_details": "",
+      "received_date": "",
+      "received_time": "",
+      "head_received": null,
+      "receiver_name": "",
+      "receiver_signature": "",
+      "premises_id_destination": "AB456"
+    }
+  ]
+}
+```
+
+**Field Descriptions**:
+
+| Field | Type | Required | Description | Source |
+|-------|------|----------|-------------|--------|
+| `epc` | string | Yes | UHF/EPC tag ID to identify cattle | `events.parsed_data.epc` |
+| `timestamp` | string | No | Export timestamp | `events.received_at` |
+| `purpose` | string | No | Purpose: "transport_only", "transport_for_sale_owner", "transport_for_sale_dealer", "inspection_only" | `events.parsed_data.purpose` |
+| `transport_for_sale_by` | string | No | Who transports for sale: "owner" or "dealer" | `events.parsed_data.transport_for_sale_by` |
+| `date` | string | No | Manifest date (YYYY-MM-DD) | `events.parsed_data.date` |
+| `owner_name` | string | No | Owner name | `events.parsed_data.owner_name` |
+| `owner_phone` | string | No | Owner phone | `events.parsed_data.owner_phone` |
+| `owner_address` | string | No | Owner address | `events.parsed_data.owner_address` |
+| `dealer_name` | string | No | Dealer name | `events.parsed_data.dealer_name` |
+| `dealer_phone` | string | No | Dealer phone | `events.parsed_data.dealer_phone` |
+| `dealer_address` | string | No | Dealer address | `events.parsed_data.dealer_address` |
+| `on_account_of` | string | No | On account of | `events.parsed_data.on_account_of` |
+| `location_before` | string | No | Location before transport | `events.parsed_data.location_before` |
+| `premises_id_before` | string | No | Premises ID before | `events.parsed_data.premises_id_before` |
+| `reason_for_transport` | string | No | Reason for transport | `events.parsed_data.reason_for_transport` |
+| `destination_name` | string | No | Destination name | `events.parsed_data.destination_name` |
+| `destination_address` | string | No | Destination address | `events.parsed_data.destination_address` |
+| `owner_signature` | string | No | Owner signature | `events.parsed_data.owner_signature` |
+| `owner_signature_date` | string | No | Owner signature date | `events.parsed_data.owner_signature_date` |
+| `inspector_name` | string | No | Inspector name | `events.parsed_data.inspector_name` |
+| `inspector_number` | string | No | Inspector number | `events.parsed_data.inspector_number` |
+| `inspection_date` | string | No | Inspection date | `events.parsed_data.inspection_date` |
+| `inspection_time` | string | No | Inspection time | `events.parsed_data.inspection_time` |
+| `inspection_notes` | string | No | Inspection notes | `events.parsed_data.inspection_notes` |
+| `transporter_name` | string | No | Transporter name | `events.parsed_data.transporter_name` |
+| `transporter_trailer` | string | No | Trailer/conveyance number | `events.parsed_data.transporter_trailer` |
+| `transporter_phone` | string | No | Transporter phone | `events.parsed_data.transporter_phone` |
+| `transporter_signature` | string | No | Transporter signature | `events.parsed_data.transporter_signature` |
+| `transporter_signature_date` | string | No | Transporter signature date | `events.parsed_data.transporter_signature_date` |
+| `security_interest_declared` | boolean | No | Security interest declared | `events.parsed_data.security_interest_declared` |
+| `security_interest_details` | string | No | Security interest details | `events.parsed_data.security_interest_details` |
+| `received_date` | string | No | Date received at destination | `events.parsed_data.received_date` |
+| `received_time` | string | No | Time received at destination | `events.parsed_data.received_time` |
+| `head_received` | integer | No | Number of head received | `events.parsed_data.head_received` |
+| `receiver_name` | string | No | Receiver name | `events.parsed_data.receiver_name` |
+| `receiver_signature` | string | No | Receiver signature | `events.parsed_data.receiver_signature` |
+| `premises_id_destination` | string | No | Premises ID at destination | `events.parsed_data.premises_id_destination` |
+
+**Notes**:
+- Only `epc` is required; all manifest fields are optional
+- Cattle status is updated to "Export" regardless of whether manifest data is provided
+- **Manifest Creation**: If any manifest fields are provided (non-empty), a manifest record is automatically created
+- **Grouping**: Cattle with identical manifest data (excluding `epc` and `timestamp`) are grouped into the same manifest record
+- If cattle is already marked as Export, the record is skipped (not counted as an error)
+- Export timestamp is recorded in the audit log
+- If cattle with the specified UHF tag is not found, the record is skipped with an error message
+- Timestamp format supports: "2024-11-25 10:30:00.123456", ISO format with 'T', or "YYYY-MM-DD" format
+- Empty strings and null values are treated equivalently when grouping cattle for manifests
+- Response includes `manifests_created` count and `manifest_ids` array
+
+**Code Reference**: `office/scripts/api_sync.py` (to be implemented)
+
+---
+
 ## Sync Process
 
 ### Sync Loop
@@ -283,6 +396,7 @@ The API sync engine runs in a background thread that executes every 5 seconds:
 3. **Pairing Events**: Only unsynced events (`synced_at IS NULL`)
 4. **Checkin Events**: Only unsynced events (`synced_at IS NULL`)
 5. **Repair Events**: Only unsynced events (`synced_at IS NULL`)
+6. **Export Events**: Only unsynced events (`synced_at IS NULL`)
 
 ### Sync Status Tracking
 
@@ -313,6 +427,7 @@ Event payloads extract additional fields from the `parsed_data` JSON column:
 - **Pairing Events**: `lf_id`, `epc`, `weight_kg`
 - **Checkin Events**: `weight_kg`
 - **Repair Events**: `old_lf_id`, `new_lf_id`, `old_epc`, `new_epc`, `reason`
+- **Export Events**: `epc`, plus all manifest fields (see field descriptions above)
 
 ---
 
