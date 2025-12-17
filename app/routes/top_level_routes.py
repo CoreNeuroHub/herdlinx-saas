@@ -857,7 +857,12 @@ def settings():
     """Main settings page (all admin users)"""
     user_type = session.get('user_type')
     
-    return render_template('top_level/settings.html', user_type=user_type)
+    # Get feedlots for the erase feedlot data modal (only for super owner/super admin)
+    feedlots = []
+    if user_type in ['super_owner', 'super_admin']:
+        feedlots = Feedlot.find_all()
+    
+    return render_template('top_level/settings.html', user_type=user_type, feedlots=feedlots)
 
 @top_level_bp.route('/settings/api-keys')
 @login_required
@@ -1350,16 +1355,16 @@ def load_test_data():
         # Always return JSON for this endpoint (called via fetch)
         return jsonify({'success': False, 'message': error_msg}), 500
 
-@top_level_bp.route('/settings/reset-database', methods=['POST'])
+@top_level_bp.route('/settings/erase-all-data', methods=['POST'])
 @login_required
 @super_admin_required
-def reset_database():
-    """Reset the database - delete all data except users (top-level users only)"""
+def erase_all_data():
+    """Erase all data - delete all feedlots, pens, batches, cattle, API keys except users (top-level users only)"""
     user_type = session.get('user_type')
     
     # Only allow top-level users
     if user_type not in ['super_owner', 'super_admin']:
-        flash('Access denied. Database reset is only available for top-level users.', 'error')
+        flash('Access denied. Erase data is only available for top-level users.', 'error')
         return redirect(url_for('top_level.settings'))
     
     try:
@@ -1398,11 +1403,76 @@ def reset_database():
         if hasattr(db, 'pens'):
             db.pens.delete_many({})
         
-        flash('Database reset successfully. All data and feedlot databases have been deleted except users.', 'success')
+        flash('All data erased successfully. All feedlots and their data have been deleted. Users were preserved.', 'success')
         return redirect(url_for('top_level.settings'))
     
     except Exception as e:
-        current_app.logger.error(f"Error resetting database: {str(e)}")
-        flash(f'Failed to reset database: {str(e)}', 'error')
+        current_app.logger.error(f"Error erasing all data: {str(e)}")
+        flash(f'Failed to erase data: {str(e)}', 'error')
+        return redirect(url_for('top_level.settings'))
+
+@top_level_bp.route('/settings/erase-feedlot-data', methods=['POST'])
+@login_required
+@super_admin_required
+def erase_feedlot_data():
+    """Erase data for a specific feedlot - delete pens, batches, cattle but keep the feedlot and users"""
+    user_type = session.get('user_type')
+    
+    # Only allow top-level users
+    if user_type not in ['super_owner', 'super_admin']:
+        flash('Access denied. Erase data is only available for top-level users.', 'error')
+        return redirect(url_for('top_level.settings'))
+    
+    feedlot_id = request.form.get('feedlot_id')
+    if not feedlot_id:
+        flash('Please select a feedlot.', 'error')
+        return redirect(url_for('top_level.settings'))
+    
+    try:
+        from app import get_feedlot_db
+        
+        # Get the feedlot
+        feedlot = Feedlot.find_by_id(feedlot_id)
+        if not feedlot:
+            flash('Feedlot not found.', 'error')
+            return redirect(url_for('top_level.settings'))
+        
+        feedlot_name = feedlot.get('name', 'Unknown')
+        feedlot_code = feedlot.get('feedlot_code')
+        
+        if not feedlot_code:
+            flash('Feedlot code not found. Cannot erase data.', 'error')
+            return redirect(url_for('top_level.settings'))
+        
+        # Normalize feedlot_code
+        normalized_code = feedlot_code.lower().strip()
+        
+        # Get feedlot-specific database
+        feedlot_db = get_feedlot_db(normalized_code)
+        
+        # Count items before deletion for reporting
+        cattle_count = feedlot_db.cattle.count_documents({})
+        batches_count = feedlot_db.batches.count_documents({})
+        pens_count = db.pens.count_documents({'feedlot_id': ObjectId(feedlot_id)})
+        
+        # Delete all cattle from feedlot-specific database
+        feedlot_db.cattle.delete_many({})
+        
+        # Delete all batches from feedlot-specific database
+        feedlot_db.batches.delete_many({})
+        
+        # Delete all manifests from feedlot-specific database (if exists)
+        if 'manifests' in feedlot_db.list_collection_names():
+            feedlot_db.manifests.delete_many({})
+        
+        # Delete all pens for this feedlot from main database
+        db.pens.delete_many({'feedlot_id': ObjectId(feedlot_id)})
+        
+        flash(f'Data erased for feedlot "{feedlot_name}": {cattle_count} cattle, {batches_count} batches, and {pens_count} pens deleted. Feedlot and users were preserved.', 'success')
+        return redirect(url_for('top_level.settings'))
+    
+    except Exception as e:
+        current_app.logger.error(f"Error erasing feedlot data for {feedlot_id}: {str(e)}")
+        flash(f'Failed to erase feedlot data: {str(e)}', 'error')
         return redirect(url_for('top_level.settings'))
 

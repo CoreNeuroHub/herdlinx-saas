@@ -40,11 +40,11 @@
                 </div>
             </div>
             
-            <div data-testid="reset-database-settings-link" class="block p-4 border border-red-200 rounded-lg hover:border-red-400 hover:bg-red-50 transition duration-200 cursor-pointer" onclick="openResetDatabaseModal()">
+            <div data-testid="erase-data-settings-link" class="block p-4 border border-red-200 rounded-lg hover:border-red-400 hover:bg-red-50 transition duration-200 cursor-pointer" onclick="openEraseDataChoiceModal()">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h3 class="text-lg font-semibold text-red-800 mb-1">Reset Database</h3>
-                        <p class="text-sm text-red-600">Clear all data from the database. This action cannot be undone.</p>
+                        <h3 class="text-lg font-semibold text-red-800 mb-1">Erase Data</h3>
+                        <p class="text-sm text-red-600">Erase all data or data for a specific feedlot. This action cannot be undone.</p>
                     </div>
                     <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -103,12 +103,58 @@
     </div>
 </div>
 
-<!-- Reset Database Confirmation Modal -->
-<div id="reset-database-modal" data-testid="reset-database-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeResetDatabaseModalOnBackdrop(event)">
+<!-- Erase Data Choice Modal -->
+<div id="erase-data-choice-modal" data-testid="erase-data-choice-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeEraseDataChoiceModalOnBackdrop(event)">
     <div class="bg-white rounded-lg shadow-xl max-w-lg w-full" onclick="event.stopPropagation()">
         <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-            <h3 class="text-xl font-bold text-gray-800">Reset Database</h3>
-            <button type="button" data-testid="close-reset-database-modal-button" onclick="closeResetDatabaseModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <h3 class="text-xl font-bold text-gray-800">Erase Data</h3>
+            <button type="button" data-testid="close-erase-data-choice-modal-button" onclick="closeEraseDataChoiceModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="px-6 py-4">
+            <p class="text-gray-600 mb-4">Choose what data you want to erase:</p>
+            <div class="space-y-3">
+                <button type="button" data-testid="erase-all-data-option-button" onclick="openEraseAllDataModal()" class="w-full p-4 border border-red-200 rounded-lg hover:border-red-400 hover:bg-red-50 transition duration-200 text-left">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-red-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        <div>
+                            <h4 class="font-semibold text-red-800">Erase All Data</h4>
+                            <p class="text-sm text-red-600">Delete all feedlots, pens, batches, cattle, and API keys</p>
+                        </div>
+                    </div>
+                </button>
+                <button type="button" data-testid="erase-feedlot-data-option-button" onclick="openEraseFeedlotDataModal()" class="w-full p-4 border border-orange-200 rounded-lg hover:border-orange-400 hover:bg-orange-50 transition duration-200 text-left">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-orange-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <div>
+                            <h4 class="font-semibold text-orange-800">Erase Feedlot Data</h4>
+                            <p class="text-sm text-orange-600">Delete pens, batches, and cattle for a specific feedlot only</p>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+        <div class="border-t border-gray-200 px-6 py-4 flex justify-end">
+            <button type="button" data-testid="cancel-erase-data-choice-button" onclick="closeEraseDataChoiceModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Erase All Data Confirmation Modal -->
+<div id="erase-all-data-modal" data-testid="erase-all-data-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeEraseAllDataModalOnBackdrop(event)">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full" onclick="event.stopPropagation()">
+        <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-gray-800">Erase All Data</h3>
+            <button type="button" data-testid="close-erase-all-data-modal-button" onclick="closeEraseAllDataModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -134,15 +180,67 @@
             </div>
         </div>
         <div class="border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
-            <button type="button" data-testid="cancel-reset-database-button" onclick="closeResetDatabaseModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                Cancel
+            <button type="button" data-testid="back-erase-all-data-button" onclick="backToEraseDataChoice()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                Back
             </button>
-            <form id="reset-database-form" data-testid="reset-database-form" method="POST" action="{{ url_for('top_level.reset_database') }}" class="inline">
-                <button type="submit" data-testid="confirm-reset-database-button" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                    Reset Database
+            <form id="erase-all-data-form" data-testid="erase-all-data-form" method="POST" action="{{ url_for('top_level.erase_all_data') }}" class="inline">
+                <button type="submit" data-testid="confirm-erase-all-data-button" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Erase All Data
                 </button>
             </form>
         </div>
+    </div>
+</div>
+
+<!-- Erase Feedlot Data Modal -->
+<div id="erase-feedlot-data-modal" data-testid="erase-feedlot-data-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="closeEraseFeedlotDataModalOnBackdrop(event)">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full" onclick="event.stopPropagation()">
+        <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-gray-800">Erase Feedlot Data</h3>
+            <button type="button" data-testid="close-erase-feedlot-data-modal-button" onclick="closeEraseFeedlotDataModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="erase-feedlot-data-form" data-testid="erase-feedlot-data-form" method="POST" action="{{ url_for('top_level.erase_feedlot_data') }}">
+            <div class="px-6 py-4">
+                <div class="mb-4">
+                    <div class="flex items-start mb-4">
+                        <svg class="w-6 h-6 text-orange-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-gray-800 font-semibold mb-2">Warning: This action cannot be undone!</p>
+                            <p class="text-gray-600 mb-3">This will permanently delete for the selected feedlot:</p>
+                            <ul class="list-disc list-inside text-gray-600 mb-3 space-y-1">
+                                <li>All pens</li>
+                                <li>All batches</li>
+                                <li>All cattle</li>
+                            </ul>
+                            <p class="text-gray-600 font-semibold">The feedlot record and users will be preserved.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="feedlot_id" class="block text-sm font-medium text-gray-700 mb-2">Select Feedlot</label>
+                    <select id="feedlot_id" name="feedlot_id" data-testid="erase-feedlot-select" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                        <option value="">-- Select a feedlot --</option>
+                        {% for feedlot in feedlots %}
+                        <option value="{{ feedlot._id }}">{{ feedlot.name }} ({{ feedlot.feedlot_code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
+                <button type="button" data-testid="back-erase-feedlot-data-button" onclick="backToEraseDataChoice()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    Back
+                </button>
+                <button type="submit" data-testid="confirm-erase-feedlot-data-button" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                    Erase Feedlot Data
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -229,35 +327,89 @@ function handleLoadTestDataButtonClick() {
     });
 }
 
-function openResetDatabaseModal() {
-    const modal = document.getElementById('reset-database-modal');
+// Erase Data Choice Modal Functions
+function openEraseDataChoiceModal() {
+    const modal = document.getElementById('erase-data-choice-modal');
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    
-    // Close on Escape key
-    document.addEventListener('keydown', handleResetDatabaseEscape);
+    document.addEventListener('keydown', handleEraseDataEscape);
 }
 
-function closeResetDatabaseModal() {
-    const modal = document.getElementById('reset-database-modal');
+function closeEraseDataChoiceModal() {
+    const modal = document.getElementById('erase-data-choice-modal');
     modal.classList.add('hidden');
     document.body.style.overflow = 'auto';
-    
-    // Remove Escape key listener
-    document.removeEventListener('keydown', handleResetDatabaseEscape);
+    document.removeEventListener('keydown', handleEraseDataEscape);
 }
 
-function closeResetDatabaseModalOnBackdrop(event) {
-    if (event.target.id === 'reset-database-modal') {
-        closeResetDatabaseModal();
+function closeEraseDataChoiceModalOnBackdrop(event) {
+    if (event.target.id === 'erase-data-choice-modal') {
+        closeEraseDataChoiceModal();
     }
 }
 
-function handleResetDatabaseEscape(event) {
+// Erase All Data Modal Functions
+function openEraseAllDataModal() {
+    closeEraseDataChoiceModal();
+    const modal = document.getElementById('erase-all-data-modal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleEraseDataEscape);
+}
+
+function closeEraseAllDataModal() {
+    const modal = document.getElementById('erase-all-data-modal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    document.removeEventListener('keydown', handleEraseDataEscape);
+}
+
+function closeEraseAllDataModalOnBackdrop(event) {
+    if (event.target.id === 'erase-all-data-modal') {
+        closeEraseAllDataModal();
+    }
+}
+
+// Erase Feedlot Data Modal Functions
+function openEraseFeedlotDataModal() {
+    closeEraseDataChoiceModal();
+    const modal = document.getElementById('erase-feedlot-data-modal');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleEraseDataEscape);
+}
+
+function closeEraseFeedlotDataModal() {
+    const modal = document.getElementById('erase-feedlot-data-modal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    document.removeEventListener('keydown', handleEraseDataEscape);
+    // Reset the select field
+    document.getElementById('feedlot_id').value = '';
+}
+
+function closeEraseFeedlotDataModalOnBackdrop(event) {
+    if (event.target.id === 'erase-feedlot-data-modal') {
+        closeEraseFeedlotDataModal();
+    }
+}
+
+// Back to choice modal
+function backToEraseDataChoice() {
+    closeEraseAllDataModal();
+    closeEraseFeedlotDataModal();
+    openEraseDataChoiceModal();
+}
+
+// Escape key handler for all erase modals
+function handleEraseDataEscape(event) {
     if (event.key === 'Escape') {
-        closeResetDatabaseModal();
+        closeEraseDataChoiceModal();
+        closeEraseAllDataModal();
+        closeEraseFeedlotDataModal();
     }
 }
 </script>
 {% endblock %}
+
 
