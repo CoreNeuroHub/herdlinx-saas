@@ -1058,6 +1058,44 @@ def sync_export_events():
             'message': f'Error processing request: {str(e)}'
         }), 500
 
+
+@api_bp.route('/v2/event', methods=['POST'])
+@api_key_required
+def handle_event():
+    """Unified v2 event endpoint that routes to v1 handlers based on event code"""
+    data = request.get_json()
+    if not data:
+        return jsonify({
+            'success': False,
+            'message': 'Request body must be JSON'
+        }), 400
+
+    event_code = (data.get('event') or '').strip().lower()
+    if not event_code:
+        return jsonify({
+            'success': False,
+            'message': 'event is required in request body'
+        }), 400
+
+    # Map event codes to existing handlers (reuse v1 logic)
+    handler_map = {
+        'induction': sync_induction_events.__wrapped__,
+        'repair': sync_repair_events.__wrapped__,
+        'checkin': sync_checkin_events.__wrapped__,
+        'export': sync_export_events.__wrapped__,
+        'pair': sync_pairing_events.__wrapped__,
+        'pairing': sync_pairing_events.__wrapped__,  # alias for backward compatibility
+    }
+
+    handler = handler_map.get(event_code)
+    if not handler:
+        return jsonify({
+            'success': False,
+            'message': 'Invalid event. Supported events: induction, repair, checkin, export, pair'
+        }), 400
+
+    # The decorators have already attached feedlot context; call underlying handler logic
+    return handler()
 # API key generation is now only available through the web UI (Settings → API Keys)
 # This endpoint has been removed to restrict key generation to the secure web interface
 # Use the Settings page in the web application to generate and manage API keys

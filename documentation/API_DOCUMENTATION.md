@@ -127,6 +127,48 @@ All endpoints return JSON responses with the following structure:
 
 ---
 
+## V2 Unified Event Endpoint
+
+Use this endpoint to send any supported event type through a single URL while keeping the same payload schemas used in v1.
+
+- **Endpoint**: `POST /api/v2/event`
+- **Auth**: `X-API-Key` header (same as v1)
+- **Required field**: `event` (one of `induction`, `repair`, `checkin`, `export`, `pair`)
+- **Payload**: Same structure as the corresponding v1 endpoint (see sections below). Include `event` alongside the usual fields.
+
+**Sample Request**
+
+```json
+{
+  "event": "induction",
+  "feedlot_code": "jfmurray",
+  "data": [
+    {
+      "livestock_id": 3,
+      "batch_name": "BATCH_2025-12-04_7325",
+      "pen": "6",
+      "pen_location": "6",
+      "lf_id": "124000224161433",
+      "epc": "0900000000000003",
+      "weight": 0,
+      "timestamp": "2025-12-04 14:18:11.265273"
+    }
+  ]
+}
+```
+
+**Routing Behavior**
+
+- `event=induction` → processes as `POST /api/v1/feedlot/induction-events`
+- `event=pair` → processes as `POST /api/v1/feedlot/pairing-events`
+- `event=checkin` → processes as `POST /api/v1/feedlot/checkin-events`
+- `event=repair` → processes as `POST /api/v1/feedlot/repair-events`
+- `event=export` → processes as `POST /api/v1/feedlot/export-events`
+
+Unsupported `event` values return `400` with a descriptive error.
+
+---
+
 ## Endpoints
 
 ### 1. Sync Induction Events
