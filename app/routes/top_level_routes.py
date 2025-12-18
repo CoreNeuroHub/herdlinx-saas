@@ -231,6 +231,251 @@ def create_feedlot():
     # GET request - redirect to dashboard since we're using a modal now
     return redirect(url_for('top_level.dashboard'))
 
+@top_level_bp.route('/feedlot/create-wizard', methods=['POST'])
+@login_required
+@super_admin_required
+def create_feedlot_wizard():
+    """Create a new feedlot using the multi-step wizard
+    
+    Accepts JSON payload with:
+    - feedlot: {name, location, feedlot_code, land_description, premises_id}
+    - users: [{username, email, password, user_type}, ...]
+    - branding: {logo_base64, favicon_base64, primary_color, secondary_color, company_name, use_default}
+    - generate_api_key: boolean
+    - api_key_description: optional string
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': 'Request body must be JSON'}), 400
+        
+        # Extract feedlot data
+        feedlot_data = data.get('feedlot', {})
+        name = feedlot_data.get('name', '').strip()
+        location = feedlot_data.get('location', '').strip()
+        feedlot_code = feedlot_data.get('feedlot_code', '').strip()
+        land_description = feedlot_data.get('land_description', '').strip() or None
+        premises_id = feedlot_data.get('premises_id', '').strip() or None
+        
+        # Validate required fields
+        if not name or not location or not feedlot_code:
+            return jsonify({'success': False, 'message': 'Feedlot name, location, and feedlot code are required.'}), 400
+        
+        # Validate feedlot_code format
+        if not re.match(r'^[a-z0-9_-]+$', feedlot_code.lower()):
+            return jsonify({'success': False, 'message': 'Feedlot code must contain only lowercase letters, numbers, hyphens, and underscores.'}), 400
+        
+        # Check if feedlot_code already exists
+        existing = Feedlot.find_by_code(feedlot_code)
+        if existing:
+            return jsonify({'success': False, 'message': f"Feedlot code '{feedlot_code}' already exists."}), 400
+        
+        # Step 1: Create the feedlot
+        feedlot_id = Feedlot.create_feedlot(
+            name=name,
+            location=location,
+            feedlot_code=feedlot_code,
+            contact_info={},  # No contact info in wizard
+            owner_id=None,
+            land_description=land_description,
+            premises_id=premises_id
+        )
+        
+        created_users = []
+        owner_id = None
+        
+        # Step 2: Create users
+        users_data = data.get('users', [])
+        for user_data in users_data:
+            username = user_data.get('username', '').strip()
+            email = user_data.get('email', '').strip()
+            password = user_data.get('password', '')
+            user_type = user_data.get('user_type', 'user')
+            
+            if not username or not email or not password:
+                continue  # Skip invalid users
+            
+            # Check if username or email already exists
+            if User.find_by_username(username):
+                continue  # Skip duplicate username
+            if User.find_by_email(email):
+                continue  # Skip duplicate email
+            
+            # Hash password
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            
+            # Create user with feedlot assignment
+            user_insert_data = {
+                'username': username,
+                'email': email,
+                'password_hash': password_hash,
+                'user_type': user_type,
+                'is_active': True,
+                'created_at': datetime.utcnow(),
+                'updated_at': datetime.utcnow()
+            }
+            
+            # Assign feedlot based on user type
+            if user_type in ['business_owner', 'business_admin']:
+                user_insert_data['feedlot_ids'] = [ObjectId(feedlot_id)]
+            else:
+                user_insert_data['feedlot_id'] = ObjectId(feedlot_id)
+            
+            result = db.users.insert_one(user_insert_data)
+            created_user_id = str(result.inserted_id)
+            
+            created_users.append({
+                'id': created_user_id,
+                'username': username,
+                'email': email,
+                'user_type': user_type
+            })
+            
+            # Track business owner for feedlot assignment
+            if user_type == 'business_owner' and owner_id is None:
+                owner_id = created_user_id
+        
+        # Assign first business owner as feedlot owner
+        if owner_id:
+            Feedlot.update_feedlot(feedlot_id, {'owner_id': ObjectId(owner_id)})
+        
+        # Step 3: Handle branding
+        branding_data = data.get('branding', {})
+        use_default_branding = branding_data.get('use_default', True)
+        
+        if not use_default_branding:
+            branding_update = {}
+            
+            # Handle logo base64 upload
+            logo_base64 = branding_data.get('logo_base64', '').strip()
+            if logo_base64:
+                logo_path = _save_base64_image(feedlot_id, logo_base64, 'logo')
+                if logo_path:
+                    branding_update['logo_path'] = logo_path
+            
+            # Handle favicon base64 upload
+            favicon_base64 = branding_data.get('favicon_base64', '').strip()
+            if favicon_base64:
+                favicon_path = _save_base64_image(feedlot_id, favicon_base64, 'favicon')
+                if favicon_path:
+                    branding_update['favicon_path'] = favicon_path
+            
+            # Handle colors
+            primary_color = branding_data.get('primary_color', '').strip()
+            if primary_color:
+                branding_update['primary_color'] = primary_color if primary_color.startswith('#') else f'#{primary_color}'
+            else:
+                branding_update['primary_color'] = '#2D8B8B'
+            
+            secondary_color = branding_data.get('secondary_color', '').strip()
+            if secondary_color:
+                branding_update['secondary_color'] = secondary_color if secondary_color.startswith('#') else f'#{secondary_color}'
+            else:
+                branding_update['secondary_color'] = '#0A2540'
+            
+            # Handle company name
+            company_name = branding_data.get('company_name', '').strip()
+            if company_name:
+                branding_update['company_name'] = company_name
+            
+            if branding_update:
+                Feedlot.update_branding(feedlot_id, branding_update)
+        
+        # Step 4: Generate API key if requested
+        api_key_string = None
+        generate_api_key = data.get('generate_api_key', False)
+        if generate_api_key:
+            api_key_description = data.get('api_key_description', '').strip() or None
+            api_key_string, api_key_id = APIKey.create_api_key(feedlot_id, api_key_description)
+        
+        # Build response
+        response_data = {
+            'success': True,
+            'message': 'Feedlot created successfully.',
+            'feedlot_id': feedlot_id,
+            'feedlot_name': name,
+            'feedlot_code': feedlot_code.lower(),
+            'users_created': len(created_users),
+            'users': created_users
+        }
+        
+        if api_key_string:
+            response_data['api_key'] = api_key_string
+            response_data['api_key_warning'] = 'Save this API key immediately. It will not be shown again.'
+        
+        return jsonify(response_data), 200
+    
+    except ValueError as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"Error in create_feedlot_wizard: {str(e)}")
+        return jsonify({'success': False, 'message': f'Failed to create feedlot: {str(e)}'}), 500
+
+def _save_base64_image(feedlot_id, base64_data, image_type):
+    """Helper function to save base64 encoded image
+    
+    Args:
+        feedlot_id: Feedlot ID for filename
+        base64_data: Base64 encoded image data (may include data URL prefix)
+        image_type: 'logo' or 'favicon'
+    
+    Returns:
+        Relative path to saved file or None if failed
+    """
+    import base64
+    
+    try:
+        # Remove data URL prefix if present
+        if ',' in base64_data:
+            header, base64_data = base64_data.split(',', 1)
+            # Extract file extension from header
+            if 'png' in header:
+                ext = 'png'
+            elif 'jpeg' in header or 'jpg' in header:
+                ext = 'jpg'
+            elif 'gif' in header:
+                ext = 'gif'
+            elif 'webp' in header:
+                ext = 'webp'
+            elif 'svg' in header:
+                ext = 'svg'
+            else:
+                ext = 'png'  # Default
+        else:
+            ext = 'png'  # Default
+        
+        # Decode base64 data
+        image_data = base64.b64decode(base64_data)
+        
+        # Check file size (max 5MB)
+        if len(image_data) > 5 * 1024 * 1024:
+            return None
+        
+        # Generate unique filename
+        filename = f"{feedlot_id}_{uuid.uuid4().hex[:8]}.{ext}"
+        filename = secure_filename(filename)
+        
+        # Create directory
+        if image_type == 'logo':
+            target_dir = os.path.join(current_app.static_folder, 'feedlot_branding', 'logos')
+            relative_path = f'feedlot_branding/logos/{filename}'
+        else:
+            target_dir = os.path.join(current_app.static_folder, 'feedlot_branding', 'favicons')
+            relative_path = f'feedlot_branding/favicons/{filename}'
+        
+        os.makedirs(target_dir, exist_ok=True)
+        
+        # Save file
+        file_path = os.path.join(target_dir, filename)
+        with open(file_path, 'wb') as f:
+            f.write(image_data)
+        
+        return relative_path
+    
+    except Exception as e:
+        current_app.logger.error(f"Error saving base64 image: {str(e)}")
+        return None
+
 @top_level_bp.route('/feedlot/<feedlot_id>/view')
 @login_required
 @admin_access_required

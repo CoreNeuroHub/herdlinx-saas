@@ -1330,9 +1330,17 @@
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="manage-users-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
+        <!-- Quick Links Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Links</h3>
+        <div class="space-y-1 mb-4">
+            <a href="{{ url_for('top_level.dashboard') }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Feedlot Hub</a>
+        </div>
+        
+        <!-- Quick Actions Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
         <div class="space-y-1">
-            <button onclick="openAddUserModal();" data-testid="add-new-user-action-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add new user</button>
+            <button onclick="openAddUserModal();" data-testid="quick-actions-add-user" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add new user</button>
         </div>
     </div>
     {% endblock %}

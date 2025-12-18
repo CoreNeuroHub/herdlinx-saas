@@ -407,13 +407,22 @@
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="cattle-view-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
+        <!-- Quick Links Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Links</h3>
+        <div class="space-y-1 mb-4">
+            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Feedlot Hub</a>
+            <a href="{{ url_for('feedlot.export_manifest', feedlot_id=feedlot._id) }}" data-testid="quick-links-export-manifest" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Export Manifest</a>
+        </div>
+        
+        <!-- Quick Actions Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
         <div class="space-y-1">
             {% block actions_items %}
-            <a href="{{ url_for('feedlot.add_weight_record', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="add-weight-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Add Weight</a>
-            <a href="{{ url_for('feedlot.move_cattle', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="move-pen-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Move Pen</a>
-            <a href="{{ url_for('feedlot.update_tags', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="update-tags-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Update Tags</a>
-            <button type="button" onclick="openDeleteCattleModal()" data-testid="delete-cattle-action" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded cursor-pointer">Delete Cattle</button>
+            <a href="{{ url_for('feedlot.add_weight_record', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="quick-actions-add-weight" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Add Weight</a>
+            <a href="{{ url_for('feedlot.move_cattle', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="quick-actions-move-pen" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Move Pen</a>
+            <a href="{{ url_for('feedlot.update_tags', feedlot_id=feedlot._id, cattle_id=cattle._id) }}" data-testid="quick-actions-update-tags" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Update Tags</a>
+            <button type="button" onclick="openDeleteCattleModal()" data-testid="quick-actions-delete-cattle" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded cursor-pointer">Delete Cattle</button>
             {% endblock %}
         </div>
     </div>

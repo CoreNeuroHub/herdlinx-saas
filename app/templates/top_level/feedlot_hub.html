@@ -107,13 +107,367 @@
 </div>
 {% endif %}
 
-<!-- Add New Feedlot Modal -->
-<div id="add-feedlot-modal" data-testid="add-feedlot-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+<!-- Feedlot Creation Wizard Modal -->
+<div id="feedlot-wizard-modal" data-testid="feedlot-wizard-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
-                <h2 class="text-2xl font-bold text-gray-800">Add New Feedlot</h2>
-                <button onclick="closeAddFeedlotModal()" data-testid="close-add-feedlot-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                <h2 class="text-2xl font-bold text-gray-800">Create New Feedlot</h2>
+                <button onclick="closeWizard()" data-testid="close-wizard-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close wizard">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Step Indicator -->
+            <div class="mt-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center wizard-step-indicator" data-step="1">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold bg-teal text-white" id="step-indicator-1">1</div>
+                        <span class="ml-2 text-sm font-medium text-gray-700 hidden sm:inline">Basic Info</span>
+                    </div>
+                    <div class="flex-1 h-1 mx-2 bg-gray-200"><div class="h-1 bg-teal transition-all duration-300" id="progress-1-2" style="width: 0%"></div></div>
+                    
+                    <div class="flex items-center wizard-step-indicator" data-step="2">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-200 text-gray-600" id="step-indicator-2">2</div>
+                        <span class="ml-2 text-sm font-medium text-gray-500 hidden sm:inline">Users</span>
+                    </div>
+                    <div class="flex-1 h-1 mx-2 bg-gray-200"><div class="h-1 bg-teal transition-all duration-300" id="progress-2-3" style="width: 0%"></div></div>
+                    
+                    <div class="flex items-center wizard-step-indicator" data-step="3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-200 text-gray-600" id="step-indicator-3">3</div>
+                        <span class="ml-2 text-sm font-medium text-gray-500 hidden sm:inline">Branding</span>
+                    </div>
+                    <div class="flex-1 h-1 mx-2 bg-gray-200"><div class="h-1 bg-teal transition-all duration-300" id="progress-3-4" style="width: 0%"></div></div>
+                    
+                    <div class="flex items-center wizard-step-indicator" data-step="4">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-200 text-gray-600" id="step-indicator-4">4</div>
+                        <span class="ml-2 text-sm font-medium text-gray-500 hidden sm:inline">API Key</span>
+                    </div>
+                    <div class="flex-1 h-1 mx-2 bg-gray-200"><div class="h-1 bg-teal transition-all duration-300" id="progress-4-5" style="width: 0%"></div></div>
+                    
+                    <div class="flex items-center wizard-step-indicator" data-step="5">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-200 text-gray-600" id="step-indicator-5">5</div>
+                        <span class="ml-2 text-sm font-medium text-gray-500 hidden sm:inline">Confirm</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step Content Container -->
+        <div class="p-6">
+            <!-- Step 1: Basic Information -->
+            <div id="wizard-step-1" class="wizard-step" data-testid="wizard-step-1">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="wizard-name" class="block text-sm font-medium text-gray-700 mb-2">Feedlot Name *</label>
+                        <input type="text" id="wizard-name" data-testid="wizard-name-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               placeholder="Enter feedlot name">
+                    </div>
+                    
+                    <div>
+                        <label for="wizard-location" class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                        <input type="text" id="wizard-location" data-testid="wizard-location-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               placeholder="Enter location">
+                    </div>
+                    
+                    <div>
+                        <label for="wizard-feedlot-code" class="block text-sm font-medium text-gray-700 mb-2">Feedlot Code *</label>
+                        <input type="text" id="wizard-feedlot-code" data-testid="wizard-feedlot-code-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               placeholder="e.g., feedlot-001">
+                        <p class="mt-1 text-sm text-gray-500">Unique identifier for office app integration. Lowercase alphanumeric, hyphens (-), and underscores (_) only.</p>
+                    </div>
+                    
+                    <div>
+                        <label for="wizard-land-description" class="block text-sm font-medium text-gray-700 mb-2">Land Description</label>
+                        <textarea id="wizard-land-description" rows="3" data-testid="wizard-land-description-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               placeholder="Optional land description"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="wizard-premises-id" class="block text-sm font-medium text-gray-700 mb-2">Premises Identification (PID) Number</label>
+                        <input type="text" id="wizard-premises-id" data-testid="wizard-premises-id-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               placeholder="Optional PID number">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Users -->
+            <div id="wizard-step-2" class="wizard-step hidden" data-testid="wizard-step-2">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">User Management</h3>
+                <p class="text-sm text-gray-600 mb-4">Add users who will have access to this feedlot. You can skip this step and add users later.</p>
+                
+                <!-- Users List -->
+                <div id="wizard-users-list" class="space-y-2 mb-4">
+                    <!-- Users will be added here dynamically -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="wizard-users-empty" class="text-center py-8 bg-gray-50 rounded-lg mb-4">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-500">No users added yet</p>
+                </div>
+                
+                <!-- Add User Buttons -->
+                <div class="flex space-x-4">
+                    <button type="button" id="wizard-add-owner-btn" onclick="openWizardUserModal('owner')" data-testid="wizard-add-owner-button"
+                            class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                        Add Owner
+                    </button>
+                    <button type="button" id="wizard-add-user-btn" onclick="openWizardUserModal('user')" data-testid="wizard-add-user-button"
+                            class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 hidden">
+                        Add User
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Branding -->
+            <div id="wizard-step-3" class="wizard-step hidden" data-testid="wizard-step-3">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Branding</h3>
+                <p class="text-sm text-gray-600 mb-4">Customize the feedlot branding or use the default HerdLinx branding.</p>
+                
+                <div class="space-y-6">
+                    <!-- Logo Upload -->
+                    <div class="border-b border-gray-200 pb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Logo</label>
+                        <div class="flex items-start space-x-6">
+                            <div class="flex-shrink-0">
+                                <div id="wizard-logo-preview-placeholder" class="w-32 h-32 bg-gray-100 border-2 border-gray-300 rounded-lg flex items-center justify-center">
+                                    <span class="text-gray-400 text-sm">No logo</span>
+                                </div>
+                                <img id="wizard-logo-preview" src="" alt="Logo Preview" class="w-32 h-32 object-contain border-2 border-gray-300 rounded-lg p-2 hidden">
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" id="wizard-logo" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
+                                       data-testid="wizard-logo-input"
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal file:text-white hover:file:opacity-90 file:cursor-pointer"
+                                       onchange="previewWizardLogo(this)">
+                                <p class="text-xs text-gray-500 mt-2">PNG, JPG, JPEG, GIF, WEBP, or SVG. Max 5MB.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Favicon Upload -->
+                    <div class="border-b border-gray-200 pb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Favicon</label>
+                        <div class="flex items-start space-x-6">
+                            <div class="flex-shrink-0">
+                                <div id="wizard-favicon-preview-placeholder" class="w-16 h-16 bg-gray-100 border-2 border-gray-300 rounded-lg flex items-center justify-center">
+                                    <span class="text-gray-400 text-xs">No favicon</span>
+                                </div>
+                                <img id="wizard-favicon-preview" src="" alt="Favicon Preview" class="w-16 h-16 object-contain border-2 border-gray-300 rounded-lg p-2 hidden">
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" id="wizard-favicon" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
+                                       data-testid="wizard-favicon-input"
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal file:text-white hover:file:opacity-90 file:cursor-pointer"
+                                       onchange="previewWizardFavicon(this)">
+                                <p class="text-xs text-gray-500 mt-2">PNG, JPG, JPEG, GIF, WEBP, or SVG. Max 5MB.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Primary Color -->
+                    <div class="border-b border-gray-200 pb-6">
+                        <label for="wizard-primary-color" class="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="color" id="wizard-primary-color" value="#2D8B8B"
+                                   data-testid="wizard-primary-color-input"
+                                   class="w-20 h-10 border border-gray-300 rounded-lg cursor-pointer">
+                            <input type="text" id="wizard-primary-color-text" value="#2D8B8B"
+                                   data-testid="wizard-primary-color-text-input"
+                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                                   placeholder="#2D8B8B" pattern="^#[0-9A-Fa-f]{6}$">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Main brand color used throughout the feedlot interface.</p>
+                    </div>
+                    
+                    <!-- Secondary Color -->
+                    <div class="border-b border-gray-200 pb-6">
+                        <label for="wizard-secondary-color" class="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
+                        <div class="flex items-center space-x-4">
+                            <input type="color" id="wizard-secondary-color" value="#0A2540"
+                                   data-testid="wizard-secondary-color-input"
+                                   class="w-20 h-10 border border-gray-300 rounded-lg cursor-pointer">
+                            <input type="text" id="wizard-secondary-color-text" value="#0A2540"
+                                   data-testid="wizard-secondary-color-text-input"
+                                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                                   placeholder="#0A2540" pattern="^#[0-9A-Fa-f]{6}$">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Secondary brand color for accents and highlights.</p>
+                    </div>
+                    
+                    <!-- Company Name -->
+                    <div>
+                        <label for="wizard-company-name" class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                        <input type="text" id="wizard-company-name" data-testid="wizard-company-name-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               placeholder="Optional custom display name">
+                        <p class="text-xs text-gray-500 mt-2">Custom display name. If left empty, feedlot name will be used.</p>
+                    </div>
+                    
+                    <!-- Reset Button -->
+                    <div class="pt-4">
+                        <button type="button" onclick="resetWizardBranding()" data-testid="wizard-reset-branding-button"
+                                class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                            Reset to HerdLinx Default
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 4: API Key -->
+            <div id="wizard-step-4" class="wizard-step hidden" data-testid="wizard-step-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">API Key Generation</h3>
+                <p class="text-sm text-gray-600 mb-4">Generate an API key for office app integration. You can skip this step and generate keys later.</p>
+                
+                <div class="space-y-4">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Feedlot Code</label>
+                        <p class="text-lg font-mono text-gray-900" id="wizard-api-feedlot-code">-</p>
+                    </div>
+                    
+                    <div>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="wizard-generate-api-key" data-testid="wizard-generate-api-key-checkbox"
+                                   class="rounded border-gray-300 text-teal focus:ring-teal w-5 h-5">
+                            <span class="text-sm font-medium text-gray-700">Generate API Key for this feedlot</span>
+                        </label>
+                    </div>
+                    
+                    <div id="wizard-api-key-description-field" class="hidden">
+                        <label for="wizard-api-key-description" class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                        <input type="text" id="wizard-api-key-description" data-testid="wizard-api-key-description-input"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                               placeholder="e.g., Production API Key, Testing Key">
+                        <p class="mt-1 text-sm text-gray-500">Add a description to help identify this API key later.</p>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 hidden" id="wizard-api-key-warning">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    <strong>Important:</strong> The API key will only be shown once after creation. Make sure to copy and store it securely.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 5: Confirmation -->
+            <div id="wizard-step-5" class="wizard-step hidden" data-testid="wizard-step-5">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Confirmation</h3>
+                <p class="text-sm text-gray-600 mb-4">Review the details below before creating the feedlot.</p>
+                
+                <div class="space-y-4">
+                    <!-- Feedlot Summary -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Feedlot Details</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-500">Name:</span>
+                                <p class="font-medium text-gray-900" id="confirm-name">-</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Location:</span>
+                                <p class="font-medium text-gray-900" id="confirm-location">-</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Feedlot Code:</span>
+                                <p class="font-medium text-gray-900 font-mono" id="confirm-feedlot-code">-</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">Premises ID:</span>
+                                <p class="font-medium text-gray-900" id="confirm-premises-id">Not provided</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Users Summary -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Users</h4>
+                        <p class="text-sm text-gray-900" id="confirm-users-count">No users will be created</p>
+                        <div id="confirm-users-list" class="mt-2 space-y-1">
+                            <!-- User list will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Branding Summary -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">Branding</h4>
+                        <p class="text-sm text-gray-900" id="confirm-branding">Using HerdLinx default branding</p>
+                        <div id="confirm-branding-details" class="mt-2 hidden">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-gray-500 text-sm">Primary:</span>
+                                    <div id="confirm-primary-color" class="w-6 h-6 rounded border border-gray-300"></div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-gray-500 text-sm">Secondary:</span>
+                                    <div id="confirm-secondary-color" class="w-6 h-6 rounded border border-gray-300"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- API Key Summary -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">API Key</h4>
+                        <p class="text-sm text-gray-900" id="confirm-api-key">No API key will be generated</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Buttons -->
+        <div class="p-6 border-t border-gray-200">
+            <div class="flex justify-between">
+                <button type="button" id="wizard-prev-btn" onclick="wizardPrevStep()" data-testid="wizard-prev-button"
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 hidden">
+                    Previous
+                </button>
+                <div class="flex space-x-4 ml-auto">
+                    <button type="button" id="wizard-skip-btn" onclick="wizardSkipStep()" data-testid="wizard-skip-button"
+                            class="bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 hidden">
+                        Skip
+                    </button>
+                    <button type="button" id="wizard-next-btn" onclick="wizardNextStep()" data-testid="wizard-next-button"
+                            class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Next
+                    </button>
+                    <button type="button" id="wizard-submit-btn" onclick="submitWizard()" data-testid="wizard-submit-button"
+                            class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-6 rounded-lg transition duration-200 hidden">
+                        Create Feedlot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wizard User Modal (nested) -->
+<div id="wizard-user-modal" data-testid="wizard-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-gray-800" id="wizard-user-modal-title">Add User</h2>
+                <button onclick="closeWizardUserModal()" data-testid="close-wizard-user-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -121,232 +475,735 @@
             </div>
         </div>
         
-        <form id="add-feedlot-form" method="POST" action="{{ url_for('top_level.create_feedlot') }}" data-testid="add-feedlot-form" class="p-6 space-y-4">
+        <div class="p-6 space-y-4">
             <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Feedlot Name *</label>
-                <input type="text" id="name" name="name" required
-                       data-testid="add-feedlot-name-input"
+                <label for="wizard-user-username" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                <input type="text" id="wizard-user-username" data-testid="wizard-user-username-input"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
             
             <div>
-                <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-                <input type="text" id="location" name="location" required
-                       data-testid="add-feedlot-location-input"
+                <label for="wizard-user-email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                <input type="email" id="wizard-user-email" data-testid="wizard-user-email-input"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
             
             <div>
-                <label for="feedlot_code" class="block text-sm font-medium text-gray-700 mb-2">Feedlot Code *</label>
-                <input type="text" id="feedlot_code" name="feedlot_code" required
-                       data-testid="add-feedlot-code-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
-                       placeholder="e.g., feedlot-001" pattern="[a-z0-9_-]+" title="Lowercase alphanumeric characters, hyphens, and underscores only">
-                <p class="mt-1 text-sm text-gray-500">Unique identifier for office app integration. Lowercase alphanumeric, hyphens (-), and underscores (_) only.</p>
-            </div>
-            
-            <div>
-                <label for="land_description" class="block text-sm font-medium text-gray-700 mb-2">Land Description</label>
-                <textarea id="land_description" name="land_description" rows="3"
-                       data-testid="add-feedlot-land-description-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"></textarea>
-            </div>
-            
-            <div>
-                <label for="premises_id" class="block text-sm font-medium text-gray-700 mb-2">Premises Identification (PID) Number</label>
-                <input type="text" id="premises_id" name="premises_id"
-                       data-testid="add-feedlot-premises-id-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
-            </div>
-            
-            <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-4">Contact Information</h3>
-            
-            <div>
-                <label for="contact_person" class="block text-sm font-medium text-gray-700 mb-2">Contact Person</label>
-                <input type="text" id="contact_person" name="contact_person"
+                <label for="wizard-user-password" class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                <input type="password" id="wizard-user-password" data-testid="wizard-user-password-input"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
             
             <div>
-                <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                <input type="tel" id="phone" name="phone"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
-            </div>
-            
-            <div>
-                <label for="feedlot_email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input type="email" id="feedlot_email" name="email"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <label for="wizard-user-type" class="block text-sm font-medium text-gray-700 mb-2">User Type *</label>
+                <select id="wizard-user-type" data-testid="wizard-user-type-select"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    <option value="business_owner">Business Owner</option>
+                    <option value="business_admin">Business Admin</option>
+                    <option value="user">User</option>
+                </select>
             </div>
             
             <div class="flex space-x-4 pt-4">
-                <button type="submit" id="submit-feedlot-btn" data-testid="submit-add-feedlot-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    Create Feedlot
+                <button type="button" onclick="addWizardUser()" data-testid="confirm-wizard-user-button"
+                        class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Add User
                 </button>
-                <button type="button" onclick="closeAddFeedlotModal()" data-testid="cancel-add-feedlot-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button type="button" onclick="closeWizardUserModal()" data-testid="cancel-wizard-user-button"
+                        class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Cancel
                 </button>
             </div>
-        </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal with API Key Display -->
+<div id="wizard-success-modal" data-testid="wizard-success-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Feedlot Created Successfully</h2>
+                <button onclick="closeSuccessModal()" data-testid="close-success-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6 space-y-4">
+            <div class="bg-green-50 border-l-4 border-green-400 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-green-700" id="success-message">Feedlot has been created successfully.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="success-api-key-section" class="hidden">
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                <strong>Important:</strong> This API key will only be shown once. Please copy it now and store it securely.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">API Key</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" id="success-api-key" readonly data-testid="success-api-key-input"
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 font-mono text-sm">
+                        <button onclick="copySuccessApiKey()" data-testid="copy-success-api-key-button"
+                                class="bg-teal hover:opacity-90 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+                            Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end pt-4">
+                <button onclick="closeSuccessModal()" data-testid="done-success-modal-button"
+                        class="bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Done
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
+    // ============================================
+    // Wizard State Management
+    // ============================================
+    const wizardState = {
+        currentStep: 1,
+        totalSteps: 5,
+        feedlot: {
+            name: '',
+            location: '',
+            feedlot_code: '',
+            land_description: '',
+            premises_id: ''
+        },
+        users: [],
+        branding: {
+            logo_base64: '',
+            favicon_base64: '',
+            primary_color: '#2D8B8B',
+            secondary_color: '#0A2540',
+            company_name: '',
+            use_default: true
+        },
+        apiKey: {
+            generate: false,
+            description: ''
+        }
+    };
+    
+    // ============================================
+    // Wizard Open/Close Functions
+    // ============================================
     function openAddFeedlotModal() {
-        const modal = document.getElementById('add-feedlot-modal');
+        resetWizardState();
+        const modal = document.getElementById('feedlot-wizard-modal');
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        
-        // Initialize feedlot code validation
-        initializeFeedlotCodeValidation();
+        updateWizardUI();
+        initializeWizardValidation();
     }
     
-    function initializeFeedlotCodeValidation() {
-        const feedlotCodeInput = document.getElementById('feedlot_code');
-        const submitBtn = document.getElementById('submit-feedlot-btn');
-        
-        if (!feedlotCodeInput || !submitBtn) return;
-        
-        // Validate feedlot code pattern: lowercase alphanumeric, hyphens, and underscores only
-        function validateFeedlotCode(code) {
-            const pattern = /^[a-z0-9_-]+$/;
-            return pattern.test(code) && code.length > 0;
-        }
-        
-        // Handle input event - filter and convert to lowercase
-        feedlotCodeInput.addEventListener('input', function(e) {
-            let value = e.target.value;
-            
-            // Convert to lowercase
-            value = value.toLowerCase();
-            
-            // Remove any characters that are not alphanumeric, hyphen, or underscore
-            value = value.replace(/[^a-z0-9_-]/g, '');
-            
-            // Update the input value
-            e.target.value = value;
-            
-            // Validate and enable/disable submit button
-            const isValid = validateFeedlotCode(value);
-            submitBtn.disabled = !isValid;
-        });
-        
-        // Handle paste event
-        feedlotCodeInput.addEventListener('paste', function(e) {
-            setTimeout(() => {
-                let value = e.target.value;
-                value = value.toLowerCase();
-                value = value.replace(/[^a-z0-9_-]/g, '');
-                e.target.value = value;
-                
-                const isValid = validateFeedlotCode(value);
-                submitBtn.disabled = !isValid;
-            }, 0);
-        });
-        
-        // Initial validation check
-        const isValid = validateFeedlotCode(feedlotCodeInput.value);
-        submitBtn.disabled = !isValid;
-    }
-    
-    function closeAddFeedlotModal() {
-        const modal = document.getElementById('add-feedlot-modal');
-        const form = document.getElementById('add-feedlot-form');
-        const submitBtn = document.getElementById('submit-feedlot-btn');
-        
+    function closeWizard() {
+        const modal = document.getElementById('feedlot-wizard-modal');
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
-        form.reset();
-        
-        // Reset submit button state
-        if (submitBtn) {
-            submitBtn.disabled = true;
-        }
-        
-        // Remove any error states
-        const inputs = form.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.classList.remove('border-red-500');
-        });
+        resetWizardState();
     }
     
-    // Close modals on Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const feedlotModal = document.getElementById('add-feedlot-modal');
-            const userModal = document.getElementById('add-user-modal');
-            if (feedlotModal && !feedlotModal.classList.contains('hidden')) {
-                closeAddFeedlotModal();
-            }
-            if (userModal && !userModal.classList.contains('hidden')) {
-                closeAddUserModal();
+    function resetWizardState() {
+        wizardState.currentStep = 1;
+        wizardState.feedlot = { name: '', location: '', feedlot_code: '', land_description: '', premises_id: '' };
+        wizardState.users = [];
+        wizardState.branding = { logo_base64: '', favicon_base64: '', primary_color: '#2D8B8B', secondary_color: '#0A2540', company_name: '', use_default: true };
+        wizardState.apiKey = { generate: false, description: '' };
+        
+        // Reset form fields
+        document.getElementById('wizard-name').value = '';
+        document.getElementById('wizard-location').value = '';
+        document.getElementById('wizard-feedlot-code').value = '';
+        document.getElementById('wizard-land-description').value = '';
+        document.getElementById('wizard-premises-id').value = '';
+        document.getElementById('wizard-primary-color').value = '#2D8B8B';
+        document.getElementById('wizard-primary-color-text').value = '#2D8B8B';
+        document.getElementById('wizard-secondary-color').value = '#0A2540';
+        document.getElementById('wizard-secondary-color-text').value = '#0A2540';
+        document.getElementById('wizard-company-name').value = '';
+        document.getElementById('wizard-generate-api-key').checked = false;
+        document.getElementById('wizard-api-key-description').value = '';
+        
+        // Reset previews
+        resetWizardBrandingPreviews();
+        updateWizardUsersDisplay();
+    }
+    
+    // ============================================
+    // Step Navigation
+    // ============================================
+    function wizardNextStep() {
+        if (!validateCurrentStep()) return;
+        saveCurrentStepData();
+        
+        if (wizardState.currentStep < wizardState.totalSteps) {
+            wizardState.currentStep++;
+            updateWizardUI();
+        }
+    }
+    
+    function wizardPrevStep() {
+        if (wizardState.currentStep > 1) {
+            wizardState.currentStep--;
+            updateWizardUI();
+        }
+    }
+    
+    function wizardSkipStep() {
+        saveCurrentStepData();
+        if (wizardState.currentStep < wizardState.totalSteps) {
+            wizardState.currentStep++;
+            updateWizardUI();
+        }
+    }
+    
+    function updateWizardUI() {
+        const step = wizardState.currentStep;
+        
+        // Hide all steps
+        document.querySelectorAll('.wizard-step').forEach(el => el.classList.add('hidden'));
+        
+        // Show current step
+        document.getElementById(`wizard-step-${step}`).classList.remove('hidden');
+        
+        // Update step indicators
+        for (let i = 1; i <= wizardState.totalSteps; i++) {
+            const indicator = document.getElementById(`step-indicator-${i}`);
+            const textEl = indicator.parentElement.querySelector('span');
+            
+            if (i < step) {
+                indicator.className = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold bg-teal text-white';
+                indicator.innerHTML = '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>';
+                if (textEl) textEl.className = 'ml-2 text-sm font-medium text-gray-700 hidden sm:inline';
+            } else if (i === step) {
+                indicator.className = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold bg-teal text-white';
+                indicator.textContent = i;
+                if (textEl) textEl.className = 'ml-2 text-sm font-medium text-gray-700 hidden sm:inline';
+            } else {
+                indicator.className = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-200 text-gray-600';
+                indicator.textContent = i;
+                if (textEl) textEl.className = 'ml-2 text-sm font-medium text-gray-500 hidden sm:inline';
             }
         }
-    });
+        
+        // Update progress bars
+        for (let i = 1; i < wizardState.totalSteps; i++) {
+            const progressBar = document.getElementById(`progress-${i}-${i+1}`);
+            if (progressBar) {
+                progressBar.style.width = i < step ? '100%' : '0%';
+            }
+        }
+        
+        // Update navigation buttons
+        const prevBtn = document.getElementById('wizard-prev-btn');
+        const nextBtn = document.getElementById('wizard-next-btn');
+        const skipBtn = document.getElementById('wizard-skip-btn');
+        const submitBtn = document.getElementById('wizard-submit-btn');
+        
+        prevBtn.classList.toggle('hidden', step === 1);
+        nextBtn.classList.toggle('hidden', step === wizardState.totalSteps);
+        submitBtn.classList.toggle('hidden', step !== wizardState.totalSteps);
+        
+        // Show skip button on steps 2, 3, 4
+        skipBtn.classList.toggle('hidden', step === 1 || step === wizardState.totalSteps);
+        
+        // Step-specific UI updates
+        if (step === 4) {
+            document.getElementById('wizard-api-feedlot-code').textContent = wizardState.feedlot.feedlot_code || '-';
+        } else if (step === 5) {
+            updateConfirmationStep();
+        }
+        
+        // Validate current step for navigation
+        validateCurrentStep();
+    }
     
-    // Handle form submission via AJAX
-    document.getElementById('add-feedlot-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
+    // ============================================
+    // Validation
+    // ============================================
+    function validateCurrentStep() {
+        const step = wizardState.currentStep;
+        let isValid = true;
         
-        const form = e.target;
-        const submitBtn = document.getElementById('submit-feedlot-btn');
-        const formData = new FormData(form);
+        if (step === 1) {
+            const name = document.getElementById('wizard-name').value.trim();
+            const location = document.getElementById('wizard-location').value.trim();
+            const feedlotCode = document.getElementById('wizard-feedlot-code').value.trim();
+            const codePattern = /^[a-z0-9_-]+$/;
+            
+            isValid = name.length > 0 && location.length > 0 && feedlotCode.length > 0 && codePattern.test(feedlotCode);
+        }
         
-        // Disable submit button
+        // Enable/disable next button
+        const nextBtn = document.getElementById('wizard-next-btn');
+        nextBtn.disabled = !isValid;
+        
+        return isValid;
+    }
+    
+    function initializeWizardValidation() {
+        // Step 1 validation
+        const step1Inputs = ['wizard-name', 'wizard-location', 'wizard-feedlot-code'];
+        step1Inputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.addEventListener('input', function(e) {
+                    if (id === 'wizard-feedlot-code') {
+                        let value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+                        e.target.value = value;
+                    }
+                    validateCurrentStep();
+                });
+            }
+        });
+        
+        // Color picker sync
+        const primaryColor = document.getElementById('wizard-primary-color');
+        const primaryColorText = document.getElementById('wizard-primary-color-text');
+        const secondaryColor = document.getElementById('wizard-secondary-color');
+        const secondaryColorText = document.getElementById('wizard-secondary-color-text');
+        
+        if (primaryColor && primaryColorText) {
+            primaryColor.addEventListener('input', () => primaryColorText.value = primaryColor.value);
+            primaryColorText.addEventListener('change', () => {
+                if (/^#[0-9A-Fa-f]{6}$/.test(primaryColorText.value)) {
+                    primaryColor.value = primaryColorText.value;
+                }
+            });
+        }
+        
+        if (secondaryColor && secondaryColorText) {
+            secondaryColor.addEventListener('input', () => secondaryColorText.value = secondaryColor.value);
+            secondaryColorText.addEventListener('change', () => {
+                if (/^#[0-9A-Fa-f]{6}$/.test(secondaryColorText.value)) {
+                    secondaryColor.value = secondaryColorText.value;
+                }
+            });
+        }
+        
+        // API key checkbox
+        const apiKeyCheckbox = document.getElementById('wizard-generate-api-key');
+        if (apiKeyCheckbox) {
+            apiKeyCheckbox.addEventListener('change', function() {
+                const descField = document.getElementById('wizard-api-key-description-field');
+                const warningField = document.getElementById('wizard-api-key-warning');
+                descField.classList.toggle('hidden', !this.checked);
+                warningField.classList.toggle('hidden', !this.checked);
+            });
+        }
+    }
+    
+    // ============================================
+    // Save Step Data
+    // ============================================
+    function saveCurrentStepData() {
+        const step = wizardState.currentStep;
+        
+        if (step === 1) {
+            wizardState.feedlot.name = document.getElementById('wizard-name').value.trim();
+            wizardState.feedlot.location = document.getElementById('wizard-location').value.trim();
+            wizardState.feedlot.feedlot_code = document.getElementById('wizard-feedlot-code').value.trim();
+            wizardState.feedlot.land_description = document.getElementById('wizard-land-description').value.trim();
+            wizardState.feedlot.premises_id = document.getElementById('wizard-premises-id').value.trim();
+        } else if (step === 3) {
+            wizardState.branding.primary_color = document.getElementById('wizard-primary-color').value;
+            wizardState.branding.secondary_color = document.getElementById('wizard-secondary-color').value;
+            wizardState.branding.company_name = document.getElementById('wizard-company-name').value.trim();
+            
+            // Check if branding is custom
+            const hasLogo = wizardState.branding.logo_base64.length > 0;
+            const hasFavicon = wizardState.branding.favicon_base64.length > 0;
+            const hasCustomColors = wizardState.branding.primary_color !== '#2D8B8B' || wizardState.branding.secondary_color !== '#0A2540';
+            const hasCompanyName = wizardState.branding.company_name.length > 0;
+            
+            wizardState.branding.use_default = !(hasLogo || hasFavicon || hasCustomColors || hasCompanyName);
+        } else if (step === 4) {
+            wizardState.apiKey.generate = document.getElementById('wizard-generate-api-key').checked;
+            wizardState.apiKey.description = document.getElementById('wizard-api-key-description').value.trim();
+        }
+    }
+    
+    // ============================================
+    // User Management
+    // ============================================
+    function openWizardUserModal(type) {
+        const modal = document.getElementById('wizard-user-modal');
+        const title = document.getElementById('wizard-user-modal-title');
+        const typeSelect = document.getElementById('wizard-user-type');
+        
+        if (type === 'owner') {
+            title.textContent = 'Add Owner';
+            typeSelect.value = 'business_owner';
+            typeSelect.disabled = true;
+        } else {
+            title.textContent = 'Add User';
+            typeSelect.value = 'user';
+            typeSelect.disabled = false;
+        }
+        
+        // Clear form
+        document.getElementById('wizard-user-username').value = '';
+        document.getElementById('wizard-user-email').value = '';
+        document.getElementById('wizard-user-password').value = '';
+        
+        modal.classList.remove('hidden');
+    }
+    
+    function closeWizardUserModal() {
+        const modal = document.getElementById('wizard-user-modal');
+        modal.classList.add('hidden');
+    }
+    
+    function addWizardUser() {
+        const username = document.getElementById('wizard-user-username').value.trim();
+        const email = document.getElementById('wizard-user-email').value.trim();
+        const password = document.getElementById('wizard-user-password').value;
+        const userType = document.getElementById('wizard-user-type').value;
+        
+        if (!username || !email || !password) {
+            showToast('Please fill in all required fields.', 'error');
+            return;
+        }
+        
+        // Check for duplicates
+        if (wizardState.users.some(u => u.username === username)) {
+            showToast('A user with this username already exists in the list.', 'error');
+            return;
+        }
+        
+        if (wizardState.users.some(u => u.email === email)) {
+            showToast('A user with this email already exists in the list.', 'error');
+            return;
+        }
+        
+        // Add user to state
+        wizardState.users.push({
+            username,
+            email,
+            password,
+            user_type: userType
+        });
+        
+        updateWizardUsersDisplay();
+        closeWizardUserModal();
+        showToast('User added to the list.', 'success');
+    }
+    
+    function removeWizardUser(index) {
+        wizardState.users.splice(index, 1);
+        updateWizardUsersDisplay();
+    }
+    
+    function updateWizardUsersDisplay() {
+        const listContainer = document.getElementById('wizard-users-list');
+        const emptyState = document.getElementById('wizard-users-empty');
+        const addOwnerBtn = document.getElementById('wizard-add-owner-btn');
+        const addUserBtn = document.getElementById('wizard-add-user-btn');
+        
+        // Check if owner exists
+        const hasOwner = wizardState.users.some(u => u.user_type === 'business_owner');
+        
+        // Update button visibility
+        addOwnerBtn.classList.toggle('hidden', hasOwner);
+        addUserBtn.classList.toggle('hidden', !hasOwner);
+        
+        // Update list display
+        if (wizardState.users.length === 0) {
+            listContainer.innerHTML = '';
+            emptyState.classList.remove('hidden');
+        } else {
+            emptyState.classList.add('hidden');
+            listContainer.innerHTML = wizardState.users.map((user, index) => `
+                <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3" data-testid="wizard-user-item-${index}">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-teal flex items-center justify-center text-white font-semibold">
+                            ${user.username.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">${user.username}</p>
+                            <p class="text-xs text-gray-500">${user.email}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${user.user_type === 'business_owner' ? 'bg-blue-100 text-blue-800' : user.user_type === 'business_admin' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}">
+                            ${user.user_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </span>
+                        <button type="button" onclick="removeWizardUser(${index})" data-testid="remove-wizard-user-${index}" class="text-red-600 hover:text-red-800">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+    
+    // ============================================
+    // Branding Functions
+    // ============================================
+    function previewWizardLogo(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                wizardState.branding.logo_base64 = e.target.result;
+                wizardState.branding.use_default = false;
+                
+                const preview = document.getElementById('wizard-logo-preview');
+                const placeholder = document.getElementById('wizard-logo-preview-placeholder');
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                if (placeholder) placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    function previewWizardFavicon(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                wizardState.branding.favicon_base64 = e.target.result;
+                wizardState.branding.use_default = false;
+                
+                const preview = document.getElementById('wizard-favicon-preview');
+                const placeholder = document.getElementById('wizard-favicon-preview-placeholder');
+                if (preview) {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                }
+                if (placeholder) placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    function resetWizardBranding() {
+        wizardState.branding = {
+            logo_base64: '',
+            favicon_base64: '',
+            primary_color: '#2D8B8B',
+            secondary_color: '#0A2540',
+            company_name: '',
+            use_default: true
+        };
+        
+        document.getElementById('wizard-primary-color').value = '#2D8B8B';
+        document.getElementById('wizard-primary-color-text').value = '#2D8B8B';
+        document.getElementById('wizard-secondary-color').value = '#0A2540';
+        document.getElementById('wizard-secondary-color-text').value = '#0A2540';
+        document.getElementById('wizard-company-name').value = '';
+        document.getElementById('wizard-logo').value = '';
+        document.getElementById('wizard-favicon').value = '';
+        
+        resetWizardBrandingPreviews();
+        showToast('Branding reset to HerdLinx defaults.', 'success');
+    }
+    
+    function resetWizardBrandingPreviews() {
+        const logoPreview = document.getElementById('wizard-logo-preview');
+        const logoPlaceholder = document.getElementById('wizard-logo-preview-placeholder');
+        const faviconPreview = document.getElementById('wizard-favicon-preview');
+        const faviconPlaceholder = document.getElementById('wizard-favicon-preview-placeholder');
+        
+        if (logoPreview) logoPreview.classList.add('hidden');
+        if (logoPlaceholder) logoPlaceholder.classList.remove('hidden');
+        if (faviconPreview) faviconPreview.classList.add('hidden');
+        if (faviconPlaceholder) faviconPlaceholder.classList.remove('hidden');
+    }
+    
+    // ============================================
+    // Confirmation Step
+    // ============================================
+    function updateConfirmationStep() {
+        // Feedlot details
+        document.getElementById('confirm-name').textContent = wizardState.feedlot.name || '-';
+        document.getElementById('confirm-location').textContent = wizardState.feedlot.location || '-';
+        document.getElementById('confirm-feedlot-code').textContent = wizardState.feedlot.feedlot_code || '-';
+        document.getElementById('confirm-premises-id').textContent = wizardState.feedlot.premises_id || 'Not provided';
+        
+        // Users
+        const usersCount = wizardState.users.length;
+        document.getElementById('confirm-users-count').textContent = usersCount === 0 
+            ? 'No users will be created' 
+            : `${usersCount} user${usersCount !== 1 ? 's' : ''} will be created`;
+        
+        const usersList = document.getElementById('confirm-users-list');
+        if (usersCount > 0) {
+            usersList.innerHTML = wizardState.users.map(u => `
+                <div class="text-sm text-gray-600">
+                    <span class="font-medium">${u.username}</span> (${u.user_type.replace('_', ' ')})
+                </div>
+            `).join('');
+        } else {
+            usersList.innerHTML = '';
+        }
+        
+        // Branding
+        const brandingText = document.getElementById('confirm-branding');
+        const brandingDetails = document.getElementById('confirm-branding-details');
+        
+        if (wizardState.branding.use_default) {
+            brandingText.textContent = 'Using HerdLinx default branding';
+            brandingDetails.classList.add('hidden');
+        } else {
+            brandingText.textContent = 'Using custom branding';
+            brandingDetails.classList.remove('hidden');
+            document.getElementById('confirm-primary-color').style.backgroundColor = wizardState.branding.primary_color;
+            document.getElementById('confirm-secondary-color').style.backgroundColor = wizardState.branding.secondary_color;
+        }
+        
+        // API Key
+        const apiKeyText = document.getElementById('confirm-api-key');
+        apiKeyText.textContent = wizardState.apiKey.generate 
+            ? 'An API key will be generated' 
+            : 'No API key will be generated';
+    }
+    
+    // ============================================
+    // Submit Wizard
+    // ============================================
+    async function submitWizard() {
+        const submitBtn = document.getElementById('wizard-submit-btn');
         submitBtn.disabled = true;
         submitBtn.textContent = 'Creating...';
         
         try {
-            const response = await fetch(form.action, {
+            const payload = {
+                feedlot: wizardState.feedlot,
+                users: wizardState.users,
+                branding: wizardState.branding,
+                generate_api_key: wizardState.apiKey.generate,
+                api_key_description: wizardState.apiKey.description
+            };
+            
+            const response = await fetch('{{ url_for("top_level.create_feedlot_wizard") }}', {
                 method: 'POST',
-                body: formData,
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
-                }
+                },
+                body: JSON.stringify(payload)
             });
             
             const data = await response.json();
             
             if (data.success) {
-                showToast(data.message || 'Feedlot created successfully.', 'success');
-                closeAddFeedlotModal();
-                // Reload the page to show the new feedlot
-                setTimeout(() => {
-                    window.location.reload();
-                }, 500);
+                closeWizard();
+                
+                // Show success modal
+                const successModal = document.getElementById('wizard-success-modal');
+                const successMessage = document.getElementById('success-message');
+                const apiKeySection = document.getElementById('success-api-key-section');
+                const apiKeyInput = document.getElementById('success-api-key');
+                
+                let message = `Feedlot "${data.feedlot_name}" has been created successfully.`;
+                if (data.users_created > 0) {
+                    message += ` ${data.users_created} user${data.users_created !== 1 ? 's' : ''} created.`;
+                }
+                successMessage.textContent = message;
+                
+                if (data.api_key) {
+                    apiKeySection.classList.remove('hidden');
+                    apiKeyInput.value = data.api_key;
+                } else {
+                    apiKeySection.classList.add('hidden');
+                }
+                
+                successModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
             } else {
                 showToast(data.message || 'Failed to create feedlot. Please try again.', 'error');
-                
-                // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Feedlot';
-                
-                // Highlight error fields if provided
-                if (data.errors) {
-                    Object.keys(data.errors).forEach(field => {
-                        const input = form.querySelector(`[name="${field}"]`);
-                        if (input) {
-                            input.classList.add('border-red-500');
-                        }
-                    });
-                }
             }
         } catch (error) {
             showToast('An error occurred while creating the feedlot. Please try again.', 'error');
-            
-            // Re-enable submit button
             submitBtn.disabled = false;
             submitBtn.textContent = 'Create Feedlot';
         }
+    }
+    
+    // ============================================
+    // Success Modal Functions
+    // ============================================
+    function closeSuccessModal() {
+        const modal = document.getElementById('wizard-success-modal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        window.location.reload();
+    }
+    
+    function copySuccessApiKey() {
+        const apiKeyInput = document.getElementById('success-api-key');
+        apiKeyInput.select();
+        apiKeyInput.setSelectionRange(0, 99999);
+        document.execCommand('copy');
+        
+        showToast('API key copied to clipboard.', 'success');
+    }
+    
+    // ============================================
+    // Close on Escape Key
+    // ============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const wizardModal = document.getElementById('feedlot-wizard-modal');
+            const wizardUserModal = document.getElementById('wizard-user-modal');
+            const successModal = document.getElementById('wizard-success-modal');
+            const userModal = document.getElementById('add-user-modal');
+            
+            if (wizardUserModal && !wizardUserModal.classList.contains('hidden')) {
+                closeWizardUserModal();
+            } else if (successModal && !successModal.classList.contains('hidden')) {
+                closeSuccessModal();
+            } else if (wizardModal && !wizardModal.classList.contains('hidden')) {
+                closeWizard();
+            } else if (userModal && !userModal.classList.contains('hidden')) {
+                closeAddUserModal();
+            }
+        }
     });
     
-    // Add New User Modal Functions
+    // ============================================
+    // Add New User Modal Functions (existing functionality)
+    // ============================================
     function openAddUserModal() {
         const modal = document.getElementById('add-user-modal');
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        
-        // Initialize user type dropdown behavior
         updateFeedlotField();
     }
     
@@ -358,22 +1215,17 @@
         document.body.style.overflow = 'auto';
         form.reset();
         
-        // Reset user type to default
         const userTypeSelect = document.getElementById('user_type');
         if (userTypeSelect) {
             userTypeSelect.value = 'user';
             updateFeedlotField();
         }
         
-        // Clear all checkboxes
         const checkboxes = document.querySelectorAll('input[name="feedlot_ids"]');
         checkboxes.forEach(checkbox => checkbox.checked = false);
         
-        // Remove any error states
         const inputs = form.querySelectorAll('input, select');
-        inputs.forEach(input => {
-            input.classList.remove('border-red-500');
-        });
+        inputs.forEach(input => input.classList.remove('border-red-500'));
     }
     
     function updateFeedlotField() {
@@ -384,26 +1236,17 @@
         
         if (userTypeSelect && feedlotSingleField && feedlotMultipleField) {
             if (userTypeSelect.value === 'business_admin' || userTypeSelect.value === 'business_owner') {
-                // Show multiple feedlot selection for business_admin and business_owner
                 feedlotSingleField.style.display = 'none';
                 feedlotMultipleField.style.display = 'block';
-                if (feedlotSelect) {
-                    feedlotSelect.removeAttribute('required');
-                }
+                if (feedlotSelect) feedlotSelect.removeAttribute('required');
             } else if (userTypeSelect.value === 'user') {
-                // Show single feedlot selection for regular users
                 feedlotSingleField.style.display = 'block';
                 feedlotMultipleField.style.display = 'none';
-                if (feedlotSelect) {
-                    feedlotSelect.setAttribute('required', 'required');
-                }
+                if (feedlotSelect) feedlotSelect.setAttribute('required', 'required');
             } else {
-                // Super owner or super admin - no feedlot required
                 feedlotSingleField.style.display = 'none';
                 feedlotMultipleField.style.display = 'none';
-                if (feedlotSelect) {
-                    feedlotSelect.removeAttribute('required');
-                }
+                if (feedlotSelect) feedlotSelect.removeAttribute('required');
             }
         }
     }
@@ -677,15 +1520,28 @@
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="feedlot-hub-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
-        <div class="space-y-1">
+        <!-- Quick Links Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Links</h3>
+        <div class="space-y-1 mb-4">
+            <a href="{{ url_for('top_level.dashboard') }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Feedlot Hub</a>
+        </div>
+        
+        <!-- Quick Actions Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
+        <div class="space-y-1 mb-4">
             {% block actions_items %}
             {% if user_type in ['super_owner', 'super_admin'] %}
-            <button onclick="openAddFeedlotModal()" data-testid="add-feedlot-action-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New Feedlot</button>
+            <button onclick="openAddFeedlotModal()" data-testid="quick-actions-add-feedlot" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New Feedlot</button>
             {% endif %}
-            <button onclick="openAddUserModal()" data-testid="add-user-action-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New User</button>
-            <a href="{{ url_for('top_level.manage_users') }}" data-testid="manage-users-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Users</a>
+            <button onclick="openAddUserModal()" data-testid="quick-actions-add-user" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New User</button>
             {% endblock %}
+        </div>
+        
+        <!-- Management Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
+        <div class="space-y-1">
+            <a href="{{ url_for('top_level.manage_users') }}" data-testid="management-manage-users" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Users</a>
         </div>
     </div>
     {% endblock %}

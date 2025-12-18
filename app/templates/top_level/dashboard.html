@@ -181,18 +181,30 @@
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="dashboard-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
+        <!-- Quick Links Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Links</h3>
+        <div class="space-y-1 mb-4">
+            <a href="{{ url_for('top_level.dashboard') }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Feedlot Hub</a>
+        </div>
+        
+        <!-- Quick Actions Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
+        <div class="space-y-1 mb-4">
+            {% block actions_items %}
+            {% if user_type in ['super_owner', 'super_admin'] %}
+            <button onclick="openAddFeedlotModal()" data-testid="quick-actions-add-feedlot" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New Feedlot</button>
+            {% endif %}
+            <button onclick="openAddUserModal()" data-testid="quick-actions-add-user" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New User</button>
+            {% endblock %}
+        </div>
+        
+        <!-- Management Section -->
         <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
         <div class="space-y-1">
-            {% block actions_items %}
-            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="view-feedlot-hub-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">View Feedlot Hub</a>
-            <button onclick="openWidgetSettingsModal()" data-testid="show-hide-widgets-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Show/Hide Widgets</button>
-            <button onclick="resetWidgets()" data-testid="reset-widgets-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Reset Widgets</button>
-            {% if user_type in ['super_owner', 'super_admin'] %}
-            <button onclick="openAddFeedlotModal()" data-testid="add-feedlot-action-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New Feedlot</button>
-            {% endif %}
-            <button onclick="openAddUserModal()" data-testid="add-user-action-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New User</button>
-            <a href="{{ url_for('top_level.manage_users') }}" data-testid="manage-users-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Users</a>
-            {% endblock %}
+            <button onclick="openWidgetSettingsModal()" data-testid="management-show-hide-widgets" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Show/Hide Widgets</button>
+            <button onclick="resetWidgets()" data-testid="management-reset-widgets" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Reset Widgets</button>
+            <a href="{{ url_for('top_level.manage_users') }}" data-testid="management-manage-users" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Users</a>
         </div>
     </div>
     {% endblock %}
