@@ -434,6 +434,10 @@ def sync_induction_events():
                 errors.append(f'Record {records_processed}: {str(e)}')
                 records_skipped += 1
         
+        # Update last_api_sync_at for real-time UI updates
+        if records_created > 0 or records_updated > 0 or batches_created > 0 or batches_updated > 0:
+            Feedlot.update_last_api_sync(feedlot_id)
+        
         return jsonify({
             'success': True,
             'message': f'Processed {records_processed} induction event records',
@@ -543,6 +547,10 @@ def sync_pairing_events():
             except Exception as e:
                 errors.append(f'Record {records_processed}: {str(e)}')
                 records_skipped += 1
+        
+        # Update last_api_sync_at for real-time UI updates
+        if records_updated > 0:
+            Feedlot.update_last_api_sync(feedlot_id)
         
         return jsonify({
             'success': True,
@@ -656,6 +664,10 @@ def sync_checkin_events():
                 errors.append(f'Record {records_processed}: {str(e)}')
                 records_skipped += 1
         
+        # Update last_api_sync_at for real-time UI updates
+        if records_created > 0:
+            Feedlot.update_last_api_sync(feedlot_id)
+        
         return jsonify({
             'success': True,
             'message': f'Processed {records_processed} check-in event records',
@@ -768,6 +780,10 @@ def sync_repair_events():
             except Exception as e:
                 errors.append(f'Record {records_processed}: {str(e)}')
                 records_skipped += 1
+        
+        # Update last_api_sync_at for real-time UI updates
+        if records_updated > 0:
+            Feedlot.update_last_api_sync(feedlot_id)
         
         return jsonify({
             'success': True,
@@ -1162,6 +1178,10 @@ def sync_export_events():
             except Exception as e:
                 errors.append(f'Manifest creation error: {str(e)}')
         
+        # Update last_api_sync_at for real-time UI updates
+        if records_updated > 0 or batches_created > 0 or manifests_created > 0:
+            Feedlot.update_last_api_sync(feedlot_id)
+        
         return jsonify({
             'success': True,
             'message': f'Processed {records_processed} export event records',
@@ -1220,6 +1240,47 @@ def handle_event():
 
     # The decorators have already attached feedlot context; call underlying handler logic
     return handler()
+
+
+@api_bp.route('/v1/feedlot/<feedlot_id>/sync-status', methods=['GET'])
+@login_required
+def get_sync_status(feedlot_id):
+    """Get the last API sync timestamp for a feedlot
+    
+    This endpoint is used by the frontend to poll for data updates.
+    Authenticated via session (login_required) rather than API key.
+    """
+    # Verify user has access to this feedlot
+    user_type = session.get('user_type')
+    user_feedlot_id = session.get('feedlot_id')
+    user_feedlot_ids = session.get('feedlot_ids', [])
+    
+    # Super owners and super admins can access any feedlot
+    if user_type not in ['super_owner', 'super_admin']:
+        # Business users need explicit access
+        has_access = False
+        if user_feedlot_id and str(user_feedlot_id) == str(feedlot_id):
+            has_access = True
+        if user_feedlot_ids:
+            feedlot_ids_str = [str(fid) for fid in user_feedlot_ids]
+            if str(feedlot_id) in feedlot_ids_str:
+                has_access = True
+        
+        if not has_access:
+            return jsonify({
+                'success': False,
+                'message': 'Access denied'
+            }), 403
+    
+    # Get the last_api_sync_at timestamp
+    last_sync = Feedlot.get_last_api_sync(feedlot_id)
+    
+    return jsonify({
+        'success': True,
+        'last_api_sync_at': last_sync.isoformat() if last_sync else None
+    }), 200
+
+
 # API key generation is now only available through the web UI (Settings → API Keys)
 # This endpoint has been removed to restrict key generation to the secure web interface
 # Use the Settings page in the web application to generate and manage API keys
