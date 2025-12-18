@@ -505,9 +505,20 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-navy text-white py-6">
-        <div class="container mx-auto px-4 text-center">
-            <p>&copy; 2025 Herdlinx. All rights reserved.</p>
+    <footer class="bg-navy text-white py-6" data-testid="footer">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col items-center space-y-4">
+                <!-- Logo and Powered by -->
+                <div class="flex items-center space-x-3">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" 
+                         alt="HerdLinx" 
+                         class="h-10 w-10 rounded-full object-cover"
+                         data-testid="footer-logo">
+                    <span class="text-sm font-medium text-gray-300" data-testid="footer-powered-by">Powered by HerdLinx</span>
+                </div>
+                <!-- Copyright -->
+                <p class="text-sm text-gray-400" data-testid="footer-copyright">&copy; 2025 Herdlinx. All rights reserved.</p>
+            </div>
         </div>
     </footer>
 

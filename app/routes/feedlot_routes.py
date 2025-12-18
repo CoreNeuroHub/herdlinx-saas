@@ -381,6 +381,9 @@ def view_batch(feedlot_id, batch_id):
     cattle = Cattle.find_by_batch(feedlot_code, batch_id)
     batch['cattle_count'] = len(cattle)
     
+    # Get historical cattle count from the batch's cattle_ids array
+    batch['historical_cattle_count'] = Batch.get_historical_cattle_count(feedlot_code, batch_id)
+    
     return render_template('feedlot/batches/view.html', feedlot=feedlot, batch=batch, cattle=cattle)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/batches/<batch_id>/edit', methods=['GET', 'POST'])

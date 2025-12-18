@@ -788,7 +788,7 @@ def sync_repair_events():
 @api_bp.route('/v1/feedlot/export-events', methods=['POST'])
 @api_key_required
 def sync_export_events():
-    """Sync export events from office app - marks cattle as Export status and optionally creates manifest records"""
+    """Sync export events from office app - marks cattle as Export status, creates export batch, and optionally creates manifest records"""
     try:
         data = request.get_json()
         if not data:
@@ -835,6 +835,38 @@ def sync_export_events():
         errors = []
         manifests_created = 0
         manifest_ids = []
+        batches_created = 0
+        batches_updated = 0
+        
+        # Cache batches for this feedlot (for batch creation/lookup)
+        all_batches = Batch.find_by_feedlot(feedlot_code_normalized, feedlot_id)
+        batch_cache = {b.get('batch_number', '').strip(): b for b in all_batches}
+        
+        # Track auto-generated batch sequence for this request
+        auto_batch_sequence = {}  # date_str -> next sequence number
+        
+        # Helper function to generate auto batch name
+        def generate_auto_batch_name():
+            """Generate an auto batch name in format EXPORT-YYYY-MM-DD-###"""
+            date_str = datetime.utcnow().strftime('%Y-%m-%d')
+            
+            # Initialize sequence for this date if not yet set
+            if date_str not in auto_batch_sequence:
+                # Count existing export batches for today to determine starting sequence
+                prefix = f"EXPORT-{date_str}-"
+                existing_count = 0
+                for batch_name in batch_cache.keys():
+                    if batch_name.startswith(prefix):
+                        try:
+                            seq_num = int(batch_name[len(prefix):])
+                            existing_count = max(existing_count, seq_num)
+                        except ValueError:
+                            pass
+                auto_batch_sequence[date_str] = existing_count + 1
+            
+            seq = auto_batch_sequence[date_str]
+            auto_batch_sequence[date_str] = seq + 1
+            return f"EXPORT-{date_str}-{seq:03d}"
         
         # Helper function to extract manifest fields from event item
         def extract_manifest_fields(event_item):
@@ -932,6 +964,9 @@ def sync_export_events():
                     records_skipped += 1
                     continue
                 
+                # Store the previous batch_id for audit logging
+                previous_batch_id = existing_cattle.get('batch_id')
+                
                 # Extract manifest fields
                 manifest_fields = extract_manifest_fields(event_item)
                 
@@ -950,26 +985,111 @@ def sync_export_events():
                     except (ValueError, AttributeError):
                         export_timestamp = datetime.utcnow()
                 
-                # Update cattle status to Export
+                # Handle batch creation/lookup for export batch
+                batch_name = (event_item.get('batch_name') or '').strip()
+                if not batch_name:
+                    # Auto-generate batch name if not provided
+                    batch_name = generate_auto_batch_name()
+                
+                # Look up batch in cache (case-insensitive lookup for robustness)
+                saas_batch = batch_cache.get(batch_name)
+                if not saas_batch:
+                    for cached_batch_name, cached_batch in batch_cache.items():
+                        if cached_batch_name.lower() == batch_name.lower():
+                            saas_batch = cached_batch
+                            break
+                
+                export_batch_id = None
+                if not saas_batch:
+                    # Create new export batch
+                    try:
+                        # Extract optional batch fields from event
+                        funder = (event_item.get('funder') or '').strip()
+                        if funder == 'None' or funder.lower() == 'none':
+                            funder = ''
+                        notes = (event_item.get('notes') or '').strip()
+                        
+                        batch_id = Batch.create_batch(
+                            feedlot_code_normalized,
+                            feedlot_id,
+                            batch_name,
+                            export_timestamp,
+                            funder,
+                            notes,
+                            event_type='export'
+                        )
+                        if not batch_id:
+                            raise Exception('Batch creation returned no ID')
+                        
+                        # Refresh batch from database and add to cache
+                        saas_batch = Batch.find_by_id(feedlot_code_normalized, batch_id)
+                        if not saas_batch:
+                            raise Exception(f'Failed to retrieve created batch with ID {batch_id}')
+                        
+                        batch_number_from_db = saas_batch.get('batch_number', '').strip()
+                        if batch_number_from_db:
+                            batch_cache[batch_number_from_db] = saas_batch
+                        batch_cache[batch_name] = saas_batch
+                        batches_created += 1
+                        export_batch_id = batch_id
+                    except Exception as batch_error:
+                        errors.append(f'Record {records_processed}: Failed to create export batch "{batch_name}": {str(batch_error)}')
+                        # Continue processing without batch assignment
+                        export_batch_id = None
+                else:
+                    # Batch exists
+                    export_batch_id = str(saas_batch['_id'])
+                    
+                    # Update batch if new information is available
+                    update_batch_data = {}
+                    
+                    # Update funder if provided and different
+                    funder = (event_item.get('funder') or '').strip()
+                    if funder == 'None' or funder.lower() == 'none':
+                        funder = ''
+                    if funder and saas_batch.get('funder') != funder:
+                        update_batch_data['funder'] = funder
+                    
+                    # Update notes if provided
+                    notes = (event_item.get('notes') or '').strip()
+                    if notes and saas_batch.get('notes') != notes:
+                        update_batch_data['notes'] = notes
+                    
+                    if update_batch_data:
+                        Batch.update_batch(feedlot_code_normalized, export_batch_id, update_batch_data)
+                        batches_updated += 1
+                
+                # Update cattle status to Export and assign to export batch
+                update_cattle_data = {'cattle_status': 'Export'}
+                if export_batch_id:
+                    update_cattle_data['batch_id'] = ObjectId(export_batch_id)
+                
                 Cattle.update_cattle(
                     feedlot_code_normalized,
                     cattle_record_id,
-                    {'cattle_status': 'Export'},
+                    update_cattle_data,
                     updated_by='api'
                 )
                 
                 # Add audit log entry for export
+                audit_details = {
+                    'uhf_tag': epc,
+                    'export_timestamp': export_timestamp.isoformat() if isinstance(export_timestamp, datetime) else str(export_timestamp),
+                    'previous_status': current_status
+                }
+                if export_batch_id:
+                    audit_details['export_batch_id'] = export_batch_id
+                    audit_details['export_batch_name'] = batch_name
+                if previous_batch_id:
+                    audit_details['previous_batch_id'] = str(previous_batch_id)
+                
                 Cattle.add_audit_log_entry(
                     feedlot_code_normalized,
                     cattle_record_id,
                     'exported',
-                    f'Cattle marked as Export (UHF tag: {epc})',
+                    f'Cattle marked as Export and assigned to batch "{batch_name}" (UHF tag: {epc})',
                     'api',
-                    {
-                        'uhf_tag': epc,
-                        'export_timestamp': export_timestamp.isoformat() if isinstance(export_timestamp, datetime) else str(export_timestamp),
-                        'previous_status': current_status
-                    }
+                    audit_details
                 )
                 
                 records_updated += 1
@@ -991,7 +1111,9 @@ def sync_export_events():
                     'cattle_id': cattle_record_id,
                     'cattle': existing_cattle,
                     'manifest_fields': manifest_fields,
-                    'has_manifest_data': has_manifest_data
+                    'has_manifest_data': has_manifest_data,
+                    'export_batch_id': export_batch_id,
+                    'export_batch_name': batch_name
                 })
                     
             except Exception as e:
@@ -1047,6 +1169,8 @@ def sync_export_events():
             'records_created': records_created,
             'records_updated': records_updated,
             'records_skipped': records_skipped,
+            'batches_created': batches_created,
+            'batches_updated': batches_updated,
             'manifests_created': manifests_created,
             'manifest_ids': manifest_ids,
             'errors': errors

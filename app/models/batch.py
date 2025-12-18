@@ -24,6 +24,7 @@ class Batch:
             'funder': funder,
             'notes': notes or '',
             'event_type': event_type,
+            'cattle_ids': [],  # Historical record of all cattle ever associated with this batch
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow()
         }
@@ -96,7 +97,7 @@ class Batch:
     
     @staticmethod
     def get_cattle_count(feedlot_code, batch_id):
-        """Get number of cattle in a batch
+        """Get number of cattle currently in a batch (excludes deleted)
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
@@ -107,4 +108,52 @@ class Batch:
             'batch_id': ObjectId(batch_id),
             'deleted_at': None
         })
+    
+    @staticmethod
+    def add_cattle_to_batch(feedlot_code, batch_id, cattle_record_id):
+        """Add a cattle record ID to the batch's historical cattle_ids array
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            batch_id: The batch ID
+            cattle_record_id: The cattle record ID to add
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        feedlot_db.batches.update_one(
+            {'_id': ObjectId(batch_id)},
+            {
+                '$addToSet': {'cattle_ids': ObjectId(cattle_record_id)},
+                '$set': {'updated_at': datetime.utcnow()}
+            }
+        )
+    
+    @staticmethod
+    def get_batch_cattle_ids(feedlot_code, batch_id):
+        """Get all historical cattle IDs associated with this batch
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            batch_id: The batch ID
+            
+        Returns:
+            List of cattle record ObjectIds that have ever been in this batch
+        """
+        batch = Batch.find_by_id(feedlot_code, batch_id, include_deleted=True)
+        if not batch:
+            return []
+        return batch.get('cattle_ids', [])
+    
+    @staticmethod
+    def get_historical_cattle_count(feedlot_code, batch_id):
+        """Get total number of cattle ever associated with this batch
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            batch_id: The batch ID
+            
+        Returns:
+            Count of all cattle that have ever been in this batch
+        """
+        cattle_ids = Batch.get_batch_cattle_ids(feedlot_code, batch_id)
+        return len(cattle_ids)
 
