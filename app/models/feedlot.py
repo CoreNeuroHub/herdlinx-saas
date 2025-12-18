@@ -350,36 +350,4 @@ class Feedlot:
                 'updated_at': datetime.utcnow()
             }}
         )
-    
-    @staticmethod
-    def update_last_api_sync(feedlot_id):
-        """Update the last_api_sync_at timestamp for a feedlot
-        
-        Called when API calls modify data for this feedlot, allowing
-        the frontend to detect changes and refresh the UI.
-        
-        Args:
-            feedlot_id: The feedlot ID
-        """
-        db.feedlots.update_one(
-            {'_id': ObjectId(feedlot_id)},
-            {'$set': {
-                'last_api_sync_at': datetime.utcnow()
-            }}
-        )
-    
-    @staticmethod
-    def get_last_api_sync(feedlot_id):
-        """Get the last_api_sync_at timestamp for a feedlot
-        
-        Args:
-            feedlot_id: The feedlot ID
-        
-        Returns:
-            datetime or None if never synced
-        """
-        feedlot = Feedlot.find_by_id(feedlot_id)
-        if feedlot:
-            return feedlot.get('last_api_sync_at')
-        return None
 
