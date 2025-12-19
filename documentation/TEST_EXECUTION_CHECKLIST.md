@@ -24,7 +24,7 @@ Quick reference checklist for executing test cases. Use this alongside the detai
 - [ ] TC-SO-001: Login as Super Owner/Admin
 - [ ] TC-SO-002: Login with Invalid Credentials
 - [ ] TC-SO-003: Access Dashboard
-- [ ] TC-SO-004: Access Feedlot Hub
+- [ ] TC-SO-004: Access Your Feedlots
 
 ### Feedlot Management
 - [ ] TC-SO-005: Create New Feedlot
@@ -80,7 +80,7 @@ Quick reference checklist for executing test cases. Use this alongside the detai
 ### Authentication & Access
 - [ ] TC-BO-001: Login as Business Owner/Admin
 - [ ] TC-BO-002: Access Dashboard (Filtered View)
-- [ ] TC-BO-003: Access Feedlot Hub (Filtered View)
+- [ ] TC-BO-003: Access Your Feedlots (Filtered View)
 
 ### Feedlot Access Control
 - [ ] TC-BO-004: Access Assigned Feedlot
@@ -166,7 +166,7 @@ Quick reference checklist for executing test cases. Use this alongside the detai
 - [ ] TC-U-036: Upload Invalid Profile Picture
 
 ### Feedlot Management Restrictions
-- [ ] TC-U-032: Cannot View Feedlot Hub
+- [ ] TC-U-032: Cannot View Your Feedlots
 - [ ] TC-U-033: Cannot Edit Feedlot
 
 ### Manifest Export

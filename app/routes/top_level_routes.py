@@ -137,7 +137,7 @@ def dashboard():
 @login_required
 @admin_access_required
 def feedlot_hub():
-    """Feedlot Hub page showing all feedlots with search/filter"""
+    """Your Feedlots page showing all feedlots with search/filter"""
     from app.models.pen import Pen
     from app.models.cattle import Cattle
     

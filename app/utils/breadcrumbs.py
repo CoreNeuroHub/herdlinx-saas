@@ -60,9 +60,9 @@ def generate_breadcrumbs(current_feedlot=None, request_obj=None):
         if 'dashboard' in path and 'feedlot' not in path:
             breadcrumbs.append({'label': 'Dashboard', 'url': None})
         elif 'feedlot-hub' in path:
-            breadcrumbs.append({'label': 'Feedlot Hub', 'url': None})
+            breadcrumbs.append({'label': 'Your Feedlots', 'url': None})
         elif 'feedlot' in path and 'view' in path:
-            breadcrumbs.append({'label': 'Feedlot Hub', 'url': url_for('top_level.feedlot_hub')})
+            breadcrumbs.append({'label': 'Your Feedlots', 'url': url_for('top_level.feedlot_hub')})
             feedlot_id = path_parts[path_parts.index('feedlot') + 1] if 'feedlot' in path_parts else None
             if feedlot_id:
                 try:
@@ -72,7 +72,7 @@ def generate_breadcrumbs(current_feedlot=None, request_obj=None):
                     label = 'Feedlot'
                 breadcrumbs.append({'label': label, 'url': None})
         elif 'feedlot' in path and 'edit' in path:
-            breadcrumbs.append({'label': 'Feedlot Hub', 'url': url_for('top_level.feedlot_hub')})
+            breadcrumbs.append({'label': 'Your Feedlots', 'url': url_for('top_level.feedlot_hub')})
             feedlot_id = path_parts[path_parts.index('feedlot') + 1] if 'feedlot' in path_parts else None
             if feedlot_id:
                 try:
@@ -83,7 +83,7 @@ def generate_breadcrumbs(current_feedlot=None, request_obj=None):
                 breadcrumbs.append({'label': label, 'url': url_for('feedlot.dashboard', feedlot_id=feedlot_id)})
                 breadcrumbs.append({'label': 'Edit', 'url': None})
         elif 'feedlot' in path and 'users' in path:
-            breadcrumbs.append({'label': 'Feedlot Hub', 'url': url_for('top_level.feedlot_hub')})
+            breadcrumbs.append({'label': 'Your Feedlots', 'url': url_for('top_level.feedlot_hub')})
             feedlot_id = path_parts[path_parts.index('feedlot') + 1] if 'feedlot' in path_parts else None
             if feedlot_id:
                 try:

@@ -282,7 +282,7 @@ def create_app(config_class=Config):
         # Top-level users (super_owner, super_admin) always see top-level nav
         if user_type in ['super_owner', 'super_admin']:
             nav_context['show_top_level_nav'] = True
-        # Business owner/admin users also see top-level nav (dashboard, feedlot hub, settings)
+        # Business owner/admin users also see top-level nav (dashboard, your feedlots, settings)
         elif user_type in ['business_owner', 'business_admin']:
             nav_context['show_top_level_nav'] = True
         

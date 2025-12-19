@@ -68,7 +68,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
-#### TC-SO-004: Access Feedlot Hub
+#### TC-SO-004: Access Your Feedlots
 **Objective:** Verify Super Owner/Admin can view all feedlots
 
 **Steps:**
@@ -106,7 +106,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 **Expected Result:**
 - Feedlot is created successfully
 - Success message displayed
-- Feedlot appears in feedlot hub
+- Feedlot appears in your feedlots
 - Feedlot code is unique and uppercase
 
 **Test Data:**
@@ -138,7 +138,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 **Steps:**
 1. Log in as Super Owner/Admin
-2. Navigate to feedlot hub
+2. Navigate to your feedlots
 3. Click on a feedlot to view details
 
 **Expected Result:**
@@ -613,7 +613,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 **Steps:**
 1. Log in as Super Owner/Admin
-2. Navigate to feedlot hub
+2. Navigate to your feedlots
 3. Click on any feedlot
 4. Access feedlot dashboard
 
@@ -713,7 +713,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ---
 
-#### TC-BO-003: Access Feedlot Hub (Filtered View)
+#### TC-BO-003: Access Your Feedlots (Filtered View)
 **Objective:** Verify Business Owner/Admin sees only assigned feedlots
 
 **Steps:**
@@ -734,7 +734,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 **Steps:**
 1. Log in as Business Owner/Admin
-2. Navigate to feedlot hub
+2. Navigate to your feedlots
 3. Click on an assigned feedlot
 
 **Expected Result:**
@@ -764,7 +764,7 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 **Steps:**
 1. Log in as Business Owner/Admin assigned to multiple feedlots
-2. Navigate to feedlot hub
+2. Navigate to your feedlots
 3. Verify all assigned feedlots are visible
 4. Access each assigned feedlot
 
@@ -1754,8 +1754,8 @@ This document contains comprehensive test cases for all user types in the HerdLi
 
 ### 3.5 Feedlot Management Restrictions
 
-#### TC-U-032: Cannot View Feedlot Hub
-**Objective:** Verify regular user cannot access feedlot hub
+#### TC-U-032: Cannot View Your Feedlots
+**Objective:** Verify regular user cannot access your feedlots
 
 **Steps:**
 1. Log in as regular user
