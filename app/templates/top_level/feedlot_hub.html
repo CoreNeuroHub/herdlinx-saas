@@ -5,16 +5,102 @@
 {% block home_url %}{{ url_for('top_level.dashboard') }}{% endblock %}
 
 {% block content %}
+<style>
+    /* Table Styles */
+    #feedlots-table-container {
+        overflow-x: auto;
+    }
+    
+    #feedlots-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    }
+    
+    #feedlots-table thead {
+        background-color: #f9fafb;
+    }
+    
+    #feedlots-table thead th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    #feedlots-table thead th.sortable {
+        user-select: none;
+    }
+    
+    #feedlots-table thead th.sortable:hover {
+        background-color: #f3f4f6;
+    }
+    
+    #feedlots-table thead th.sortable .sort-indicator {
+        display: inline-flex;
+        align-items: center;
+        transition: opacity 0.2s;
+    }
+    
+    #feedlots-table thead th.sortable .sort-indicator svg {
+        transition: opacity 0.2s, transform 0.2s;
+    }
+    
+    #feedlots-table thead th.sortable:hover .sort-indicator svg {
+        opacity: 0.6;
+    }
+    
+    #feedlots-table thead th.sortable[data-sort-direction="asc"] .sort-indicator svg {
+        opacity: 1;
+        transform: rotate(0deg);
+    }
+    
+    #feedlots-table thead th.sortable[data-sort-direction="desc"] .sort-indicator svg {
+        opacity: 1;
+        transform: rotate(180deg);
+    }
+    
+    #feedlots-table tbody tr {
+        border-bottom: 1px solid #e5e7eb;
+        transition: background-color 0.15s ease-in-out;
+    }
+    
+    #feedlots-table tbody tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    #feedlots-table tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    #feedlots-table tbody td {
+        padding: 1rem;
+        font-size: 0.875rem;
+        color: #374151;
+    }
+    
+    #feedlots-table tbody td:first-child {
+        font-weight: 600;
+        color: #111827;
+    }
+</style>
+
 <div class="flex flex-col md:flex-row gap-6 mb-8">
     <div class="flex-1">
         <div class="mb-4">
             <h1 class="text-4xl font-bold text-gray-800 mb-2">Your Feedlots</h1>
-            <p class="text-gray-600">Manage all feedlot instances</p>
         </div>
 
-    <!-- Search, Filter, and Sort Controls -->
+    <!-- Search and Filter Controls -->
     <div class="mb-6 bg-white rounded-lg shadow-md p-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Search Bar -->
             <div>
                 <label for="search-feedlots" class="block text-sm font-medium text-gray-700 mb-2">Search Feedlots</label>
@@ -40,66 +126,91 @@
                     {% endif %}
                 </select>
             </div>
-            
-            <!-- Sort Dropdown -->
-            <div>
-                <label for="sort-feedlots" class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                <select id="sort-feedlots" data-testid="sort-feedlots-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
-                    <option value="name-asc">Name (A-Z)</option>
-                    <option value="name-desc">Name (Z-A)</option>
-                    <option value="location-asc">Location (A-Z)</option>
-                    <option value="location-desc">Location (Z-A)</option>
-                    <option value="date-desc">Newest First</option>
-                    <option value="date-asc">Oldest First</option>
-                </select>
-            </div>
         </div>
     </div>
 
 {% if feedlots %}
-<div id="feedlots-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Hidden data container for JavaScript filtering/sorting -->
+<div id="feedlots-data" style="display: none;">
     {% for feedlot in feedlots %}
-    <div class="feedlot-card bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200 p-6" 
-         data-testid="feedlot-card-{{ feedlot._id }}"
+    <div class="feedlot-data-item"
+         data-testid="feedlot-data-{{ feedlot._id }}"
          data-name="{{ (feedlot.name or '')|lower }}" 
          data-location="{{ (feedlot.location or '')|lower }}"
-         data-created="{% if feedlot.created_at %}{% if feedlot.created_at is string %}{{ feedlot.created_at }}{% else %}{{ feedlot.created_at.strftime('%Y-%m-%dT%H:%M:%S') }}{% endif %}{% else %}1970-01-01T00:00:00{% endif %}">
-        <h3 class="text-xl font-bold text-gray-800 mb-2">{{ feedlot.name }}</h3>
-        <p class="text-gray-600 mb-4">{{ feedlot.location }}</p>
-        
-        <div class="mb-4 space-y-2">
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Total Pens:</span>
-                <span class="text-sm font-semibold text-gray-800">{{ feedlot.total_pens or 0 }}</span>
-            </div>
-            <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Total Cattle:</span>
-                <span class="text-sm font-semibold text-gray-800">{{ feedlot.total_cattle or 0 }}</span>
-            </div>
-        </div>
-        
-        {% if feedlot.owner %}
-        <div class="mb-4 pt-4 border-t border-gray-200">
-            <p class="text-xs text-gray-500 mb-1">Owner</p>
-            <p class="text-sm font-medium text-gray-700">
-                {{ feedlot.owner.username }}
-                {% if feedlot.owner.get('first_name') or feedlot.owner.get('last_name') %}
-                    <span class="text-gray-500">({{ feedlot.owner.get('first_name', '') }} {{ feedlot.owner.get('last_name', '') }})</span>
-                {% endif %}
-            </p>
-        </div>
-        {% endif %}
-        
-        <div class="mt-4">
-            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="feedlot-card-link-{{ feedlot._id }}" class="inline-flex items-center text-teal hover:text-teal-700 font-semibold transition duration-200">
-                Go to feedlot
-                <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
-        </div>
+         data-created="{% if feedlot.created_at %}{% if feedlot.created_at is string %}{{ feedlot.created_at }}{% else %}{{ feedlot.created_at.strftime('%Y-%m-%dT%H:%M:%S') }}{% endif %}{% else %}1970-01-01T00:00:00{% endif %}"
+         data-pens="{{ feedlot.total_pens or 0 }}"
+         data-cattle="{{ feedlot.total_cattle or 0 }}"
+         data-owner="{% if feedlot.owner %}{{ feedlot.owner.username }}{% if feedlot.owner.get('first_name') or feedlot.owner.get('last_name') %} ({{ feedlot.owner.get('first_name', '') }} {{ feedlot.owner.get('last_name', '') }}){% endif %}{% else %}{% endif %}"
+         data-feedlot-id="{{ feedlot._id }}"
+         data-feedlot-name="{{ feedlot.name }}"
+         data-feedlot-location="{{ feedlot.location }}"
+         data-feedlot-url="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}">
     </div>
     {% endfor %}
+</div>
+
+<!-- Table View -->
+<div id="feedlots-table-container">
+    <table id="feedlots-table" data-testid="feedlots-table">
+        <thead>
+            <tr>
+                <th class="sortable" data-sort="name" data-testid="sort-header-name">
+                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-900">
+                        <span>Name</span>
+                        <span class="sort-indicator ml-2">
+                            <svg class="w-4 h-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                            </svg>
+                        </span>
+                    </div>
+                </th>
+                <th class="sortable" data-sort="location" data-testid="sort-header-location">
+                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-900">
+                        <span>Location</span>
+                        <span class="sort-indicator ml-2">
+                            <svg class="w-4 h-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                            </svg>
+                        </span>
+                    </div>
+                </th>
+                <th class="sortable" data-sort="pens" data-testid="sort-header-pens">
+                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-900">
+                        <span>Total Pens</span>
+                        <span class="sort-indicator ml-2">
+                            <svg class="w-4 h-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                            </svg>
+                        </span>
+                    </div>
+                </th>
+                <th class="sortable" data-sort="cattle" data-testid="sort-header-cattle">
+                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-900">
+                        <span>Total Cattle</span>
+                        <span class="sort-indicator ml-2">
+                            <svg class="w-4 h-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                            </svg>
+                        </span>
+                    </div>
+                </th>
+                <th class="sortable" data-sort="owner" data-testid="sort-header-owner">
+                    <div class="flex items-center justify-between cursor-pointer hover:text-gray-900">
+                        <span>Owner</span>
+                        <span class="sort-indicator ml-2">
+                            <svg class="w-4 h-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                            </svg>
+                        </span>
+                    </div>
+                </th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="feedlots-table-body">
+            <!-- Table rows will be populated by JavaScript -->
+        </tbody>
+    </table>
 </div>
 {% else %}
 <div class="bg-white rounded-lg shadow-md p-8 text-center">
@@ -1424,96 +1535,161 @@
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('search-feedlots');
         const filterLocation = document.getElementById('filter-location');
-        const sortSelect = document.getElementById('sort-feedlots');
-        const feedlotsGrid = document.getElementById('feedlots-grid');
         
-        if (!feedlotsGrid) return;
+        // Sort state
+        let currentSortColumn = 'name';
+        let currentSortDirection = 'asc';
         
-        function filterAndSortFeedlots() {
-            const searchTerm = (searchInput.value || '').toLowerCase().trim();
-            const selectedLocation = (filterLocation.value || '').toLowerCase();
-            const sortOption = sortSelect.value;
+        // Initialize sort on name column
+        updateSortIndicators();
+        
+        // Populate table on page load
+        populateTable();
+        
+        function updateSortIndicators() {
+            // Remove all sort indicators
+            document.querySelectorAll('.sortable').forEach(th => {
+                th.removeAttribute('data-sort-direction');
+            });
             
-            const feedlotCards = Array.from(document.querySelectorAll('.feedlot-card'));
-            let visibleCards = feedlotCards.filter(card => {
-                const name = (card.getAttribute('data-name') || '').toLowerCase();
-                const location = (card.getAttribute('data-location') || '').toLowerCase();
+            // Add sort indicator to current column
+            const currentHeader = document.querySelector(`.sortable[data-sort="${currentSortColumn}"]`);
+            if (currentHeader) {
+                currentHeader.setAttribute('data-sort-direction', currentSortDirection);
+            }
+        }
+        
+        function handleHeaderClick(column) {
+            // If clicking the same column, toggle direction
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New column, default to ascending
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+            
+            updateSortIndicators();
+            populateTable();
+        }
+        
+        // Add click handlers to sortable headers
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.addEventListener('click', function() {
+                const column = this.getAttribute('data-sort');
+                if (column) {
+                    handleHeaderClick(column);
+                }
+            });
+        });
+        
+        function populateTable() {
+            const tableBody = document.getElementById('feedlots-table-body');
+            if (!tableBody) return;
+            
+            // Get all feedlot data items
+            const allDataItems = Array.from(document.querySelectorAll('.feedlot-data-item'));
+            
+            // Filter data items based on search and location
+            const searchTerm = (searchInput?.value || '').toLowerCase().trim();
+            const selectedLocation = (filterLocation?.value || '').toLowerCase();
+            
+            const visibleItems = allDataItems.filter(item => {
+                const name = (item.getAttribute('data-name') || '').toLowerCase();
+                const location = (item.getAttribute('data-location') || '').toLowerCase();
                 
-                // Search filter
-                const matchesSearch = !searchTerm || 
-                    name.includes(searchTerm) || 
-                    location.includes(searchTerm);
-                
-                // Location filter
+                const matchesSearch = !searchTerm || name.includes(searchTerm) || location.includes(searchTerm);
                 const matchesLocation = !selectedLocation || location === selectedLocation;
                 
                 return matchesSearch && matchesLocation;
             });
             
-            // Sort the visible cards
-            visibleCards.sort((a, b) => {
-                const aName = a.getAttribute('data-name') || '';
-                const bName = b.getAttribute('data-name') || '';
-                const aLocation = a.getAttribute('data-location') || '';
-                const bLocation = b.getAttribute('data-location') || '';
-                const aCreated = a.getAttribute('data-created') || '';
-                const bCreated = b.getAttribute('data-created') || '';
+            // Sort visible items
+            visibleItems.sort((a, b) => {
+                let aValue, bValue;
                 
-                switch(sortOption) {
-                    case 'name-asc':
-                        return aName.localeCompare(bName);
-                    case 'name-desc':
-                        return bName.localeCompare(aName);
-                    case 'location-asc':
-                        return aLocation.localeCompare(bLocation);
-                    case 'location-desc':
-                        return bLocation.localeCompare(aLocation);
-                    case 'date-desc':
-                        return bCreated.localeCompare(aCreated);
-                    case 'date-asc':
-                        return aCreated.localeCompare(bCreated);
+                switch(currentSortColumn) {
+                    case 'name':
+                        aValue = a.getAttribute('data-name') || '';
+                        bValue = b.getAttribute('data-name') || '';
+                        break;
+                    case 'location':
+                        aValue = a.getAttribute('data-location') || '';
+                        bValue = b.getAttribute('data-location') || '';
+                        break;
+                    case 'pens':
+                        aValue = parseInt(a.getAttribute('data-pens') || '0', 10);
+                        bValue = parseInt(b.getAttribute('data-pens') || '0', 10);
+                        break;
+                    case 'cattle':
+                        aValue = parseInt(a.getAttribute('data-cattle') || '0', 10);
+                        bValue = parseInt(b.getAttribute('data-cattle') || '0', 10);
+                        break;
+                    case 'owner':
+                        aValue = (a.getAttribute('data-owner') || '').toLowerCase();
+                        bValue = (b.getAttribute('data-owner') || '').toLowerCase();
+                        break;
                     default:
                         return 0;
                 }
-            });
-            
-            // Hide all cards first
-            feedlotCards.forEach(card => {
-                card.style.display = 'none';
-            });
-            
-            // Show visible cards in sorted order
-            visibleCards.forEach((card, index) => {
-                card.style.display = 'block';
-                feedlotsGrid.appendChild(card);
-            });
-            
-            // Show message if no feedlots match
-            const noResultsMsg = document.getElementById('no-results-message');
-            if (visibleCards.length === 0) {
-                if (!noResultsMsg) {
-                    const msg = document.createElement('div');
-                    msg.id = 'no-results-message';
-                    msg.className = 'bg-white rounded-lg shadow-md p-8 text-center col-span-full';
-                    msg.innerHTML = '<p class="text-gray-600 text-lg">No feedlots match your search criteria.</p>';
-                    feedlotsGrid.appendChild(msg);
+                
+                let comparison = 0;
+                if (typeof aValue === 'number' && typeof bValue === 'number') {
+                    comparison = aValue - bValue;
+                } else {
+                    comparison = String(aValue).localeCompare(String(bValue));
                 }
-            } else {
-                if (noResultsMsg) {
-                    noResultsMsg.remove();
-                }
+                
+                return currentSortDirection === 'asc' ? comparison : -comparison;
+            });
+            
+            // Clear existing table rows
+            tableBody.innerHTML = '';
+            
+            if (visibleItems.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td colspan="6" class="text-center py-8 text-gray-600">No feedlots match your search criteria.</td>';
+                tableBody.appendChild(row);
+                return;
             }
+            
+            // Populate table with feedlot data
+            visibleItems.forEach(item => {
+                const row = document.createElement('tr');
+                const name = item.getAttribute('data-feedlot-name') || '';
+                const location = item.getAttribute('data-feedlot-location') || '';
+                const pens = item.getAttribute('data-pens') || '0';
+                const cattle = item.getAttribute('data-cattle') || '0';
+                const owner = item.getAttribute('data-owner') || '';
+                const feedlotUrl = item.getAttribute('data-feedlot-url') || '#';
+                const feedlotId = item.getAttribute('data-feedlot-id') || '';
+                
+                row.innerHTML = `
+                    <td>${name}</td>
+                    <td>${location}</td>
+                    <td>${pens}</td>
+                    <td>${cattle}</td>
+                    <td>${owner}</td>
+                    <td>
+                        <a href="${feedlotUrl}" data-testid="feedlot-table-link-${feedlotId}" 
+                           class="inline-flex items-center text-teal hover:text-teal-700 font-semibold transition duration-200 text-sm">
+                            View
+                            <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </a>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
         }
         
         // Add event listeners
         if (searchInput) {
-            searchInput.addEventListener('input', filterAndSortFeedlots);
+            searchInput.addEventListener('input', populateTable);
         }
         if (filterLocation) {
-            filterLocation.addEventListener('change', filterAndSortFeedlots);
-        }
-        if (sortSelect) {
-            sortSelect.addEventListener('change', filterAndSortFeedlots);
+            filterLocation.addEventListener('change', populateTable);
         }
     });
 </script>
