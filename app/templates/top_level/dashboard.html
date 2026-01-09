@@ -184,6 +184,7 @@
         <div class="space-y-1 mb-4">
             <a href="{{ url_for('top_level.dashboard') }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
             <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Your Feedlots</a>
+            <button onclick="handleExportClick()" data-testid="quick-links-export" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Export</button>
         </div>
         
         <!-- Quick Actions Section -->
@@ -1198,5 +1199,156 @@
         // Refresh price every hour
         setInterval(fetchCattlePrice, 60 * 60 * 1000);
     }
+    
+    // Export functionality
+    function handleExportClick() {
+        // Check if we're in a feedlot context
+        {% if feedlot or current_feedlot %}
+        // We're in a feedlot context, redirect directly
+        const feedlotId = '{{ (feedlot or current_feedlot)._id }}';
+        window.location.href = '{{ url_for("feedlot.export_manifest", feedlot_id="PLACEHOLDER") }}'.replace('PLACEHOLDER', feedlotId);
+        {% else %}
+        // Not in feedlot context, show modal
+        openExportFeedlotModal();
+        {% endif %}
+    }
+    
+    function openExportFeedlotModal() {
+        const modal = document.getElementById('export-feedlot-modal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Focus on search input
+        const searchInput = document.getElementById('search-feedlots-input');
+        if (searchInput) {
+            setTimeout(() => searchInput.focus(), 100);
+        }
+        
+        // Reset search
+        if (searchInput) {
+            searchInput.value = '';
+            filterFeedlots();
+        }
+    }
+    
+    function closeExportFeedlotModal() {
+        const modal = document.getElementById('export-feedlot-modal');
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        
+        // Reset search
+        const searchInput = document.getElementById('search-feedlots-input');
+        if (searchInput) {
+            searchInput.value = '';
+            filterFeedlots();
+        }
+    }
+    
+    function filterFeedlots() {
+        const searchInput = document.getElementById('search-feedlots-input');
+        const feedlotList = document.getElementById('export-feedlot-list');
+        
+        if (!searchInput || !feedlotList) return;
+        
+        const searchTerm = searchInput.value.toLowerCase();
+        const feedlotItems = feedlotList.querySelectorAll('[data-feedlot-item]');
+        
+        feedlotItems.forEach(item => {
+            const feedlotName = item.getAttribute('data-feedlot-name') || '';
+            const feedlotLocation = item.getAttribute('data-feedlot-location') || '';
+            const searchableText = (feedlotName + ' ' + feedlotLocation).toLowerCase();
+            
+            if (searchableText.includes(searchTerm)) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Show/hide no results message
+        const noResults = document.getElementById('export-feedlot-no-results');
+        const visibleItems = Array.from(feedlotItems).filter(item => item.style.display !== 'none');
+        if (noResults) {
+            noResults.style.display = visibleItems.length === 0 ? 'block' : 'none';
+        }
+    }
+    
+    function selectFeedlotForExport(feedlotId) {
+        window.location.href = '{{ url_for("feedlot.export_manifest", feedlot_id="PLACEHOLDER") }}'.replace('PLACEHOLDER', feedlotId);
+    }
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const exportModal = document.getElementById('export-feedlot-modal');
+            if (exportModal && !exportModal.classList.contains('hidden')) {
+                closeExportFeedlotModal();
+            }
+        }
+    });
+    
+    // Close modal when clicking on backdrop
+    document.getElementById('export-feedlot-modal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeExportFeedlotModal();
+        }
+    });
 </script>
+
+<!-- Export Feedlot Selection Modal -->
+<div id="export-feedlot-modal" data-testid="export-feedlot-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-gray-800">Select Feedlot for Export</h2>
+                <button onclick="closeExportFeedlotModal()" data-testid="close-export-feedlot-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div class="mb-4">
+                <input type="text" 
+                       id="search-feedlots-input" 
+                       data-testid="search-feedlots-input"
+                       placeholder="Search feedlots..." 
+                       oninput="filterFeedlots()"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+            </div>
+            
+            <div id="export-feedlot-list" class="space-y-2 max-h-96 overflow-y-auto">
+                {% if feedlots %}
+                    {% for feedlot in feedlots %}
+                    <button onclick="selectFeedlotForExport('{{ feedlot._id }}')" 
+                            data-feedlot-item
+                            data-feedlot-name="{{ feedlot.name }}"
+                            data-feedlot-location="{{ feedlot.location or '' }}"
+                            data-testid="export-feedlot-item-{{ feedlot._id }}"
+                            class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-teal transition-colors">
+                        <div class="font-semibold text-gray-800">{{ feedlot.name }}</div>
+                        {% if feedlot.location %}
+                        <div class="text-sm text-gray-600 mt-1">{{ feedlot.location }}</div>
+                        {% endif %}
+                    </button>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-500 text-center py-4">No feedlots available</p>
+                {% endif %}
+            </div>
+            
+            <div id="export-feedlot-no-results" style="display: none;" class="text-gray-500 text-center py-4">
+                No feedlots found matching your search.
+            </div>
+        </div>
+        
+        <div class="p-6 border-t border-gray-200">
+            <button onclick="closeExportFeedlotModal()" data-testid="cancel-export-feedlot-button" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
