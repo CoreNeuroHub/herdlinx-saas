@@ -5,13 +5,32 @@
 {% block home_url %}{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}{% endblock %}
 
 {% block content %}
+<!-- Hero Section - Professional Homepage Header -->
+<div class="mb-8">
+    <div class="flex flex-col items-center justify-center text-center py-8">
+        {% if feedlot.get('branding') and feedlot.branding.get('logo_path') %}
+        <div class="mb-6">
+            <img src="{{ url_for('static', filename=feedlot.branding.logo_path) }}" 
+                 alt="{% if feedlot.branding.get('company_name') %}{{ feedlot.branding.company_name }}{% else %}{{ feedlot.name }}{% endif %}" 
+                 class="h-32 w-auto max-w-xs object-contain mx-auto"
+                 data-testid="feedlot-logo">
+        </div>
+        {% endif %}
+        <h1 class="text-5xl md:text-6xl font-bold text-gray-800 mb-3" data-testid="feedlot-name">
+            {% if feedlot.get('branding') and feedlot.branding.get('company_name') %}
+                {{ feedlot.branding.company_name }}
+            {% else %}
+                {{ feedlot.name }}
+            {% endif %}
+        </h1>
+        {% if feedlot.location %}
+        <p class="text-xl text-gray-600" data-testid="feedlot-location">{{ feedlot.location }}</p>
+        {% endif %}
+    </div>
+</div>
+
 <div class="flex flex-col md:flex-row gap-6 mb-8">
     <div class="flex-1">
-        <div class="mb-4">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ feedlot.name }}</h1>
-            <p class="text-gray-600">{{ feedlot.location }}</p>
-        </div>
-
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition" data-testid="total-pens-card">
         <div class="flex items-center justify-between">
@@ -51,7 +70,7 @@
 </div>
 
 <div class="bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4">Recent Batches</h2>
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">Recent Events</h2>
     {% if recent_batches %}
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
@@ -62,7 +81,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Event Date</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cattle Count</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Funder</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">

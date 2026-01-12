@@ -111,7 +111,14 @@
             <div class="flex items-center justify-between relative">
                 <!-- Logo and Label - Left Side -->
                 <div>
-                    <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
+                    {% set user_type = session.get('user_type') %}
+                    {% if user_type in ['super_owner', 'super_admin'] %}
+                        <a href="{{ url_for('top_level.dashboard') }}" class="flex items-center space-x-3">
+                    {% elif current_feedlot %}
+                        <a href="{{ url_for('feedlot.dashboard', feedlot_id=current_feedlot._id) }}" class="flex items-center space-x-3">
+                    {% else %}
+                        <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
+                    {% endif %}
                         {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('logo_path') %}
                         <img src="{{ url_for('static', filename=current_feedlot.branding.logo_path) }}" 
                              alt="{{ current_feedlot.branding.company_name if current_feedlot.branding.get('company_name') else current_feedlot.name }}" 

@@ -54,3 +54,4 @@ Thumbs.db
 *.log
 *.db
 /office_app/office_venv
+/app/static/feedlot_branding

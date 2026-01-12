@@ -295,7 +295,7 @@ def view_pen_map(feedlot_id):
 @login_required
 @feedlot_access_required()
 def list_batches(feedlot_id):
-    """List all batches for a feedlot"""
+    """List all batches for a feedlot with search, filter, and sort"""
     feedlot = Feedlot.find_by_id(feedlot_id)
     if not feedlot:
         flash('Feedlot not found.', 'error')
@@ -306,16 +306,34 @@ def list_batches(feedlot_id):
         flash('Feedlot code not found.', 'error')
         return redirect(url_for('auth.login'))
     
-    batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
+    # Get filter parameters
+    search = request.args.get('search', '').strip()
+    event_type_filter = request.args.get('event_type', '')
+    sort_by = request.args.get('sort_by', 'event_date')
+    sort_order = request.args.get('sort_order', 'desc')
     
-    # Add cattle count to each batch and normalize event_date (for backward compatibility)
-    for batch in batches:
-        batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
-        # Normalize: ensure event_date exists (for backward compatibility with induction_date)
-        if 'event_date' not in batch and 'induction_date' in batch:
-            batch['event_date'] = batch['induction_date']
+    # Get filtered batches
+    batches = Batch.find_by_feedlot_with_filters(
+        feedlot_code,
+        feedlot_id,
+        search=search if search else None,
+        event_type=event_type_filter if event_type_filter else None,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
     
-    return render_template('feedlot/batches/list.html', feedlot=feedlot, batches=batches)
+    # Get unique event types for filter dropdown
+    all_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
+    unique_event_types = list(set(b.get('event_type', 'induction') for b in all_batches if b.get('event_type')))
+    
+    return render_template('feedlot/batches/list.html', 
+                         feedlot=feedlot, 
+                         batches=batches,
+                         unique_event_types=sorted(unique_event_types),
+                         current_search=search,
+                         current_event_type=event_type_filter,
+                         current_sort_by=sort_by,
+                         current_sort_order=sort_order)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/batches/create', methods=['GET', 'POST'])
 @login_required
