@@ -2,6 +2,7 @@ from datetime import datetime
 from bson import ObjectId
 from app import get_feedlot_db
 from app.models.pen import Pen
+from app.models.batch import Batch
 
 class Cattle:
     @staticmethod
@@ -69,6 +70,10 @@ class Cattle:
         
         result = feedlot_db.cattle.insert_one(cattle_data)
         cattle_record_id = str(result.inserted_id)
+        
+        # Add cattle to batch's historical cattle_ids array if batch is provided
+        if batch_id:
+            Batch.add_cattle_to_batch(feedlot_code, batch_id, cattle_record_id)
         
         # Add initial audit log entry for creation
         Cattle.add_audit_log_entry(feedlot_code, cattle_record_id, 'created', f'Cattle record created (ID: {cattle_id})', created_by)

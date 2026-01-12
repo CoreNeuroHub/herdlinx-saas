@@ -24,6 +24,7 @@ class Batch:
             'funder': funder,
             'notes': notes or '',
             'event_type': event_type,
+            'cattle_ids': [],  # Historical record of all cattle ever associated with this batch
             'created_at': datetime.utcnow(),
             'updated_at': datetime.utcnow()
         }
@@ -96,7 +97,7 @@ class Batch:
     
     @staticmethod
     def get_cattle_count(feedlot_code, batch_id):
-        """Get number of cattle in a batch
+        """Get number of cattle currently in a batch (excludes deleted)
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
@@ -107,4 +108,116 @@ class Batch:
             'batch_id': ObjectId(batch_id),
             'deleted_at': None
         })
+    
+    @staticmethod
+    def add_cattle_to_batch(feedlot_code, batch_id, cattle_record_id):
+        """Add a cattle record ID to the batch's historical cattle_ids array
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            batch_id: The batch ID
+            cattle_record_id: The cattle record ID to add
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        feedlot_db.batches.update_one(
+            {'_id': ObjectId(batch_id)},
+            {
+                '$addToSet': {'cattle_ids': ObjectId(cattle_record_id)},
+                '$set': {'updated_at': datetime.utcnow()}
+            }
+        )
+    
+    @staticmethod
+    def get_batch_cattle_ids(feedlot_code, batch_id):
+        """Get all historical cattle IDs associated with this batch
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            batch_id: The batch ID
+            
+        Returns:
+            List of cattle record ObjectIds that have ever been in this batch
+        """
+        batch = Batch.find_by_id(feedlot_code, batch_id, include_deleted=True)
+        if not batch:
+            return []
+        return batch.get('cattle_ids', [])
+    
+    @staticmethod
+    def get_historical_cattle_count(feedlot_code, batch_id):
+        """Get total number of cattle ever associated with this batch
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            batch_id: The batch ID
+            
+        Returns:
+            Count of all cattle that have ever been in this batch
+        """
+        cattle_ids = Batch.get_batch_cattle_ids(feedlot_code, batch_id)
+        return len(cattle_ids)
+    
+    @staticmethod
+    def find_by_feedlot_with_filters(feedlot_code, feedlot_id, search=None, event_type=None, sort_by='event_date', sort_order='desc', include_deleted=False):
+        """Find batches with filtering and sorting
+        
+        Args:
+            feedlot_code: The feedlot code (required for database selection)
+            feedlot_id: The feedlot ID
+            search: Optional search term for batch_number or funder
+            event_type: Optional event type filter
+            sort_by: Field to sort by (batch_number, event_date, event_type, funder, cattle_count)
+            sort_order: Sort order ('asc' or 'desc')
+            include_deleted: If True, include soft-deleted batches. Defaults to False.
+        """
+        feedlot_db = get_feedlot_db(feedlot_code)
+        query = {'feedlot_id': ObjectId(feedlot_id)}
+        
+        # Exclude soft-deleted records by default
+        if not include_deleted:
+            query['deleted_at'] = None
+        
+        # Add search filter for batch_number or funder
+        if search:
+            query['$or'] = [
+                {'batch_number': {'$regex': search, '$options': 'i'}},
+                {'funder': {'$regex': search, '$options': 'i'}}
+            ]
+        
+        # Add event type filter
+        if event_type:
+            query['event_type'] = event_type
+        
+        # Define sort order
+        sort_direction = 1 if sort_order == 'asc' else -1
+        
+        # Define sort field mapping
+        sort_field_map = {
+            'batch_number': 'batch_number',
+            'event_date': 'event_date',
+            'event_type': 'event_type',
+            'funder': 'funder',
+            'cattle_count': 'cattle_count'  # Note: This will need to be computed after fetching
+        }
+        
+        sort_field = sort_field_map.get(sort_by, 'event_date')
+        sort_criteria = [(sort_field, sort_direction)]
+        
+        batches = list(feedlot_db.batches.find(query).sort(sort_criteria))
+        
+        # Add cattle count to each batch
+        for batch in batches:
+            batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
+            # Normalize: ensure event_date exists (for backward compatibility with induction_date)
+            if 'event_date' not in batch and 'induction_date' in batch:
+                batch['event_date'] = batch['induction_date']
+            # Ensure event_type exists (default to 'induction' if not set)
+            if 'event_type' not in batch:
+                batch['event_type'] = 'induction'
+        
+        # If sorting by cattle_count, sort after adding the count
+        if sort_by == 'cattle_count':
+            batches.sort(key=lambda b: b.get('cattle_count', 0), reverse=(sort_order == 'desc'))
+        
+        return batches
 

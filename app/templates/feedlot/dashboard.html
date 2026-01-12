@@ -5,13 +5,32 @@
 {% block home_url %}{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}{% endblock %}
 
 {% block content %}
+<!-- Hero Section - Professional Homepage Header -->
+<div class="mb-8">
+    <div class="flex flex-col items-center justify-center text-center py-8">
+        {% if feedlot.get('branding') and feedlot.branding.get('logo_path') %}
+        <div class="mb-6">
+            <img src="{{ url_for('static', filename=feedlot.branding.logo_path) }}" 
+                 alt="{% if feedlot.branding.get('company_name') %}{{ feedlot.branding.company_name }}{% else %}{{ feedlot.name }}{% endif %}" 
+                 class="h-32 w-auto max-w-xs object-contain mx-auto"
+                 data-testid="feedlot-logo">
+        </div>
+        {% endif %}
+        <h1 class="text-5xl md:text-6xl font-bold text-gray-800 mb-3" data-testid="feedlot-name">
+            {% if feedlot.get('branding') and feedlot.branding.get('company_name') %}
+                {{ feedlot.branding.company_name }}
+            {% else %}
+                {{ feedlot.name }}
+            {% endif %}
+        </h1>
+        {% if feedlot.location %}
+        <p class="text-xl text-gray-600" data-testid="feedlot-location">{{ feedlot.location }}</p>
+        {% endif %}
+    </div>
+</div>
+
 <div class="flex flex-col md:flex-row gap-6 mb-8">
     <div class="flex-1">
-        <div class="mb-4">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">{{ feedlot.name }}</h1>
-            <p class="text-gray-600">{{ feedlot.location }}</p>
-        </div>
-
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition" data-testid="total-pens-card">
         <div class="flex items-center justify-between">
@@ -51,7 +70,7 @@
 </div>
 
 <div class="bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-2xl font-bold text-gray-800 mb-4">Recent Batches</h2>
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">Recent Events</h2>
     {% if recent_batches %}
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
@@ -62,7 +81,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Event Date</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cattle Count</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Funder</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -70,13 +89,13 @@
                 <tr class="hover:bg-gray-50" data-testid="recent-batch-row-{{ batch._id }}">
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ batch.batch_number }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 bg-teal bg-opacity-10 text-teal rounded-full text-xs font-semibold uppercase">
+                        <span class="px-2 py-1 status-badge-default rounded-full text-xs font-semibold uppercase">
                             {{ batch.event_type or 'induction' }}
                         </span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ batch.event_date | strftime }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 bg-teal bg-opacity-10 text-teal rounded-full text-xs font-semibold">
+                        <span class="px-2 py-1 status-badge-default rounded-full text-xs font-semibold">
                             {{ batch.cattle_count }} cattle
                         </span>
                     </td>
@@ -98,19 +117,32 @@
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="feedlot-dashboard-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
+        <!-- Quick Links Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Links</h3>
+        <div class="space-y-1 mb-4">
+            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Your Feedlots</a>
+            <a href="{{ url_for('feedlot.export_manifest', feedlot_id=feedlot._id) }}" data-testid="quick-links-export-manifest" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Export Manifest</a>
+        </div>
+        
+        <!-- Quick Actions Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
+        <div class="space-y-1 mb-4">
+            {% block actions_items %}
+            <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" data-testid="quick-actions-create-pen" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Create Pen</a>
+            <a href="{{ url_for('feedlot.create_batch', feedlot_id=feedlot._id) }}" data-testid="quick-actions-create-batch" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Create Batch</a>
+            <a href="{{ url_for('feedlot.create_cattle', feedlot_id=feedlot._id) }}" data-testid="quick-actions-create-cattle" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Create Cattle</a>
+            {% endblock %}
+        </div>
+        
+        <!-- Management Section -->
         <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
         <div class="space-y-1">
-            {% block actions_items %}
             {% if user_type in ['super_owner', 'super_admin', 'business_owner'] %}
-            <a href="{{ url_for('top_level.feedlot_branding', feedlot_id=feedlot._id) }}" data-testid="branding-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Branding</a>
+            <a href="{{ url_for('top_level.feedlot_branding', feedlot_id=feedlot._id) }}" data-testid="management-branding" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Branding</a>
             {% endif %}
-            <a href="{{ url_for('top_level.edit_feedlot', feedlot_id=feedlot._id) }}" data-testid="edit-feedlot-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Edit Feedlot</a>
-            <a href="{{ url_for('top_level.feedlot_users', feedlot_id=feedlot._id) }}" data-testid="manage-users-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Users</a>
-            <a href="{{ url_for('feedlot.create_pen', feedlot_id=feedlot._id) }}" data-testid="create-pen-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Create Pen</a>
-            <a href="{{ url_for('feedlot.create_batch', feedlot_id=feedlot._id) }}" data-testid="create-batch-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Create Batch</a>
-            <a href="{{ url_for('feedlot.create_cattle', feedlot_id=feedlot._id) }}" data-testid="create-cattle-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Create Cattle</a>
-            <a href="{{ url_for('feedlot.export_manifest', feedlot_id=feedlot._id) }}" data-testid="export-manifest-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Export Manifest</a>
-            {% endblock %}
+            <a href="{{ url_for('top_level.edit_feedlot', feedlot_id=feedlot._id) }}" data-testid="management-edit-feedlot" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Edit Feedlot</a>
+            <a href="{{ url_for('top_level.feedlot_users', feedlot_id=feedlot._id) }}" data-testid="management-manage-users" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Users</a>
         </div>
     </div>
     {% endblock %}

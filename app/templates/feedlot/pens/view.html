@@ -97,10 +97,19 @@
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="pen-view-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
+        <!-- Quick Links Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Links</h3>
+        <div class="space-y-1 mb-4">
+            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Your Feedlots</a>
+            <a href="{{ url_for('feedlot.export_manifest', feedlot_id=feedlot._id) }}" data-testid="quick-links-export-manifest" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Export Manifest</a>
+        </div>
+        
+        <!-- Quick Actions Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
         <div class="space-y-1">
             {% block actions_items %}
-            <a href="{{ url_for('feedlot.edit_pen', feedlot_id=feedlot._id, pen_id=pen._id) }}" data-testid="edit-pen-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Edit Pen</a>
+            <a href="{{ url_for('feedlot.edit_pen', feedlot_id=feedlot._id, pen_id=pen._id) }}" data-testid="quick-actions-edit-pen" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Edit Pen</a>
             {% endblock %}
         </div>
     </div>

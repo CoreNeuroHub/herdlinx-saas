@@ -106,11 +106,25 @@
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="view-feedlot-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
+        <!-- Quick Links Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Links</h3>
+        <div class="space-y-1 mb-4">
+            <a href="{{ url_for('top_level.dashboard') }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Your Feedlots</a>
+            <a href="{{ url_for('feedlot.export_manifest', feedlot_id=feedlot._id) }}" data-testid="quick-links-export" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Export</a>
+        </div>
+        
+        <!-- Quick Actions Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
+        <div class="space-y-1 mb-4">
+            <a href="{{ url_for('top_level.edit_feedlot', feedlot_id=feedlot._id) }}" data-testid="quick-actions-edit-feedlot" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Edit</a>
+        </div>
+        
+        <!-- Management Section -->
         <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
         <div class="space-y-1">
-            <a href="{{ url_for('top_level.edit_feedlot', feedlot_id=feedlot._id) }}" data-testid="edit-feedlot-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Edit</a>
-            <a href="{{ url_for('top_level.feedlot_users', feedlot_id=feedlot._id) }}" data-testid="manage-users-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Users</a>
-            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="open-feedlot-dashboard-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Open Feedlot Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_users', feedlot_id=feedlot._id) }}" data-testid="management-manage-users" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Users</a>
+            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="management-open-feedlot-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Open Feedlot Dashboard</a>
         </div>
     </div>
     {% endblock %}

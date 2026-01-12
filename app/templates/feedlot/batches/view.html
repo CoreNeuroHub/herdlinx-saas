@@ -16,7 +16,7 @@
                     <div>
                         <p class="text-sm text-gray-600">Event Type</p>
                         <p class="font-semibold">
-                            <span class="px-2 py-1 bg-teal bg-opacity-10 text-teal rounded-full text-xs font-semibold uppercase">
+                            <span class="px-2 py-1 status-badge-default rounded-full text-xs font-semibold uppercase">
                                 {{ batch.event_type or 'induction' }}
                             </span>
                         </p>
@@ -40,10 +40,16 @@
             
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Statistics</h3>
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <div>
-                        <p class="text-sm text-gray-600">Total Cattle</p>
-                        <p class="text-3xl font-bold text-teal">{{ batch.cattle_count }}</p>
+                        <p class="text-sm text-gray-600">Current Cattle</p>
+                        <p class="text-3xl font-bold text-teal" data-testid="batch-current-cattle-count">{{ batch.cattle_count }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Currently linked to this batch</p>
+                    </div>
+                    <div class="border-t pt-4">
+                        <p class="text-sm text-gray-600">Historical Total</p>
+                        <p class="text-2xl font-bold text-gray-700" data-testid="batch-historical-cattle-count">{{ batch.historical_cattle_count or 0 }}</p>
+                        <p class="text-xs text-gray-500 mt-1">All cattle ever inducted in this batch</p>
                     </div>
                 </div>
             </div>
@@ -107,10 +113,19 @@
     </div>
     {% block actions_sidebar %}
     <div id="actions-sidebar" data-testid="batch-view-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
+        <!-- Quick Links Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Links</h3>
+        <div class="space-y-1 mb-4">
+            <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Your Feedlots</a>
+            <a href="{{ url_for('feedlot.export_manifest', feedlot_id=feedlot._id) }}" data-testid="quick-links-export-manifest" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Export Manifest</a>
+        </div>
+        
+        <!-- Quick Actions Section -->
+        <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
         <div class="space-y-1">
             {% block actions_items %}
-            <a href="{{ url_for('feedlot.edit_batch', feedlot_id=feedlot._id, batch_id=batch._id) }}" data-testid="edit-batch-action" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Edit Batch</a>
+            <a href="{{ url_for('feedlot.edit_batch', feedlot_id=feedlot._id, batch_id=batch._id) }}" data-testid="quick-actions-edit-batch" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Edit Batch</a>
             {% endblock %}
         </div>
     </div>

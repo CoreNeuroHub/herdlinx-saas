@@ -482,6 +482,9 @@ Unsupported `event` values return `400` with a descriptive error.
 
 **Optional Fields**:
 - `timestamp` (string, optional) → Export timestamp (defaults to current time if not provided)
+- `batch_name` (string, optional) → Name for the export batch. If not provided, auto-generates as `EXPORT-YYYY-MM-DD-###` (e.g., `EXPORT-2025-12-18-001`)
+- `funder` (string, optional) → Funder information for the export batch
+- `notes` (string, optional) → Notes for the export batch
 
 **Manifest Fields** (all optional):
 - **Part A - Purpose**:
@@ -542,6 +545,8 @@ Unsupported `event` values return `400` with a descriptive error.
   "records_created": 0,
   "records_updated": 2,
   "records_skipped": 0,
+  "batches_created": 1,
+  "batches_updated": 0,
   "manifests_created": 1,
   "manifest_ids": ["507f1f77bcf86cd799439011"],
   "errors": []
@@ -552,6 +557,11 @@ Unsupported `event` values return `400` with a descriptive error.
 - `epc` (UHF tag) is required to identify the cattle
 - All manifest fields are optional
 - Cattle status is updated to "Export" regardless of whether manifest data is provided
+- **Export Batch Creation**: An export batch with `event_type='export'` is automatically created or reused:
+  - If `batch_name` is provided, the system looks for an existing batch with that name or creates a new one
+  - If `batch_name` is not provided, an auto-generated name in format `EXPORT-YYYY-MM-DD-###` is used (e.g., `EXPORT-2025-12-18-001`)
+  - Cattle are reassigned to the export batch (their `batch_id` is updated)
+  - The previous batch assignment is recorded in the audit log
 - **Manifest Creation**: If manifest data is provided (at least one non-empty manifest field), a manifest record is automatically created
 - **Grouping**: Cattle with identical manifest data (excluding `epc` and `timestamp`) are grouped into the same manifest record
 - If cattle is already marked as Export, the record is skipped (not counted as an error)
