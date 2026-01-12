@@ -26,21 +26,6 @@ def generate_breadcrumbs(current_feedlot=None, request_obj=None):
     breadcrumbs = []
     path = request_obj.path
     
-    # Determine home URL based on context
-    if current_feedlot:
-        # Feedlot context - home is feedlot dashboard
-        feedlot_id = str(current_feedlot['_id']) if isinstance(current_feedlot.get('_id'), ObjectId) else current_feedlot.get('_id')
-        breadcrumbs.append({
-            'label': 'Home',
-            'url': url_for('feedlot.dashboard', feedlot_id=feedlot_id)
-        })
-    else:
-        # Top-level context - home is top-level dashboard
-        breadcrumbs.append({
-            'label': 'Home',
-            'url': url_for('top_level.dashboard')
-        })
-    
     # Parse path to determine breadcrumb structure
     path_parts = [p for p in path.split('/') if p]
     
