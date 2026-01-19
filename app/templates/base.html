@@ -132,6 +132,7 @@
     <!-- Navigation -->
     <nav class="bg-navy text-white shadow-lg relative">
         <!-- Hamburger Menu Button (Absolute Left) -->
+        {% if session.user_id %}
         <button id="hamburger-menu-btn" onclick="toggleMenu()"
             class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-teal focus:outline-none focus:ring-2 focus:ring-teal rounded-md transition-colors duration-200 z-10"
             aria-label="Toggle menu">
@@ -140,6 +141,7 @@
                 </path>
             </svg>
         </button>
+        {% endif %}
         <div class="container mx-auto px-4 py-3">
             <div class="flex items-center justify-between relative">
                 <!-- Logo and Label - Left Side -->
@@ -245,6 +247,7 @@
                 {% endif %}
             </div>
         </div>
+        {% if session.user_id %}
         <!-- Hamburger Menu Overlay -->
         <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300"
             onclick="toggleMenu()"></div>
@@ -308,6 +311,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </nav>
 
     <!-- Breadcrumbs -->
@@ -366,6 +370,8 @@
             const menuPanel = document.getElementById('menu-panel');
             const menuOverlay = document.getElementById('menu-overlay');
 
+            if (!menuPanel || !menuOverlay) return;
+
             const isOpen = !menuPanel.classList.contains('-translate-x-full');
 
             if (isOpen) {
@@ -378,22 +384,28 @@
         }
 
         // Close menu when clicking outside
-        document.getElementById('menu-overlay').addEventListener('click', toggleMenu);
+        const menuOverlay = document.getElementById('menu-overlay');
+        if (menuOverlay) {
+            menuOverlay.addEventListener('click', toggleMenu);
+        }
 
         // Close menu on escape key
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 const menuPanel = document.getElementById('menu-panel');
-                if (!menuPanel.classList.contains('-translate-x-full')) {
+                if (menuPanel && !menuPanel.classList.contains('-translate-x-full')) {
                     toggleMenu();
                 }
             }
         });
 
         // Prevent menu from closing when clicking inside the menu panel
-        document.getElementById('menu-panel').addEventListener('click', function (e) {
-            e.stopPropagation();
-        });
+        const menuPanel = document.getElementById('menu-panel');
+        if (menuPanel) {
+            menuPanel.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+        }
 
 
         // Profile Dropdown functionality

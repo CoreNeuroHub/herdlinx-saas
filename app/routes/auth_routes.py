@@ -87,6 +87,18 @@ def feedlot_access_required(feedlot_id_param='feedlot_id'):
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Login page for super owner, super admin, business owner, business admin, and users"""
+    # Redirect if already logged in
+    if 'user_id' in session:
+        user_type = session.get('user_type')
+        if user_type in ['super_owner', 'super_admin']:
+            return redirect(url_for('top_level.dashboard'))
+        elif user_type in ['business_owner', 'business_admin']:
+            return redirect(url_for('top_level.dashboard'))
+        elif user_type == 'user':
+            feedlot_id = session.get('feedlot_id')
+            if feedlot_id:
+                return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -154,6 +166,25 @@ def feedlot_login(feedlot_code):
         return redirect(url_for('auth.login'))
     
     feedlot_id = str(feedlot['_id'])
+    
+    # Redirect if already logged in and has access to this feedlot
+    if 'user_id' in session:
+        user_type = session.get('user_type')
+        has_access = False
+        
+        if user_type in ['super_owner', 'super_admin']:
+            has_access = True
+        elif user_type in ['business_owner', 'business_admin']:
+            user_feedlot_ids = session.get('feedlot_ids', [])
+            if feedlot_id in user_feedlot_ids:
+                has_access = True
+        elif user_type == 'user':
+            user_feedlot_id = session.get('feedlot_id')
+            if str(user_feedlot_id) == feedlot_id:
+                has_access = True
+        
+        if has_access:
+            return redirect(url_for('feedlot.dashboard', feedlot_id=feedlot_id))
     
     # Load branding if available
     branding = Feedlot.get_branding(feedlot_id)
