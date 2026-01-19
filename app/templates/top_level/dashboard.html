@@ -14,245 +14,233 @@
             <p class="text-gray-600">Overview of all feedlots and system statistics</p>
         </div>
 
-    <!-- Statistics Widgets -->
-    <div id="widgets-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
-        <!-- Combined Statistics Widget -->
-        <div id="widget-combined-stats" data-widget-id="combined-stats" data-testid="widget-combined-stats" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Statistics</p>
-                </div>
-                <div class="bg-teal bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <p class="text-sm font-medium text-gray-600">Total Feedlots</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_stats.total_feedlots }}</p>
-                </div>
-                <div class="flex items-center justify-between">
-                    <p class="text-sm font-medium text-gray-600">Total Pens</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_stats.total_pens }}</p>
-                </div>
-                <div class="flex items-center justify-between">
-                    <p class="text-sm font-medium text-gray-600">Total Cattle</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ dashboard_stats.total_cattle }}</p>
-                </div>
-            </div>
-            <div class="mt-4">
-                <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="view-all-feedlots-link" class="text-sm text-teal hover:underline font-medium">View all feedlots →</a>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
 
-        <!-- Total Users Widget -->
-        <div id="widget-users" data-widget-id="users" data-testid="widget-users" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Total Users</p>
-                    <p class="text-3xl font-bold text-gray-800">{{ dashboard_stats.total_users }}</p>
-                </div>
-                <div class="bg-navy bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                    </svg>
-                </div>
-            </div>
-            <div class="mt-4 max-h-48 overflow-y-auto">
-                <div class="space-y-2">
-                    {% if dashboard_stats.users_per_feedlot %}
-                        {% for item in dashboard_stats.users_per_feedlot %}
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gray-700">{{ item.feedlot_name }}</span>
-                            <span class="font-semibold text-gray-800">{{ item.user_count }} user{% if item.user_count != 1 %}s{% endif %}</span>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-sm text-gray-500">No users found</p>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="mt-4">
-                <a href="{{ url_for('top_level.manage_users') }}" data-testid="manage-users-link" class="text-sm text-teal hover:underline font-medium">Manage users →</a>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-    </div>
 
-    <!-- Additional Widgets Row -->
-    <div id="widgets-container-3" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" style="grid-auto-rows: minmax(150px, auto);">
-        <!-- Date and Time Widget -->
-        <div id="widget-datetime" data-widget-id="datetime" data-testid="widget-datetime" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Date & Time</p>
-                </div>
-                <div class="bg-teal bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-            </div>
-            <div id="datetime-content">
-                <p id="widget-date" class="text-lg font-semibold text-gray-800 mb-2"></p>
-                <p id="widget-time" class="text-2xl font-bold text-teal"></p>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-
-        <!-- Weather Widget -->
-        <div id="widget-weather" data-widget-id="weather" data-testid="widget-weather" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Weather</p>
-                    <p id="weather-location" class="text-xs text-gray-500">Loading...</p>
-                </div>
-                <div class="bg-gold bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
-                    </svg>
-                </div>
-            </div>
-            <div id="weather-content">
-                <div class="flex items-center space-x-4">
-                    <div id="weather-icon" class="flex items-center justify-center w-16 h-16">
-                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
+        <!-- Additional Widgets Row -->
+        <div id="widgets-container-3" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+            style="grid-auto-rows: minmax(150px, auto);">
+            <!-- Date and Time Widget -->
+            <div id="widget-datetime" data-widget-id="datetime" data-testid="widget-datetime"
+                class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative"
+                style="min-width: 200px; min-height: 150px; max-width: 600px;">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Date & Time</p>
+                    </div>
+                    <div class="bg-teal bg-opacity-10 rounded-full p-3">
+                        <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
+                </div>
+                <div id="datetime-content">
+                    <p id="widget-date" class="text-lg font-semibold text-gray-800 mb-2"></p>
+                    <p id="widget-time" class="text-2xl font-bold text-teal"></p>
+                </div>
+                <div
+                    class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg">
+                </div>
+            </div>
+
+            <!-- Weather Widget -->
+            <div id="widget-weather" data-widget-id="weather" data-testid="widget-weather"
+                class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative"
+                style="min-width: 200px; min-height: 150px; max-width: 600px;">
+                <div class="flex items-center justify-between mb-4">
                     <div>
-                        <p id="weather-temp" class="text-3xl font-bold text-gray-800">--</p>
-                        <p id="weather-desc" class="text-sm text-gray-600">Loading...</p>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Weather</p>
+                        <p id="weather-location" class="text-xs text-gray-500">Loading...</p>
+                    </div>
+                    <div class="bg-gold bg-opacity-10 rounded-full p-3">
+                        <svg class="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z">
+                            </path>
+                        </svg>
                     </div>
                 </div>
+                <div id="weather-content">
+                    <div class="flex items-center space-x-4">
+                        <div id="weather-icon" class="flex items-center justify-center w-16 h-16">
+                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z">
+                                </path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p id="weather-temp" class="text-3xl font-bold text-gray-800">--</p>
+                            <p id="weather-desc" class="text-sm text-gray-600">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg">
+                </div>
             </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
+
+            <!-- Alberta Cattle Price Widget -->
+            <div id="widget-cattle-price" data-widget-id="cattle-price" data-testid="widget-cattle-price"
+                class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative"
+                style="min-width: 200px; min-height: 150px; max-width: 600px;">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Alberta Cattle Price</p>
+                        <p class="text-xs text-gray-500">Live Weight</p>
+                    </div>
+                    <div class="bg-navy bg-opacity-10 rounded-full p-3">
+                        <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+                <div id="cattle-price-content">
+                    <p id="cattle-price-value" class="text-3xl font-bold text-gray-800 mb-2">--</p>
+                    <p id="cattle-price-date" class="text-sm text-gray-600">Loading...</p>
+                </div>
+                <div
+                    class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg">
+                </div>
+            </div>
         </div>
 
-        <!-- Alberta Cattle Price Widget -->
-        <div id="widget-cattle-price" data-widget-id="cattle-price" data-testid="widget-cattle-price" class="widget-item bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition duration-200 relative" style="min-width: 200px; min-height: 150px; max-width: 600px;">
+        <!-- Recent Feedlots Section -->
+        {% if dashboard_stats.recent_feedlots %}
+        <div class="bg-white rounded-lg shadow-md p-6">
             <div class="flex items-center justify-between mb-4">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Alberta Cattle Price</p>
-                    <p class="text-xs text-gray-500">Live Weight</p>
-                </div>
-                <div class="bg-navy bg-opacity-10 rounded-full p-3">
-                    <svg class="w-8 h-8 text-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Recent Feedlots</h2>
+                <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="recent-feedlots-view-all-link"
+                    class="text-teal hover:underline font-medium">View all →</a>
             </div>
-            <div id="cattle-price-content">
-                <p id="cattle-price-value" class="text-3xl font-bold text-gray-800 mb-2">--</p>
-                <p id="cattle-price-date" class="text-sm text-gray-600">Loading...</p>
-            </div>
-            <div class="resize-handle absolute bottom-0 right-0 w-4 h-4 bg-gray-300 cursor-se-resize opacity-0 hover:opacity-100 transition-opacity rounded-tl-lg"></div>
-        </div>
-    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for feedlot in dashboard_stats.recent_feedlots %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ feedlot.name }}</h3>
+                    <p class="text-sm text-gray-600 mb-3">{{ feedlot.location }}</p>
+                    <div class="flex space-x-2">
+                        <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}"
+                            data-testid="recent-feedlot-open-link-{{ feedlot._id }}"
+                            class="flex-1 bg-teal hover:opacity-90 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
+                            Dashboard
+                        </a>
 
-    <!-- Recent Feedlots Section -->
-    {% if dashboard_stats.recent_feedlots %}
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-gray-800">Recent Feedlots</h2>
-            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="recent-feedlots-view-all-link" class="text-teal hover:underline font-medium">View all →</a>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {% for feedlot in dashboard_stats.recent_feedlots %}
-            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200">
-                <h3 class="text-lg font-semibold text-gray-800 mb-1">{{ feedlot.name }}</h3>
-                <p class="text-sm text-gray-600 mb-3">{{ feedlot.location }}</p>
-                <div class="flex space-x-2">
-                    <a href="{{ url_for('feedlot.dashboard', feedlot_id=feedlot._id) }}" data-testid="recent-feedlot-open-link-{{ feedlot._id }}" class="flex-1 bg-teal hover:opacity-90 text-white text-center text-sm font-semibold py-2 px-3 rounded-lg transition duration-200">
-                        Dashboard
-                    </a>
-                    
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
     </div>
     {% block actions_sidebar %}
-    <div id="actions-sidebar" data-testid="dashboard-actions-sidebar" class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
+    <div id="actions-sidebar" data-testid="dashboard-actions-sidebar"
+        class="bg-white rounded-lg shadow-md p-4 md:min-w-[200px] md:max-w-[200px] flex-shrink-0">
         <!-- Quick Links Section -->
         <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Links</h3>
         <div class="space-y-1 mb-4">
-            <a href="{{ url_for('top_level.dashboard') }}" data-testid="quick-links-dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
-            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Your Feedlots</a>
-            <button onclick="handleExportClick()" data-testid="quick-links-export" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Export</button>
+            <a href="{{ url_for('top_level.dashboard') }}" data-testid="quick-links-dashboard"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Dashboard</a>
+            <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="quick-links-feedlot-hub"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Your
+                Feedlots</a>
+            <button onclick="handleExportClick()" data-testid="quick-links-export"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Export</button>
         </div>
-        
+
         <!-- Quick Actions Section -->
         <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Quick Actions</h3>
         <div class="space-y-1 mb-4">
             {% block actions_items %}
             {% if user_type in ['super_owner', 'super_admin'] %}
-            <button onclick="openAddFeedlotModal()" data-testid="quick-actions-add-feedlot" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New Feedlot</button>
+            <button onclick="openAddFeedlotModal()" data-testid="quick-actions-add-feedlot"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add
+                New Feedlot</button>
             {% endif %}
-            <button onclick="openAddUserModal()" data-testid="quick-actions-add-user" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add New User</button>
+            <button onclick="openAddUserModal()" data-testid="quick-actions-add-user"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Add
+                New User</button>
             {% endblock %}
         </div>
-        
+
         <!-- Management Section -->
         <h3 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Management</h3>
         <div class="space-y-1">
-            <button onclick="openWidgetSettingsModal()" data-testid="management-show-hide-widgets" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Show/Hide Widgets</button>
-            <button onclick="resetWidgets()" data-testid="management-reset-widgets" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Reset Widgets</button>
-            <a href="{{ url_for('top_level.manage_users') }}" data-testid="management-manage-users" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage Users</a>
+            <button onclick="openWidgetSettingsModal()" data-testid="management-show-hide-widgets"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Show/Hide
+                Widgets</button>
+            <button onclick="resetWidgets()" data-testid="management-reset-widgets"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer transition-colors rounded">Reset
+                Widgets</button>
+            <a href="{{ url_for('top_level.manage_users') }}" data-testid="management-manage-users"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors rounded">Manage
+                Users</a>
         </div>
     </div>
     {% endblock %}
 </div>
 
 <!-- Widget Settings Modal -->
-<div id="widget-settings-modal" data-testid="widget-settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="widget-settings-modal" data-testid="widget-settings-modal"
+    class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl font-bold text-gray-800">Show/Hide Widgets</h2>
-                <button onclick="closeWidgetSettingsModal()" data-testid="close-widget-settings-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                <button onclick="closeWidgetSettingsModal()" data-testid="close-widget-settings-modal-button"
+                    class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </button>
             </div>
         </div>
-        
+
         <div class="p-6">
             <p class="text-sm text-gray-600 mb-4">Select which widgets to display on your dashboard:</p>
             <div class="space-y-3">
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-combined-stats" data-widget-id="combined-stats" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Statistics</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-users" data-widget-id="users" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
-                    <span class="text-sm font-medium text-gray-700">Total Users</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-datetime" data-widget-id="datetime" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+
+                <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
                     <span class="text-sm font-medium text-gray-700">Date & Time</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-weather" data-widget-id="weather" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="widget-check-datetime" data-widget-id="datetime" class="sr-only peer"
+                            checked>
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal">
+                        </div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
                     <span class="text-sm font-medium text-gray-700">Weather</span>
-                </label>
-                <label class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
-                    <input type="checkbox" id="widget-check-cattle-price" data-widget-id="cattle-price" class="rounded border-gray-300 text-teal focus:ring-teal" checked>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="widget-check-weather" data-widget-id="weather" class="sr-only peer"
+                            checked>
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal">
+                        </div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
                     <span class="text-sm font-medium text-gray-700">Alberta Cattle Price</span>
-                </label>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="widget-check-cattle-price" data-widget-id="cattle-price"
+                            class="sr-only peer" checked>
+                        <div
+                            class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal">
+                        </div>
+                    </label>
+                </div>
             </div>
-            
+
             <div class="flex space-x-4 pt-6 mt-6 border-t border-gray-200">
-                <button onclick="saveWidgetSettings()" data-testid="save-widget-settings-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button onclick="saveWidgetSettings()" data-testid="save-widget-settings-button"
+                    class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Save Settings
                 </button>
-                <button onclick="closeWidgetSettingsModal()" data-testid="cancel-widget-settings-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button onclick="closeWidgetSettingsModal()" data-testid="cancel-widget-settings-button"
+                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Cancel
                 </button>
             </div>
@@ -261,82 +249,89 @@
 </div>
 
 <!-- Add New Feedlot Modal -->
-<div id="add-feedlot-modal" data-testid="add-feedlot-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="add-feedlot-modal" data-testid="add-feedlot-modal"
+    class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl font-bold text-gray-800">Add New Feedlot</h2>
-                <button onclick="closeAddFeedlotModal()" data-testid="close-add-feedlot-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                <button onclick="closeAddFeedlotModal()" data-testid="close-add-feedlot-modal-button"
+                    class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </button>
             </div>
         </div>
-        
-        <form id="add-feedlot-form" method="POST" action="{{ url_for('top_level.create_feedlot') }}" data-testid="add-feedlot-form" class="p-6 space-y-4">
+
+        <form id="add-feedlot-form" method="POST" action="{{ url_for('top_level.create_feedlot') }}"
+            data-testid="add-feedlot-form" class="p-6 space-y-4">
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Feedlot Name *</label>
-                <input type="text" id="name" name="name" required
-                       data-testid="add-feedlot-name-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <input type="text" id="name" name="name" required data-testid="add-feedlot-name-input"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <div>
                 <label for="location" class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-                <input type="text" id="location" name="location" required
-                       data-testid="add-feedlot-location-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <input type="text" id="location" name="location" required data-testid="add-feedlot-location-input"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <div>
                 <label for="feedlot_code" class="block text-sm font-medium text-gray-700 mb-2">Feedlot Code *</label>
-                <input type="text" id="feedlot_code" name="feedlot_code" required
-                       data-testid="add-feedlot-code-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
-                       placeholder="e.g., feedlot-001" pattern="[a-z0-9_-]+" title="Lowercase alphanumeric characters, hyphens, and underscores only">
-                <p class="mt-1 text-sm text-gray-500">Unique identifier for office app integration. Lowercase alphanumeric, hyphens (-), and underscores (_) only.</p>
+                <input type="text" id="feedlot_code" name="feedlot_code" required data-testid="add-feedlot-code-input"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"
+                    placeholder="e.g., feedlot-001" pattern="[a-z0-9_-]+"
+                    title="Lowercase alphanumeric characters, hyphens, and underscores only">
+                <p class="mt-1 text-sm text-gray-500">Unique identifier for office app integration. Lowercase
+                    alphanumeric, hyphens (-), and underscores (_) only.</p>
             </div>
-            
+
             <div>
-                <label for="land_description" class="block text-sm font-medium text-gray-700 mb-2">Land Description</label>
+                <label for="land_description" class="block text-sm font-medium text-gray-700 mb-2">Land
+                    Description</label>
                 <textarea id="land_description" name="land_description" rows="3"
-                       data-testid="add-feedlot-land-description-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"></textarea>
+                    data-testid="add-feedlot-land-description-input"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent"></textarea>
             </div>
-            
+
             <div>
-                <label for="premises_id" class="block text-sm font-medium text-gray-700 mb-2">Premises Identification (PID) Number</label>
-                <input type="text" id="premises_id" name="premises_id"
-                       data-testid="add-feedlot-premises-id-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <label for="premises_id" class="block text-sm font-medium text-gray-700 mb-2">Premises Identification
+                    (PID) Number</label>
+                <input type="text" id="premises_id" name="premises_id" data-testid="add-feedlot-premises-id-input"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-4">Contact Information</h3>
-            
+
             <div>
                 <label for="contact_person" class="block text-sm font-medium text-gray-700 mb-2">Contact Person</label>
                 <input type="text" id="contact_person" name="contact_person"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <div>
                 <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
                 <input type="tel" id="phone" name="phone"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <div>
                 <label for="feedlot_email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                 <input type="email" id="feedlot_email" name="email"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <div class="flex space-x-4 pt-4">
-                <button type="submit" id="submit-feedlot-btn" data-testid="submit-add-feedlot-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <button type="submit" id="submit-feedlot-btn" data-testid="submit-add-feedlot-button"
+                    class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
                     Create Feedlot
                 </button>
-                <button type="button" onclick="closeAddFeedlotModal()" data-testid="cancel-add-feedlot-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button type="button" onclick="closeAddFeedlotModal()" data-testid="cancel-add-feedlot-button"
+                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Cancel
                 </button>
             </div>
@@ -349,82 +344,82 @@
         const modal = document.getElementById('add-feedlot-modal');
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        
+
         // Initialize feedlot code validation
         initializeFeedlotCodeValidation();
     }
-    
+
     function initializeFeedlotCodeValidation() {
         const feedlotCodeInput = document.getElementById('feedlot_code');
         const submitBtn = document.getElementById('submit-feedlot-btn');
-        
+
         if (!feedlotCodeInput || !submitBtn) return;
-        
+
         // Validate feedlot code pattern: lowercase alphanumeric, hyphens, and underscores only
         function validateFeedlotCode(code) {
             const pattern = /^[a-z0-9_-]+$/;
             return pattern.test(code) && code.length > 0;
         }
-        
+
         // Handle input event - filter and convert to lowercase
-        feedlotCodeInput.addEventListener('input', function(e) {
+        feedlotCodeInput.addEventListener('input', function (e) {
             let value = e.target.value;
-            
+
             // Convert to lowercase
             value = value.toLowerCase();
-            
+
             // Remove any characters that are not alphanumeric, hyphen, or underscore
             value = value.replace(/[^a-z0-9_-]/g, '');
-            
+
             // Update the input value
             e.target.value = value;
-            
+
             // Validate and enable/disable submit button
             const isValid = validateFeedlotCode(value);
             submitBtn.disabled = !isValid;
         });
-        
+
         // Handle paste event
-        feedlotCodeInput.addEventListener('paste', function(e) {
+        feedlotCodeInput.addEventListener('paste', function (e) {
             setTimeout(() => {
                 let value = e.target.value;
                 value = value.toLowerCase();
                 value = value.replace(/[^a-z0-9_-]/g, '');
                 e.target.value = value;
-                
+
                 const isValid = validateFeedlotCode(value);
                 submitBtn.disabled = !isValid;
             }, 0);
         });
-        
+
         // Initial validation check
         const isValid = validateFeedlotCode(feedlotCodeInput.value);
         submitBtn.disabled = !isValid;
     }
-    
+
     function closeAddFeedlotModal() {
         const modal = document.getElementById('add-feedlot-modal');
         const form = document.getElementById('add-feedlot-form');
         const submitBtn = document.getElementById('submit-feedlot-btn');
-        
+
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
         form.reset();
-        
+
         // Reset submit button state
         if (submitBtn) {
             submitBtn.disabled = true;
         }
-        
+
         // Remove any error states
         const inputs = form.querySelectorAll('input');
         inputs.forEach(input => {
             input.classList.remove('border-red-500');
         });
     }
-    
+
     // Close modals on Escape key
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             const feedlotModal = document.getElementById('add-feedlot-modal');
             const userModal = document.getElementById('add-user-modal');
@@ -436,19 +431,19 @@
             }
         }
     });
-    
+
     // Handle form submission via AJAX
-    document.getElementById('add-feedlot-form').addEventListener('submit', async function(e) {
+    document.getElementById('add-feedlot-form').addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         const form = e.target;
         const submitBtn = document.getElementById('submit-feedlot-btn');
         const formData = new FormData(form);
-        
+
         // Disable submit button
         submitBtn.disabled = true;
         submitBtn.textContent = 'Creating...';
-        
+
         try {
             const response = await fetch(form.action, {
                 method: 'POST',
@@ -457,9 +452,9 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 showToast(data.message || 'Feedlot created successfully.', 'success');
                 closeAddFeedlotModal();
@@ -469,11 +464,11 @@
                 }, 500);
             } else {
                 showToast(data.message || 'Failed to create feedlot. Please try again.', 'error');
-                
+
                 // Re-enable submit button
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Feedlot';
-                
+
                 // Highlight error fields if provided
                 if (data.errors) {
                     Object.keys(data.errors).forEach(field => {
@@ -486,55 +481,55 @@
             }
         } catch (error) {
             showToast('An error occurred while creating the feedlot. Please try again.', 'error');
-            
+
             // Re-enable submit button
             submitBtn.disabled = false;
             submitBtn.textContent = 'Create Feedlot';
         }
     });
-    
+
     // Add New User Modal Functions
     function openAddUserModal() {
         const modal = document.getElementById('add-user-modal');
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        
+
         // Initialize user type dropdown behavior
         updateFeedlotField();
     }
-    
+
     function closeAddUserModal() {
         const modal = document.getElementById('add-user-modal');
         const form = document.getElementById('add-user-form');
-        
+
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
         form.reset();
-        
+
         // Reset user type to default
         const userTypeSelect = document.getElementById('user_type');
         if (userTypeSelect) {
             userTypeSelect.value = 'user';
             updateFeedlotField();
         }
-        
+
         // Clear all checkboxes
         const checkboxes = document.querySelectorAll('input[name="feedlot_ids"]');
         checkboxes.forEach(checkbox => checkbox.checked = false);
-        
+
         // Remove any error states
         const inputs = form.querySelectorAll('input, select');
         inputs.forEach(input => {
             input.classList.remove('border-red-500');
         });
     }
-    
+
     function updateFeedlotField() {
         const userTypeSelect = document.getElementById('user_type');
         const feedlotSingleField = document.getElementById('user-feedlot-single-field');
         const feedlotMultipleField = document.getElementById('user-feedlot-multiple-field');
         const feedlotSelect = document.getElementById('feedlot_id');
-        
+
         if (userTypeSelect && feedlotSingleField && feedlotMultipleField) {
             if (userTypeSelect.value === 'business_admin' || userTypeSelect.value === 'business_owner') {
                 // Show multiple feedlot selection for business_admin and business_owner
@@ -563,52 +558,53 @@
 </script>
 
 <!-- Add New User Modal -->
-<div id="add-user-modal" data-testid="add-user-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div id="add-user-modal" data-testid="add-user-modal"
+    class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl font-bold text-gray-800">Add New User</h2>
-                <button onclick="closeAddUserModal()" data-testid="close-add-user-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                <button onclick="closeAddUserModal()" data-testid="close-add-user-modal-button"
+                    class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </button>
             </div>
         </div>
-        
-        <form id="add-user-form" method="POST" action="{{ url_for('auth.register') }}" data-testid="add-user-form" class="p-6 space-y-4">
+
+        <form id="add-user-form" method="POST" action="{{ url_for('auth.register') }}" data-testid="add-user-form"
+            class="p-6 space-y-4">
             {% if user_type in ['business_owner', 'business_admin'] %}
-            <p class="text-sm text-gray-600 mb-4">You can create business owner, business admin, and user accounts for your assigned feedlots.</p>
+            <p class="text-sm text-gray-600 mb-4">You can create business owner, business admin, and user accounts for
+                your assigned feedlots.</p>
             {% else %}
             <p class="text-sm text-gray-600 mb-4">Create new user accounts for the system.</p>
             {% endif %}
-            
+
             <div>
                 <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
-                <input type="text" id="username" name="username" required
-                       data-testid="add-user-username-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <input type="text" id="username" name="username" required data-testid="add-user-username-input"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                <input type="email" id="email" name="email" required
-                       data-testid="add-user-email-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <input type="email" id="email" name="email" required data-testid="add-user-email-input"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password *</label>
-                <input type="password" id="password" name="password" required
-                       data-testid="add-user-password-input"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <input type="password" id="password" name="password" required data-testid="add-user-password-input"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <div>
                 <label for="user_type" class="block text-sm font-medium text-gray-700 mb-2">User Type *</label>
-                <select id="user_type" name="user_type" required
-                        data-testid="add-user-type-select"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <select id="user_type" name="user_type" required data-testid="add-user-type-select"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
                     {% if user_type in ['super_owner', 'super_admin'] %}
                     <option value="super_owner">Super Owner</option>
                     <option value="super_admin">Super Admin</option>
@@ -618,42 +614,44 @@
                     <option value="user" selected>User</option>
                 </select>
             </div>
-            
+
             <div id="user-feedlot-single-field">
                 <label for="feedlot_id" class="block text-sm font-medium text-gray-700 mb-2">Feedlot *</label>
                 <select id="feedlot_id" name="feedlot_id"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
                     <option value="">Select a feedlot</option>
                     {% if feedlots %}
-                        {% for feedlot in feedlots %}
-                        <option value="{{ feedlot._id }}">
-                            {{ feedlot.name }} - {{ feedlot.location }}
-                        </option>
-                        {% endfor %}
+                    {% for feedlot in feedlots %}
+                    <option value="{{ feedlot._id }}">
+                        {{ feedlot.name }} - {{ feedlot.location }}
+                    </option>
+                    {% endfor %}
                     {% endif %}
                 </select>
             </div>
-            
+
             <div id="user-feedlot-multiple-field" style="display: none;">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Feedlots *</label>
                 <div class="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
                     {% if feedlots %}
-                        {% for feedlot in feedlots %}
-                        <label class="flex items-center space-x-2 py-1 px-2 hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" name="feedlot_ids" value="{{ feedlot._id }}" 
-                                   class="rounded border-gray-300 text-teal focus:ring-teal">
-                            <span class="text-sm text-gray-700">{{ feedlot.name }} - {{ feedlot.location }}</span>
-                        </label>
-                        {% endfor %}
+                    {% for feedlot in feedlots %}
+                    <label class="flex items-center space-x-2 py-1 px-2 hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" name="feedlot_ids" value="{{ feedlot._id }}"
+                            class="rounded border-gray-300 text-teal focus:ring-teal">
+                        <span class="text-sm text-gray-700">{{ feedlot.name }} - {{ feedlot.location }}</span>
+                    </label>
+                    {% endfor %}
                     {% endif %}
                 </div>
             </div>
-            
+
             <div class="flex space-x-4 pt-4">
-                <button type="submit" id="submit-user-btn" data-testid="submit-add-user-button" class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button type="submit" id="submit-user-btn" data-testid="submit-add-user-button"
+                    class="flex-1 bg-teal hover:opacity-90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Create User
                 </button>
-                <button type="button" onclick="closeAddUserModal()" data-testid="cancel-add-user-button" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                <button type="button" onclick="closeAddUserModal()" data-testid="cancel-add-user-button"
+                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                     Cancel
                 </button>
             </div>
@@ -663,27 +661,27 @@
 
 <script>
     // User type change handler
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const userTypeSelect = document.getElementById('user_type');
         if (userTypeSelect) {
             userTypeSelect.addEventListener('change', updateFeedlotField);
         }
-        
-        
+
+
         // Handle user form submission via AJAX
         const userForm = document.getElementById('add-user-form');
         if (userForm) {
-            userForm.addEventListener('submit', async function(e) {
+            userForm.addEventListener('submit', async function (e) {
                 e.preventDefault();
-                
+
                 const form = e.target;
                 const submitBtn = document.getElementById('submit-user-btn');
                 const formData = new FormData(form);
-                
+
                 // Disable submit button
                 submitBtn.disabled = true;
                 submitBtn.textContent = 'Creating...';
-                
+
                 try {
                     const response = await fetch(form.action, {
                         method: 'POST',
@@ -692,9 +690,9 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         showToast(data.message || 'User created successfully.', 'success');
                         closeAddUserModal();
@@ -704,11 +702,11 @@
                         }, 500);
                     } else {
                         showToast(data.message || 'Failed to create user. Please try again.', 'error');
-                        
+
                         // Re-enable submit button
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'Create User';
-                        
+
                         // Highlight error fields if provided
                         if (data.errors) {
                             Object.keys(data.errors).forEach(field => {
@@ -721,7 +719,7 @@
                     }
                 } catch (error) {
                     showToast('An error occurred while creating the user. Please try again.', 'error');
-                    
+
                     // Re-enable submit button
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Create User';
@@ -731,7 +729,7 @@
     });
 
     // Dashboard Widget Customization
-    const dashboardPreferences = {{ dashboard_preferences|tojson|safe }};
+    const dashboardPreferences = {{ dashboard_preferences| tojson | safe }};
     let resizeElement = null;
     let resizeStartX = 0;
     let resizeStartY = 0;
@@ -743,46 +741,46 @@
         const modal = document.getElementById('widget-settings-modal');
         // Load current visibility state
         const visibility = dashboardPreferences.widget_visibility || {};
-        const allWidgets = ['combined-stats', 'users', 'datetime', 'weather', 'cattle-price'];
+        const allWidgets = ['datetime', 'weather', 'cattle-price'];
         allWidgets.forEach(widgetId => {
             const checkbox = document.getElementById(`widget-check-${widgetId}`);
             if (checkbox) {
                 checkbox.checked = visibility[widgetId] !== false; // Default to true if not set
             }
         });
-        
+
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
-    
+
     function closeWidgetSettingsModal() {
         const modal = document.getElementById('widget-settings-modal');
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
     }
-    
+
     function saveWidgetSettings() {
         const visibility = {};
         const checkboxes = document.querySelectorAll('#widget-settings-modal input[type="checkbox"]');
-        
+
         checkboxes.forEach(checkbox => {
             const widgetId = checkbox.getAttribute('data-widget-id');
             visibility[widgetId] = checkbox.checked;
         });
-        
+
         // Update widget visibility immediately
         updateWidgetVisibility(visibility);
-        
+
         // Save preferences
         saveDashboardPreferences({
             widget_visibility: visibility,
             widget_sizes: getWidgetSizes()
         });
-        
+
         closeWidgetSettingsModal();
         showToast('Widget settings saved successfully.', 'success');
     }
-    
+
     function updateWidgetVisibility(visibility) {
         Object.keys(visibility).forEach(widgetId => {
             const widget = document.getElementById(`widget-${widgetId}`);
@@ -795,7 +793,7 @@
             }
         });
     }
-    
+
     function getWidgetSizes() {
         const sizes = {};
         document.querySelectorAll('.widget-item').forEach(widget => {
@@ -807,7 +805,7 @@
         });
         return sizes;
     }
-    
+
     async function saveDashboardPreferences(preferences) {
         try {
             const response = await fetch('{{ url_for("top_level.save_dashboard_preferences") }}', {
@@ -818,7 +816,7 @@
                 },
                 body: JSON.stringify(preferences)
             });
-            
+
             const data = await response.json();
             if (!data.success) {
                 console.error('Failed to save preferences:', data.message);
@@ -827,25 +825,25 @@
             console.error('Error saving preferences:', error);
         }
     }
-    
+
     // Reset Widgets Function
     function resetWidgets() {
         const dropdown = document.getElementById('actions-dropdown-menu');
         const dropdownBtn = document.getElementById('actions-dropdown-btn');
-        
+
         // Close dropdown if open
         if (dropdown && !dropdown.classList.contains('hidden')) {
             dropdown.classList.add('hidden');
             dropdownBtn.setAttribute('aria-expanded', 'false');
         }
-        
+
         // Show confirmation dialog
         if (!confirm('Are you sure you want to reset all widgets to their default settings?')) {
             return;
         }
-        
+
         // Reset visibility: all widgets visible
-        const allWidgets = ['combined-stats', 'users', 'datetime', 'weather', 'cattle-price'];
+        const allWidgets = ['datetime', 'weather', 'cattle-price'];
         const visibility = {};
         allWidgets.forEach(widgetId => {
             visibility[widgetId] = true;
@@ -854,7 +852,7 @@
                 widget.style.display = '';
             }
         });
-        
+
         // Reset sizes: remove all custom width/height styles
         allWidgets.forEach(widgetId => {
             const widget = document.getElementById(`widget-${widgetId}`);
@@ -863,72 +861,33 @@
                 widget.style.height = '';
             }
         });
-        
+
         // Save default preferences
         const defaultPreferences = {
             widget_visibility: visibility,
             widget_sizes: {}
         };
-        
+
         saveDashboardPreferences(defaultPreferences);
-        
+
         // Show success toast
         showToast('Widgets reset to default settings', 'success');
-        
+
         // Reload page after a short delay to ensure preferences are saved
         setTimeout(() => {
             window.location.reload();
         }, 500);
     }
-    
+
     // Load preferences on page load
     function loadDashboardPreferences() {
         if (!dashboardPreferences) return;
-        
-        // Migrate old widget IDs to new ones
-        const oldWidgetIds = ['feedlots', 'pens', 'cattle', 'batches', 'quick-actions'];
-        const newWidgetId = 'combined-stats';
-        
-        // Migrate widget visibility
+
+        // Restore visibility
         if (dashboardPreferences.widget_visibility) {
-            const visibility = dashboardPreferences.widget_visibility;
-            let needsMigration = false;
-            
-            // Check if any old widget IDs exist
-            oldWidgetIds.forEach(oldId => {
-                if (visibility.hasOwnProperty(oldId)) {
-                    needsMigration = true;
-                    // If any of the old widgets were visible, make combined-stats visible
-                    if (visibility[oldId] !== false) {
-                        visibility[newWidgetId] = true;
-                    }
-                    delete visibility[oldId];
-                }
-            });
-            
-            // Migrate widget sizes
-            if (dashboardPreferences.widget_sizes) {
-                const sizes = dashboardPreferences.widget_sizes;
-                oldWidgetIds.forEach(oldId => {
-                    if (sizes.hasOwnProperty(oldId)) {
-                        // Use the first old widget's size for the new combined widget
-                        if (!sizes[newWidgetId]) {
-                            sizes[newWidgetId] = sizes[oldId];
-                        }
-                        delete sizes[oldId];
-                        needsMigration = true;
-                    }
-                });
-            }
-            
-            // Save migrated preferences if migration occurred
-            if (needsMigration) {
-                saveDashboardPreferences(dashboardPreferences);
-            }
-            
-            updateWidgetVisibility(visibility);
+            updateWidgetVisibility(dashboardPreferences.widget_visibility);
         }
-        
+
         // Load widget sizes
         if (dashboardPreferences.widget_sizes) {
             Object.keys(dashboardPreferences.widget_sizes).forEach(widgetId => {
@@ -945,15 +904,15 @@
             });
         }
     }
-    
+
     // Widget Functionality
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         loadDashboardPreferences();
-        
+
         // Resize functionality
         const resizeHandles = document.querySelectorAll('.resize-handle');
         resizeHandles.forEach(handle => {
-            handle.addEventListener('mousedown', function(e) {
+            handle.addEventListener('mousedown', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 resizeElement = this.parentElement;
@@ -961,29 +920,29 @@
                 resizeStartY = e.clientY;
                 resizeStartWidth = resizeElement.offsetWidth;
                 resizeStartHeight = resizeElement.offsetHeight;
-                
+
                 document.addEventListener('mousemove', handleResize);
                 document.addEventListener('mouseup', stopResize);
             });
         });
-        
+
         function handleResize(e) {
             if (!resizeElement) return;
-            
+
             const deltaX = e.clientX - resizeStartX;
             const deltaY = e.clientY - resizeStartY;
-            
+
             let newWidth = resizeStartWidth + deltaX;
             let newHeight = resizeStartHeight + deltaY;
-            
+
             // Apply min/max constraints
             newWidth = Math.max(200, Math.min(600, newWidth));
             newHeight = Math.max(150, newHeight);
-            
+
             resizeElement.style.width = newWidth + 'px';
             resizeElement.style.height = newHeight + 'px';
         }
-        
+
         function stopResize() {
             if (resizeElement) {
                 // Save new sizes
@@ -996,10 +955,10 @@
             document.removeEventListener('mousemove', handleResize);
             document.removeEventListener('mouseup', stopResize);
         }
-        
-        
+
+
         // Close widget settings modal on Escape
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 const widgetModal = document.getElementById('widget-settings-modal');
                 if (widgetModal && !widgetModal.classList.contains('hidden')) {
@@ -1007,103 +966,104 @@
                 }
             }
         });
-        
+
         // Initialize widget functionality
         initializeWidgets();
     });
-    
+
     // Date and Time Widget
     function updateDateTimeWidget() {
         const dateElement = document.getElementById('widget-date');
         const timeElement = document.getElementById('widget-time');
-        
+
         if (dateElement && timeElement) {
             const now = new Date();
             const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
             dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
-            
+
             const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
             timeElement.textContent = now.toLocaleTimeString('en-US', timeOptions);
         }
     }
-    
+
     // Weather Widget
     async function fetchWeather() {
         const locationElement = document.getElementById('weather-location');
         const tempElement = document.getElementById('weather-temp');
         const descElement = document.getElementById('weather-desc');
         const iconElement = document.getElementById('weather-icon');
-        
+
         if (!locationElement || !tempElement || !descElement || !iconElement) {
             return;
         }
-        
+
         try {
             // Try to get location from feedlot if available
             let location = 'Calgary, AB'; // Default location
-            {% if dashboard_stats.recent_feedlots and dashboard_stats.recent_feedlots|length > 0 %}
+            {% if dashboard_stats.recent_feedlots and dashboard_stats.recent_feedlots | length > 0 %}
             // Use location from first recent feedlot
-            const feedlotLocation = {{ dashboard_stats.recent_feedlots[0].location|tojson|safe }};
-            if (feedlotLocation) {
-                // Extract city and province if format is "City, Province"
-                const parts = feedlotLocation.split(',').map(s => s.trim());
-                if (parts.length >= 2) {
-                    location = `${parts[0]}, ${parts[parts.length - 1]}`;
-                } else {
-                    location = feedlotLocation;
-                }
-            }
-            {% endif %}
-            
-            // Use OpenWeatherMap API (free tier)
-            // Note: In production, you should use a backend endpoint to hide the API key
-            // For now, using a public API that doesn't require a key
-            const apiKey = ''; // Add your OpenWeatherMap API key here if needed
-            const url = apiKey 
-                ? `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${apiKey}&units=metric`
-                : `https://wttr.in/${encodeURIComponent(location)}?format=j1`;
-            
-            if (apiKey) {
-                // Using OpenWeatherMap
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.cod === 200) {
-                    locationElement.textContent = `${data.name}, ${data.sys.country}`;
-                    tempElement.textContent = `${Math.round(data.main.temp)}°C`;
-                    descElement.textContent = data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1);
-                    
-                    // Weather icon mapping
-                    const iconCode = data.weather[0].icon;
-                    iconElement.innerHTML = getWeatherIcon(iconCode);
-                } else {
-                    throw new Error('Weather data not available');
-                }
-            } else {
-                // Using wttr.in (no API key required)
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                if (data.current_condition && data.current_condition[0]) {
-                    const current = data.current_condition[0];
-                    const area = data.nearest_area[0];
-                    locationElement.textContent = `${area.areaName[0].value}, ${area.region[0].value}`;
-                    tempElement.textContent = `${current.temp_C}°C`;
-                    descElement.textContent = current.weatherDesc[0].value;
-                    iconElement.innerHTML = getWeatherIconFromCode(current.weatherCode);
-                } else {
-                    throw new Error('Weather data not available');
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching weather:', error);
-            locationElement.textContent = 'Calgary, AB';
-            tempElement.textContent = '--';
-            descElement.textContent = 'Unable to load weather';
-            iconElement.innerHTML = '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>';
+            const feedlotLocation = {{ dashboard_stats.recent_feedlots[0].location| tojson | safe
+        }};
+    if (feedlotLocation) {
+        // Extract city and province if format is "City, Province"
+        const parts = feedlotLocation.split(',').map(s => s.trim());
+        if (parts.length >= 2) {
+            location = `${parts[0]}, ${parts[parts.length - 1]}`;
+        } else {
+            location = feedlotLocation;
         }
     }
-    
+    {% endif %}
+
+    // Use OpenWeatherMap API (free tier)
+    // Note: In production, you should use a backend endpoint to hide the API key
+    // For now, using a public API that doesn't require a key
+    const apiKey = ''; // Add your OpenWeatherMap API key here if needed
+    const url = apiKey
+        ? `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${apiKey}&units=metric`
+        : `https://wttr.in/${encodeURIComponent(location)}?format=j1`;
+
+    if (apiKey) {
+        // Using OpenWeatherMap
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.cod === 200) {
+            locationElement.textContent = `${data.name}, ${data.sys.country}`;
+            tempElement.textContent = `${Math.round(data.main.temp)}°C`;
+            descElement.textContent = data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1);
+
+            // Weather icon mapping
+            const iconCode = data.weather[0].icon;
+            iconElement.innerHTML = getWeatherIcon(iconCode);
+        } else {
+            throw new Error('Weather data not available');
+        }
+    } else {
+        // Using wttr.in (no API key required)
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.current_condition && data.current_condition[0]) {
+            const current = data.current_condition[0];
+            const area = data.nearest_area[0];
+            locationElement.textContent = `${area.areaName[0].value}, ${area.region[0].value}`;
+            tempElement.textContent = `${current.temp_C}°C`;
+            descElement.textContent = current.weatherDesc[0].value;
+            iconElement.innerHTML = getWeatherIconFromCode(current.weatherCode);
+        } else {
+            throw new Error('Weather data not available');
+        }
+    }
+        } catch (error) {
+        console.error('Error fetching weather:', error);
+        locationElement.textContent = 'Calgary, AB';
+        tempElement.textContent = '--';
+        descElement.textContent = 'Unable to load weather';
+        iconElement.innerHTML = '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>';
+    }
+    }
+
     function getWeatherIcon(iconCode) {
         // Return SVG icons based on OpenWeatherMap icon codes
         const iconMap = {
@@ -1128,7 +1088,7 @@
         };
         return iconMap[iconCode] || '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>';
     }
-    
+
     function getWeatherIconFromCode(code) {
         // wttr.in weather code mapping - return SVG icons
         if (code >= 113 && code <= 116) return '<svg class="w-12 h-12 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>';
@@ -1141,30 +1101,30 @@
         if (code >= 371 && code <= 395) return '<svg class="w-12 h-12 text-blue-200" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 16h-8z"></path></svg>';
         return '<svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>';
     }
-    
+
     // Alberta Cattle Price Widget
     async function fetchCattlePrice() {
         const priceElement = document.getElementById('cattle-price-value');
         const dateElement = document.getElementById('cattle-price-date');
-        
+
         if (!priceElement || !dateElement) {
             return;
         }
-        
+
         try {
             // Note: In production, you should fetch real cattle price data from an API
             // For now, using placeholder data
             // You can integrate with Alberta Agriculture API or similar service
-            
+
             // Placeholder: Simulating price data
             // In production, replace this with actual API call
             const mockPrice = 185.50; // CAD per cwt (hundredweight)
             const today = new Date();
             const dateStr = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-            
+
             priceElement.textContent = `$${mockPrice.toFixed(2)}/cwt`;
             dateElement.textContent = `Updated: ${dateStr}`;
-            
+
             // Example of how to fetch from an API (uncomment and configure when API is available):
             /*
             const response = await fetch('/api/cattle-price/alberta');
@@ -1182,24 +1142,24 @@
             dateElement.textContent = 'Unable to load price';
         }
     }
-    
+
     // Initialize all widgets
     function initializeWidgets() {
         // Initialize date/time widget
         updateDateTimeWidget();
         setInterval(updateDateTimeWidget, 1000);
-        
+
         // Initialize weather widget
         fetchWeather();
         // Refresh weather every 30 minutes
         setInterval(fetchWeather, 30 * 60 * 1000);
-        
+
         // Initialize cattle price widget
         fetchCattlePrice();
         // Refresh price every hour
         setInterval(fetchCattlePrice, 60 * 60 * 1000);
     }
-    
+
     // Export functionality
     function handleExportClick() {
         // Check if we're in a feedlot context
@@ -1212,30 +1172,30 @@
         openExportFeedlotModal();
         {% endif %}
     }
-    
+
     function openExportFeedlotModal() {
         const modal = document.getElementById('export-feedlot-modal');
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
-        
+
         // Focus on search input
         const searchInput = document.getElementById('search-feedlots-input');
         if (searchInput) {
             setTimeout(() => searchInput.focus(), 100);
         }
-        
+
         // Reset search
         if (searchInput) {
             searchInput.value = '';
             filterFeedlots();
         }
     }
-    
+
     function closeExportFeedlotModal() {
         const modal = document.getElementById('export-feedlot-modal');
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
-        
+
         // Reset search
         const searchInput = document.getElementById('search-feedlots-input');
         if (searchInput) {
@@ -1243,28 +1203,28 @@
             filterFeedlots();
         }
     }
-    
+
     function filterFeedlots() {
         const searchInput = document.getElementById('search-feedlots-input');
         const feedlotList = document.getElementById('export-feedlot-list');
-        
+
         if (!searchInput || !feedlotList) return;
-        
+
         const searchTerm = searchInput.value.toLowerCase();
         const feedlotItems = feedlotList.querySelectorAll('[data-feedlot-item]');
-        
+
         feedlotItems.forEach(item => {
             const feedlotName = item.getAttribute('data-feedlot-name') || '';
             const feedlotLocation = item.getAttribute('data-feedlot-location') || '';
             const searchableText = (feedlotName + ' ' + feedlotLocation).toLowerCase();
-            
+
             if (searchableText.includes(searchTerm)) {
                 item.style.display = '';
             } else {
                 item.style.display = 'none';
             }
         });
-        
+
         // Show/hide no results message
         const noResults = document.getElementById('export-feedlot-no-results');
         const visibleItems = Array.from(feedlotItems).filter(item => item.style.display !== 'none');
@@ -1272,13 +1232,13 @@
             noResults.style.display = visibleItems.length === 0 ? 'block' : 'none';
         }
     }
-    
+
     function selectFeedlotForExport(feedlotId) {
         window.location.href = '{{ url_for("feedlot.export_manifest", feedlot_id="PLACEHOLDER") }}'.replace('PLACEHOLDER', feedlotId);
     }
-    
+
     // Close modal on Escape key
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             const exportModal = document.getElementById('export-feedlot-modal');
             if (exportModal && !exportModal.classList.contains('hidden')) {
@@ -1286,9 +1246,9 @@
             }
         }
     });
-    
+
     // Close modal when clicking on backdrop
-    document.getElementById('export-feedlot-modal')?.addEventListener('click', function(e) {
+    document.getElementById('export-feedlot-modal')?.addEventListener('click', function (e) {
         if (e.target === this) {
             closeExportFeedlotModal();
         }
@@ -1296,56 +1256,56 @@
 </script>
 
 <!-- Export Feedlot Selection Modal -->
-<div id="export-feedlot-modal" data-testid="export-feedlot-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+<div id="export-feedlot-modal" data-testid="export-feedlot-modal"
+    class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        onclick="event.stopPropagation()">
         <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h2 class="text-2xl font-bold text-gray-800">Select Feedlot for Export</h2>
-                <button onclick="closeExportFeedlotModal()" data-testid="close-export-feedlot-modal-button" class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
+                <button onclick="closeExportFeedlotModal()" data-testid="close-export-feedlot-modal-button"
+                    class="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close modal">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
                     </svg>
                 </button>
             </div>
         </div>
-        
+
         <div class="p-6">
             <div class="mb-4">
-                <input type="text" 
-                       id="search-feedlots-input" 
-                       data-testid="search-feedlots-input"
-                       placeholder="Search feedlots..." 
-                       oninput="filterFeedlots()"
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
+                <input type="text" id="search-feedlots-input" data-testid="search-feedlots-input"
+                    placeholder="Search feedlots..." oninput="filterFeedlots()"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal focus:border-transparent">
             </div>
-            
+
             <div id="export-feedlot-list" class="space-y-2 max-h-96 overflow-y-auto">
                 {% if feedlots %}
-                    {% for feedlot in feedlots %}
-                    <button onclick="selectFeedlotForExport('{{ feedlot._id }}')" 
-                            data-feedlot-item
-                            data-feedlot-name="{{ feedlot.name }}"
-                            data-feedlot-location="{{ feedlot.location or '' }}"
-                            data-testid="export-feedlot-item-{{ feedlot._id }}"
-                            class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-teal transition-colors">
-                        <div class="font-semibold text-gray-800">{{ feedlot.name }}</div>
-                        {% if feedlot.location %}
-                        <div class="text-sm text-gray-600 mt-1">{{ feedlot.location }}</div>
-                        {% endif %}
-                    </button>
-                    {% endfor %}
+                {% for feedlot in feedlots %}
+                <button onclick="selectFeedlotForExport('{{ feedlot._id }}')" data-feedlot-item
+                    data-feedlot-name="{{ feedlot.name }}" data-feedlot-location="{{ feedlot.location or '' }}"
+                    data-testid="export-feedlot-item-{{ feedlot._id }}"
+                    class="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-teal transition-colors">
+                    <div class="font-semibold text-gray-800">{{ feedlot.name }}</div>
+                    {% if feedlot.location %}
+                    <div class="text-sm text-gray-600 mt-1">{{ feedlot.location }}</div>
+                    {% endif %}
+                </button>
+                {% endfor %}
                 {% else %}
-                    <p class="text-gray-500 text-center py-4">No feedlots available</p>
+                <p class="text-gray-500 text-center py-4">No feedlots available</p>
                 {% endif %}
             </div>
-            
+
             <div id="export-feedlot-no-results" style="display: none;" class="text-gray-500 text-center py-4">
                 No feedlots found matching your search.
             </div>
         </div>
-        
+
         <div class="p-6 border-t border-gray-200">
-            <button onclick="closeExportFeedlotModal()" data-testid="cancel-export-feedlot-button" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+            <button onclick="closeExportFeedlotModal()" data-testid="cancel-export-feedlot-button"
+                class="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
                 Cancel
             </button>
         </div>
