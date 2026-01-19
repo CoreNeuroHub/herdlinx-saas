@@ -1124,17 +1124,22 @@ def api_keys():
     # Get all feedlots
     feedlots = Feedlot.find_all()
     
-    # Enrich feedlots with their API keys
-    enriched_feedlots = []
+    # Flatten API keys list with feedlot details
+    all_api_keys = []
     for feedlot in feedlots:
         feedlot_id = str(feedlot['_id'])
-        api_keys = APIKey.find_by_feedlot(feedlot_id)
+        keys = APIKey.find_by_feedlot(feedlot_id)
         
-        enriched_feedlot = dict(feedlot)
-        enriched_feedlot['api_keys'] = api_keys
-        enriched_feedlots.append(enriched_feedlot)
+        for key in keys:
+            # Create a copy or dict to avoid modifying the original cursor object if it acts weird, 
+            # though it's a dict from mongo.
+            key_data = dict(key)
+            key_data['feedlot_name'] = feedlot.get('name')
+            key_data['feedlot_location'] = feedlot.get('location')
+            key_data['feedlot_code'] = feedlot.get('feedlot_code')
+            all_api_keys.append(key_data)
     
-    return render_template('top_level/api_keys.html', feedlots=enriched_feedlots, user_type=user_type)
+    return render_template('top_level/api_keys.html', api_keys=all_api_keys, feedlots=feedlots, user_type=user_type)
 
 @top_level_bp.route('/settings/api-keys/generate', methods=['POST'])
 @login_required
