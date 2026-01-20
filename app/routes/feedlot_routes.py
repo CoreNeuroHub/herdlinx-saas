@@ -399,8 +399,25 @@ def view_batch(feedlot_id, batch_id):
     cattle = Cattle.find_by_batch(feedlot_code, batch_id)
     batch['cattle_count'] = len(cattle)
     
-    # Get historical cattle count from the batch's cattle_ids array
-    batch['historical_cattle_count'] = Batch.get_historical_cattle_count(feedlot_code, batch_id)
+    # Calculate duration based on cattle creation times
+    timestamps = [c.get('created_at') for c in cattle if c.get('created_at')]
+    if timestamps:
+        min_time = min(timestamps)
+        max_time = max(timestamps)
+        duration = max_time - min_time
+        total_seconds = int(duration.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        
+        if hours > 0:
+            batch['duration'] = f"{hours}h {minutes}m"
+        elif minutes > 0:
+            batch['duration'] = f"{minutes}m {seconds}s"
+        else:
+            batch['duration'] = f"{seconds}s"
+    else:
+        batch['duration'] = "0s"
     
     return render_template('feedlot/batches/view.html', feedlot=feedlot, batch=batch, cattle=cattle)
 
