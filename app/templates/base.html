@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}HerdLinx SaaS{% endblock %}</title>
     {% set feedlot_for_branding = feedlot if feedlot else current_feedlot %}
-    {% if feedlot_for_branding and feedlot_for_branding.get('branding') and feedlot_for_branding.branding.get('favicon_path') %}
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename=feedlot_for_branding.branding.favicon_path.replace('/static/', '')) }}">
+    {% if feedlot_for_branding and feedlot_for_branding.get('branding') and
+    feedlot_for_branding.branding.get('favicon_path') %}
+    <link rel="icon" type="image/png"
+        href="{{ url_for('static', filename=feedlot_for_branding.branding.favicon_path.replace('/static/', '')) }}">
     {% else %}
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
     {% endif %}
@@ -27,24 +30,43 @@
     {% if feedlot_for_branding and feedlot_for_branding.get('branding') %}
     <style>
         :root {
-            --brand-primary: {{ feedlot_for_branding.branding.primary_color if feedlot_for_branding.branding.get('primary_color') else '#2D8B8B' }};
-            --brand-secondary: {{ feedlot_for_branding.branding.secondary_color if feedlot_for_branding.branding.get('secondary_color') else '#0A2540' }};
+            --brand-primary: {
+                    {
+                    feedlot_for_branding.branding.primary_color if feedlot_for_branding.branding.get('primary_color') else '#2D8B8B'
+                }
+            }
+
+            ;
+
+            --brand-secondary: {
+                    {
+                    feedlot_for_branding.branding.secondary_color if feedlot_for_branding.branding.get('secondary_color') else '#0A2540'
+                }
+            }
+
+            ;
         }
+
         .bg-navy {
             background-color: var(--brand-secondary) !important;
         }
+
         .bg-teal {
             background-color: var(--brand-primary) !important;
         }
+
         .text-teal {
             color: var(--brand-primary) !important;
         }
+
         .border-teal {
             border-color: var(--brand-primary) !important;
         }
+
         .focus\:ring-teal:focus {
             --tw-ring-color: var(--brand-primary) !important;
         }
+
         .hover\:bg-teal:hover {
             background-color: var(--brand-primary) !important;
         }
@@ -66,13 +88,16 @@
             border-radius: 0.5rem;
             transition: all 0.2s;
         }
+
         #menu-panel a:hover {
             background-color: rgba(45, 139, 139, 0.2);
         }
+
         #actions-sidebar {
             min-width: 200px;
             align-self: flex-start;
         }
+
         #actions-sidebar a,
         #actions-sidebar button {
             display: block;
@@ -85,11 +110,13 @@
             border-radius: 0.375rem;
             margin-bottom: 0.25rem;
         }
+
         #actions-sidebar a:hover,
         #actions-sidebar button:hover {
             background-color: #f3f4f6;
             color: #111827;
         }
+
         @media (max-width: 768px) {
             #actions-sidebar {
                 min-width: 100%;
@@ -97,122 +124,148 @@
                 align-self: stretch;
             }
         }
-        #menu-arrow-btn {
-            visibility: visible !important;
-            display: flex !important;
-        }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
+
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Navigation -->
     <nav class="bg-navy text-white shadow-lg relative">
+        <!-- Hamburger Menu Button (Absolute Left) -->
+        {% if session.user_id %}
+        <button id="hamburger-menu-btn" onclick="toggleMenu()"
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-teal focus:outline-none focus:ring-2 focus:ring-teal rounded-md transition-colors duration-200 z-10"
+            aria-label="Toggle menu">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
+                </path>
+            </svg>
+        </button>
+        {% endif %}
         <div class="container mx-auto px-4 py-3">
             <div class="flex items-center justify-between relative">
                 <!-- Logo and Label - Left Side -->
-                <div>
+                <div class="flex items-center">
+
                     {% set user_type = session.get('user_type') %}
                     {% if user_type in ['super_owner', 'super_admin'] %}
-                        <a href="{{ url_for('top_level.dashboard') }}" class="flex items-center space-x-3">
-                    {% elif current_feedlot %}
-                        <a href="{{ url_for('feedlot.dashboard', feedlot_id=current_feedlot._id) }}" class="flex items-center space-x-3">
-                    {% else %}
-                        <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
-                    {% endif %}
-                        {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('logo_path') %}
-                        <img src="{{ url_for('static', filename=current_feedlot.branding.logo_path) }}" 
-                             alt="{{ current_feedlot.branding.company_name if current_feedlot.branding.get('company_name') else current_feedlot.name }}" 
-                             class="h-16 w-16 rounded-full object-cover"
-                             onerror="this.style.display='none'; document.getElementById('brand-name').style.display='block';">
-                        {% else %}
-                        <img src="{{ url_for('static', filename='img/logo.png') }}" 
-                             alt="HerdLinx SaaS" 
-                             class="h-16 w-16 rounded-full object-cover"
-                             onerror="this.style.display='none'; document.getElementById('brand-name').style.display='block';">
-                        {% endif %}
-                        <span class="text-xl font-bold text-white hidden sm:block">
-                            {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('company_name') %}
-                                {{ current_feedlot.branding.company_name }}
+                    <a href="{{ url_for('top_level.dashboard') }}" class="flex items-center space-x-3">
+                        {% elif current_feedlot %}
+                        <a href="{{ url_for('feedlot.dashboard', feedlot_id=current_feedlot._id) }}"
+                            class="flex items-center space-x-3">
                             {% else %}
-                                HERD MANAGEMENT SYSTEM
-                            {% endif %}
-                        </span>
-                        <span id="brand-name" class="text-2xl font-bold hover:text-teal" style="display:none;">
-                            {% if current_feedlot and current_feedlot.get('branding') and current_feedlot.branding.get('company_name') %}
-                                {{ current_feedlot.branding.company_name }}
-                            {% else %}
-                                HerdLinx SaaS
-                            {% endif %}
-                        </span>
-                    </a>
+                            <a href="{% block home_url %}{% endblock %}" class="flex items-center space-x-3">
+                                {% endif %}
+                                {% if current_feedlot and current_feedlot.get('branding') and
+                                current_feedlot.branding.get('logo_path') %}
+                                <img src="{{ url_for('static', filename=current_feedlot.branding.logo_path) }}"
+                                    alt="{{ current_feedlot.branding.company_name if current_feedlot.branding.get('company_name') else current_feedlot.name }}"
+                                    class="h-16 w-16 rounded-full object-cover"
+                                    onerror="this.style.display='none'; document.getElementById('brand-name').style.display='block';">
+                                {% else %}
+                                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="HerdLinx SaaS"
+                                    class="h-16 w-16 rounded-full object-cover"
+                                    onerror="this.style.display='none'; document.getElementById('brand-name').style.display='block';">
+                                {% endif %}
+                                <span class="text-xl font-bold text-white hidden sm:block">
+                                    {% if current_feedlot and current_feedlot.get('branding') and
+                                    current_feedlot.branding.get('company_name') %}
+                                    {{ current_feedlot.branding.company_name }}
+                                    {% else %}
+                                    HERD MANAGEMENT SYSTEM
+                                    {% endif %}
+                                </span>
+                                <span id="brand-name" class="text-2xl font-bold hover:text-teal" style="display:none;">
+                                    {% if current_feedlot and current_feedlot.get('branding') and
+                                    current_feedlot.branding.get('company_name') %}
+                                    {{ current_feedlot.branding.company_name }}
+                                    {% else %}
+                                    HerdLinx SaaS
+                                    {% endif %}
+                                </span>
+                            </a>
                 </div>
                 <!-- Date and Time - Center -->
-                <div id="datetime-display" data-testid="datetime-display" class="absolute left-1/2 transform -translate-x-1/2 text-white text-sm font-medium text-center hidden sm:block">
+                <div id="datetime-display" data-testid="datetime-display"
+                    class="absolute left-1/2 transform -translate-x-1/2 text-white text-sm font-medium text-center hidden sm:block">
                     <div id="current-date" class="text-xs opacity-75"></div>
                     <div id="current-time" class="text-base"></div>
                 </div>
                 <!-- Profile Section - Right Side -->
                 {% if session.user_id %}
-                    {% set user_profile = session.get('user_profile') %}
-                    <div class="relative ml-auto">
-                        <button id="profile-dropdown-btn" data-testid="profile-dropdown-button" class="flex items-center space-x-3 p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal" aria-label="Profile menu" aria-expanded="false">
-                            {% if user_profile and user_profile.get('profile_picture') %}
-                            <img src="{{ user_profile.profile_picture }}" alt="Profile" 
-                                 class="w-10 h-10 rounded-full object-cover border-2 border-teal">
-                            {% else %}
-                            <div class="w-10 h-10 bg-teal rounded-full flex items-center justify-center">
-                                <span class="text-lg font-bold text-white">{{ session.username[0].upper() }}</span>
-                            </div>
-                            {% endif %}
-                            <div class="flex flex-col items-start hidden sm:flex">
-                                <span class="text-white font-semibold">
-                                    {% if user_profile and user_profile.get('first_name') %}
-                                        {{ user_profile.first_name }}{% if user_profile.get('last_name') %} {{ user_profile.last_name }}{% endif %}
-                                    {% else %}
-                                        {{ session.username }}
-                                    {% endif %}
-                                </span>
-                                {% set user_type = session.get('user_type') %}
-                                {% if user_type %}
-                                    {% set user_type_display = user_type.replace('_', ' ').title() %}
-                                    <span class="text-white text-xs opacity-75">{{ user_type_display }}</span>
+                {% set user_profile = session.get('user_profile') %}
+                <div class="relative ml-auto">
+                    <button id="profile-dropdown-btn" data-testid="profile-dropdown-button"
+                        class="flex items-center space-x-3 p-2 rounded-md hover:bg-teal transition duration-200 focus:outline-none focus:ring-2 focus:ring-teal"
+                        aria-label="Profile menu" aria-expanded="false">
+                        {% if user_profile and user_profile.get('profile_picture') %}
+                        <img src="{{ user_profile.profile_picture }}" alt="Profile"
+                            class="w-10 h-10 rounded-full object-cover border-2 border-teal">
+                        {% else %}
+                        <div class="w-10 h-10 bg-teal rounded-full flex items-center justify-center">
+                            <span class="text-lg font-bold text-white">{{ session.username[0].upper() }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex flex-col items-start hidden sm:flex">
+                            <span class="text-white font-semibold">
+                                {% if user_profile and user_profile.get('first_name') %}
+                                {{ user_profile.first_name }}{% if user_profile.get('last_name') %} {{
+                                user_profile.last_name }}{% endif %}
+                                {% else %}
+                                {{ session.username }}
                                 {% endif %}
-                            </div>
-                            <svg class="w-5 h-5 text-white hidden sm:inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <!-- Profile Dropdown Menu -->
-                        <div id="profile-dropdown-menu" data-testid="profile-dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
-                            <div class="py-1">
-                                <a href="{{ url_for('auth.profile') }}" data-testid="profile-edit-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    Edit Profile
-                                </a>
-                                <a href="{{ url_for('auth.logout') }}" data-testid="logout-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    Logout
-                                </a>
-                            </div>
+                            </span>
+                            {% set user_type = session.get('user_type') %}
+                            {% if user_type %}
+                            {% set user_type_display = user_type.replace('_', ' ').title() %}
+                            <span class="text-white text-xs opacity-75">{{ user_type_display }}</span>
+                            {% endif %}
+                        </div>
+                        <svg class="w-5 h-5 text-white hidden sm:inline-block" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <!-- Profile Dropdown Menu -->
+                    <div id="profile-dropdown-menu" data-testid="profile-dropdown-menu"
+                        class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
+                        <div class="py-1">
+                            <a href="{{ url_for('auth.profile') }}" data-testid="profile-edit-link"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                Edit Profile
+                            </a>
+                            <a href="{{ url_for('auth.logout') }}" data-testid="logout-link"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                Logout
+                            </a>
                         </div>
                     </div>
+                </div>
                 {% else %}
-                    <div class="w-10 ml-auto"></div>
+                <div class="w-10 ml-auto"></div>
                 {% endif %}
             </div>
         </div>
+        {% if session.user_id %}
         <!-- Hamburger Menu Overlay -->
-        <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300" onclick="toggleMenu()"></div>
-        <!-- Arrow Button - Sticks to the menu panel -->
-        <button id="menu-arrow-btn" data-testid="menu-arrow-button" onclick="toggleMenu()" class="fixed top-1/2 transform -translate-y-1/2 w-12 h-16 bg-navy hover:bg-teal rounded-r-lg shadow-lg flex items-center justify-center transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal z-[60]" aria-label="Toggle menu" style="left: 0;">
-            <svg id="arrow-icon" class="w-6 h-6 text-white transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-        </button>
+        <div id="menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden transition-opacity duration-300"
+            onclick="toggleMenu()"></div>
+
         <!-- Hamburger Menu Panel -->
-        <div id="menu-panel" data-testid="hamburger-menu-panel" class="fixed top-0 left-0 h-full w-80 bg-navy shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-hidden">
+        <div id="menu-panel" data-testid="hamburger-menu-panel"
+            class="fixed top-0 left-0 h-full w-80 bg-navy shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out overflow-hidden">
             <div class="flex flex-col h-full">
                 <div class="p-6 border-b border-teal border-opacity-30 flex-shrink-0">
                     <div class="flex items-center justify-between">
                         <h2 class="text-xl font-bold text-white">Menu</h2>
+                        <button onclick="toggleMenu()"
+                            class="text-gray-400 hover:text-white focus:outline-none transition-colors duration-200">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
                 <div class="flex-1 py-4 overflow-y-auto min-h-0">
@@ -221,33 +274,46 @@
                         <!-- Top-Level Navigation Section -->
                         <div class="px-4 py-2">
                             <div class="space-y-1">
-                                <a href="{{ url_for('top_level.dashboard') }}" data-testid="nav-dashboard-link" class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
-                                <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="nav-feedlot-hub-link" class="px-4 py-2 hover:bg-teal rounded transition block">Your Feedlots</a>
-                                <a href="{{ url_for('top_level.settings') }}" data-testid="nav-settings-link" class="px-4 py-2 hover:bg-teal rounded transition block">Settings</a>
+                                <a href="{{ url_for('top_level.dashboard') }}" data-testid="nav-dashboard-link"
+                                    class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
+                                <a href="{{ url_for('top_level.feedlot_hub') }}" data-testid="nav-feedlot-hub-link"
+                                    class="px-4 py-2 hover:bg-teal rounded transition block">Your Feedlots</a>
+                                <a href="{{ url_for('top_level.settings') }}" data-testid="nav-settings-link"
+                                    class="px-4 py-2 hover:bg-teal rounded transition block">Settings</a>
                             </div>
                         </div>
                         {% endif %}
-                        
+
                         {% if show_feedlot_nav and current_feedlot %}
                         <!-- Feedlot Navigation Section -->
                         <div class="px-4 py-2 border-t border-teal border-opacity-30 mt-2 pt-4">
-                            <h3 class="text-xs font-semibold text-teal uppercase tracking-wider mb-2">{{ current_feedlot.name }}</h3>
+                            <h3 class="text-xs font-semibold text-teal uppercase tracking-wider mb-2">{{
+                                current_feedlot.name }}</h3>
                             <div class="space-y-1">
-                                <a href="{{ url_for('feedlot.dashboard', feedlot_id=current_feedlot._id) }}" data-testid="nav-feedlot-dashboard-link" class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
-                                <a href="{{ url_for('feedlot.list_pens', feedlot_id=current_feedlot._id) }}" data-testid="nav-pens-link" class="px-4 py-2 hover:bg-teal rounded transition block">Pens</a>
-                                <a href="{{ url_for('feedlot.list_batches', feedlot_id=current_feedlot._id) }}" data-testid="nav-batches-link" class="px-4 py-2 hover:bg-teal rounded transition block">Batches</a>
-                                <a href="{{ url_for('feedlot.list_cattle', feedlot_id=current_feedlot._id) }}" data-testid="nav-cattle-link" class="px-4 py-2 hover:bg-teal rounded transition block">Cattle</a>
+                                <a href="{{ url_for('feedlot.dashboard', feedlot_id=current_feedlot._id) }}"
+                                    data-testid="nav-feedlot-dashboard-link"
+                                    class="px-4 py-2 hover:bg-teal rounded transition block">Dashboard</a>
+                                <a href="{{ url_for('feedlot.list_pens', feedlot_id=current_feedlot._id) }}"
+                                    data-testid="nav-pens-link"
+                                    class="px-4 py-2 hover:bg-teal rounded transition block">Pens</a>
+                                <a href="{{ url_for('feedlot.list_batches', feedlot_id=current_feedlot._id) }}"
+                                    data-testid="nav-batches-link"
+                                    class="px-4 py-2 hover:bg-teal rounded transition block">Batches</a>
+                                <a href="{{ url_for('feedlot.list_cattle', feedlot_id=current_feedlot._id) }}"
+                                    data-testid="nav-cattle-link"
+                                    class="px-4 py-2 hover:bg-teal rounded transition block">Cattle</a>
                             </div>
                         </div>
                         {% endif %}
-                        
+
                         {% block nav_items %}{% endblock %}
                     </div>
                 </div>
             </div>
         </div>
+        {% endif %}
     </nav>
-    
+
     <!-- Breadcrumbs -->
     {% if breadcrumbs and breadcrumbs|length > 1 %}
     <div class="bg-white border-b border-gray-200 shadow-sm" data-testid="breadcrumbs-container">
@@ -257,16 +323,21 @@
                     {% for crumb in breadcrumbs %}
                     <li class="flex items-center">
                         {% if not loop.first %}
-                        <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                        <svg class="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"
+                            aria-hidden="true">
+                            <path fill-rule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clip-rule="evenodd" />
                         </svg>
                         {% endif %}
                         {% if crumb.url and not loop.last %}
-                        <a href="{{ crumb.url }}" data-testid="breadcrumb-link-{{ loop.index }}" class="text-sm font-medium text-teal hover:text-teal hover:opacity-80 transition-colors whitespace-nowrap">
+                        <a href="{{ crumb.url }}" data-testid="breadcrumb-link-{{ loop.index }}"
+                            class="text-sm font-medium text-teal hover:text-teal hover:opacity-80 transition-colors whitespace-nowrap">
                             {{ crumb.label }}
                         </a>
                         {% else %}
-                        <span data-testid="breadcrumb-current-{{ loop.index }}" class="text-sm font-medium text-gray-500 whitespace-nowrap {% if loop.last %}text-gray-900{% endif %}">
+                        <span data-testid="breadcrumb-current-{{ loop.index }}"
+                            class="text-sm font-medium text-gray-500 whitespace-nowrap {% if loop.last %}text-gray-900{% endif %}">
                             {{ crumb.label }}
                         </span>
                         {% endif %}
@@ -277,77 +348,77 @@
         </div>
     </div>
     {% endif %}
-    
+
     <!-- Back Button -->
     {% block back_button %}
     <div class="bg-white border-b border-gray-200 shadow-sm" data-testid="back-button-container">
         <div class="container mx-auto px-4 py-3">
-            <button onclick="window.history.back()" 
-                    data-testid="back-button" 
-                    class="flex items-center space-x-2 text-teal hover:text-teal hover:opacity-80 transition-colors font-medium">
+            <button onclick="window.history.back()" data-testid="back-button"
+                class="flex items-center space-x-2 text-teal hover:text-teal hover:opacity-80 transition-colors font-medium">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
                 <span>Back</span>
             </button>
         </div>
     </div>
     {% endblock %}
-    
+
     <script>
         function toggleMenu() {
             const menuPanel = document.getElementById('menu-panel');
             const menuOverlay = document.getElementById('menu-overlay');
-            const arrowIcon = document.getElementById('arrow-icon');
-            const arrowBtn = document.getElementById('menu-arrow-btn');
-            
+
+            if (!menuPanel || !menuOverlay) return;
+
             const isOpen = !menuPanel.classList.contains('-translate-x-full');
-            
+
             if (isOpen) {
                 menuPanel.classList.add('-translate-x-full');
                 menuOverlay.classList.add('hidden');
-                // Position arrow at left edge (closed state) and point right
-                arrowBtn.style.left = '0';
-                arrowIcon.style.transform = 'rotate(0deg)';
             } else {
                 menuPanel.classList.remove('-translate-x-full');
                 menuOverlay.classList.remove('hidden');
-                // Position arrow at right edge of menu (open state) and point left
-                arrowBtn.style.left = '320px'; // w-80 = 320px
-                arrowIcon.style.transform = 'rotate(180deg)';
             }
         }
-        
+
         // Close menu when clicking outside
-        document.getElementById('menu-overlay').addEventListener('click', toggleMenu);
-        
+        const menuOverlay = document.getElementById('menu-overlay');
+        if (menuOverlay) {
+            menuOverlay.addEventListener('click', toggleMenu);
+        }
+
         // Close menu on escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 const menuPanel = document.getElementById('menu-panel');
-                if (!menuPanel.classList.contains('-translate-x-full')) {
+                if (menuPanel && !menuPanel.classList.contains('-translate-x-full')) {
                     toggleMenu();
                 }
             }
         });
-        
+
         // Prevent menu from closing when clicking inside the menu panel
-        document.getElementById('menu-panel').addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-        
-        
+        const menuPanel = document.getElementById('menu-panel');
+        if (menuPanel) {
+            menuPanel.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+        }
+
+
         // Profile Dropdown functionality
         function initProfileDropdown() {
             const profileDropdownBtn = document.getElementById('profile-dropdown-btn');
             const profileDropdownMenu = document.getElementById('profile-dropdown-menu');
-            
+
             if (profileDropdownBtn && profileDropdownMenu) {
-                profileDropdownBtn.addEventListener('click', function(e) {
+                profileDropdownBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopPropagation();
                     const isHidden = profileDropdownMenu.classList.contains('hidden');
-                    
+
                     if (isHidden) {
                         profileDropdownMenu.classList.remove('hidden');
                         profileDropdownBtn.setAttribute('aria-expanded', 'true');
@@ -356,9 +427,9 @@
                         profileDropdownBtn.setAttribute('aria-expanded', 'false');
                     }
                 });
-                
+
                 // Close dropdown when clicking outside
-                document.addEventListener('click', function(e) {
+                document.addEventListener('click', function (e) {
                     const target = e.target;
                     const isClickInside = profileDropdownBtn.contains(target) || profileDropdownMenu.contains(target);
                     if (!isClickInside && !profileDropdownMenu.classList.contains('hidden')) {
@@ -366,9 +437,9 @@
                         profileDropdownBtn.setAttribute('aria-expanded', 'false');
                     }
                 });
-                
+
                 // Close dropdown on escape key
-                document.addEventListener('keydown', function(e) {
+                document.addEventListener('keydown', function (e) {
                     if (e.key === 'Escape' && !profileDropdownMenu.classList.contains('hidden')) {
                         profileDropdownMenu.classList.add('hidden');
                         profileDropdownBtn.setAttribute('aria-expanded', 'false');
@@ -376,35 +447,35 @@
                 });
             }
         }
-        
+
         // Initialize profile dropdown on DOM ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initProfileDropdown);
         } else {
             initProfileDropdown();
         }
-        
+
         // Date and Time Display
         function updateDateTime() {
             const now = new Date();
             const dateElement = document.getElementById('current-date');
             const timeElement = document.getElementById('current-time');
-            
+
             if (dateElement && timeElement) {
                 // Format date: Month DD, YYYY
                 const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
                 dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
-                
+
                 // Format time: HH:MM:SS AM/PM
                 const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
                 timeElement.textContent = now.toLocaleTimeString('en-US', timeOptions);
             }
         }
-        
+
         // Update date and time immediately and then every second
         updateDateTime();
         setInterval(updateDateTime, 1000);
-        
+
         // Initialize on DOM ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', updateDateTime);
@@ -412,14 +483,15 @@
     </script>
 
     <!-- Toast Container -->
-    <div id="toast-container" data-testid="toast-container" class="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 space-y-2"></div>
+    <div id="toast-container" data-testid="toast-container"
+        class="fixed top-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 space-y-2"></div>
 
     <!-- Toast Notification System -->
     <script>
         function showToast(message, category = 'info') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            
+
             // Brand colors from brand-colors.md
             const brandColors = {
                 navy: '#0A2540',
@@ -427,7 +499,7 @@
                 gold: '#F5A623',
                 white: '#FFFFFF'
             };
-            
+
             // Determine colors based on category using brand colors
             let bgColor, textColor, borderColor, icon, hoverColor;
             if (category === 'error') {
@@ -452,12 +524,12 @@
                 hoverColor = 'rgba(255, 255, 255, 0.2)';
                 icon = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
             }
-            
+
             toast.className = 'border-l-4 rounded-lg shadow-lg p-4 mb-2 flex items-start gap-3 transform transition-all duration-300 translate-x-full opacity-0';
             toast.style.backgroundColor = bgColor;
             toast.style.color = textColor;
             toast.style.borderLeftColor = borderColor;
-            
+
             toast.innerHTML = `
                 <div class="flex-shrink-0 mt-0.5">
                     ${icon}
@@ -471,45 +543,45 @@
                     </svg>
                 </button>
             `;
-            
+
             container.appendChild(toast);
-            
+
             // Trigger animation
             setTimeout(() => {
                 toast.classList.remove('translate-x-full', 'opacity-0');
                 toast.classList.add('translate-x-0', 'opacity-100');
             }, 10);
-            
+
             // Auto-dismiss after 5 seconds
             const autoDismissTimer = setTimeout(() => {
                 dismissToast(toast.querySelector('button'));
             }, 5000);
-            
+
             // Store timer reference to clear if manually dismissed
             toast._autoDismissTimer = autoDismissTimer;
         }
-        
+
         function dismissToast(button) {
             const toast = button.closest('div');
             if (toast._autoDismissTimer) {
                 clearTimeout(toast._autoDismissTimer);
             }
-            
+
             toast.classList.remove('translate-x-0', 'opacity-100');
             toast.classList.add('translate-x-full', 'opacity-0');
-            
+
             setTimeout(() => {
                 toast.remove();
             }, 300);
         }
-        
+
         // Convert Flask flash messages to toasts
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    showToast({{ message|tojson }}, {{ category|tojson }});
-                {% endfor %}
-            {% endif %}
+        {% with messages = get_flashed_messages(with_categories = true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        showToast({{ message| tojson }}, {{ category| tojson }});
+        {% endfor %}
+        {% endif %}
         {% endwith %}
     </script>
 
@@ -524,14 +596,14 @@
             <div class="flex flex-col items-center space-y-4">
                 <!-- Logo and Powered by -->
                 <div class="flex items-center space-x-3">
-                    <img src="{{ url_for('static', filename='img/logo.png') }}" 
-                         alt="HerdLinx" 
-                         class="h-10 w-10 rounded-full object-cover"
-                         data-testid="footer-logo">
-                    <span class="text-sm font-medium text-gray-300" data-testid="footer-powered-by">Powered by HerdLinx</span>
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="HerdLinx"
+                        class="h-10 w-10 rounded-full object-cover" data-testid="footer-logo">
+                    <span class="text-sm font-medium text-gray-300" data-testid="footer-powered-by">Powered by
+                        HerdLinx</span>
                 </div>
                 <!-- Copyright -->
-                <p class="text-sm text-gray-400" data-testid="footer-copyright">&copy; 2025 Herdlinx. All rights reserved.</p>
+                <p class="text-sm text-gray-400" data-testid="footer-copyright">&copy; 2025 Herdlinx. All rights
+                    reserved.</p>
             </div>
         </div>
     </footer>
@@ -579,7 +651,7 @@
                 const computedStyle = window.getComputedStyle(current);
                 const bgColor = computedStyle.backgroundColor;
                 const bgRGB = parseRGB(bgColor);
-                
+
                 // Check if background is not transparent (alpha > 0)
                 // If rgba/rgb format, check alpha value
                 const rgbaMatch = computedStyle.backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
@@ -591,7 +663,7 @@
                 } else if (bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
                     return bgRGB;
                 }
-                
+
                 current = current.parentElement;
             }
             // Default to white if no background found
@@ -605,14 +677,14 @@
         function adjustTextColorForContrast(element) {
             // Get effective background color (checking parent elements if transparent)
             const bgRGB = getEffectiveBackgroundColor(element);
-            
+
             // Calculate contrast with black (0, 0, 0) and white (255, 255, 255)
             const contrastWithBlack = getContrastRatio(bgRGB, [0, 0, 0]);
             const contrastWithWhite = getContrastRatio(bgRGB, [255, 255, 255]);
-            
+
             // Remove existing text color classes
             element.classList.remove('text-gray-900', 'text-white', 'text-teal', 'text-teal-700');
-            
+
             // Apply the color with better contrast
             if (contrastWithWhite > contrastWithBlack) {
                 element.classList.add('text-white');
@@ -639,5 +711,5 @@
     </script>
     {% block extra_scripts %}{% endblock %}
 </body>
-</html>
 
+</html>

@@ -158,8 +158,8 @@ class Batch:
         return len(cattle_ids)
     
     @staticmethod
-    def find_by_feedlot_with_filters(feedlot_code, feedlot_id, search=None, event_type=None, sort_by='event_date', sort_order='desc', include_deleted=False):
-        """Find batches with filtering and sorting
+    def find_by_feedlot_with_filters(feedlot_code, feedlot_id, search=None, event_type=None, sort_by='event_date', sort_order='desc', include_deleted=False, page=1, per_page=20):
+        """Find batches with filtering, sorting, and pagination
         
         Args:
             feedlot_code: The feedlot code (required for database selection)
@@ -169,6 +169,13 @@ class Batch:
             sort_by: Field to sort by (batch_number, event_date, event_type, funder, cattle_count)
             sort_order: Sort order ('asc' or 'desc')
             include_deleted: If True, include soft-deleted batches. Defaults to False.
+            page: Page number (1-based index). Defaults to 1.
+            per_page: Number of items per page. Defaults to 20.
+            
+        Returns:
+            Tuple containing:
+            - List of batches for the current page
+            - Total count of matching batches
         """
         feedlot_db = get_feedlot_db(feedlot_code)
         query = {'feedlot_id': ObjectId(feedlot_id)}
@@ -201,23 +208,57 @@ class Batch:
         }
         
         sort_field = sort_field_map.get(sort_by, 'event_date')
-        sort_criteria = [(sort_field, sort_direction)]
         
-        batches = list(feedlot_db.batches.find(query).sort(sort_criteria))
-        
-        # Add cattle count to each batch
-        for batch in batches:
-            batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
-            # Normalize: ensure event_date exists (for backward compatibility with induction_date)
-            if 'event_date' not in batch and 'induction_date' in batch:
-                batch['event_date'] = batch['induction_date']
-            # Ensure event_type exists (default to 'induction' if not set)
-            if 'event_type' not in batch:
-                batch['event_type'] = 'induction'
-        
-        # If sorting by cattle_count, sort after adding the count
+        # If sorting by cattle_count, we need to fetch all, compute counts, sort, then slice
         if sort_by == 'cattle_count':
+            # Fetch all matching documents
+            batches = list(feedlot_db.batches.find(query))
+            total_count = len(batches)
+            
+            # Add cattle count and normalize data
+            for batch in batches:
+                batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
+                # Normalize: ensure event_date exists (for backward compatibility with induction_date)
+                if 'event_date' not in batch and 'induction_date' in batch:
+                    batch['event_date'] = batch['induction_date']
+                # Ensure event_type exists (default to 'induction' if not set)
+                if 'event_type' not in batch:
+                    batch['event_type'] = 'induction'
+            
+            # Sort in memory
             batches.sort(key=lambda b: b.get('cattle_count', 0), reverse=(sort_order == 'desc'))
-        
-        return batches
+            
+            # Apply pagination
+            start = (page - 1) * per_page
+            end = start + per_page
+            batches = batches[start:end]
+            
+            return batches, total_count
+            
+        else:
+            # Standard database sorting
+            sort_criteria = [(sort_field, sort_direction)]
+            
+            # Get total count first
+            total_count = feedlot_db.batches.count_documents(query)
+            
+            # Apply pagination
+            skip = (page - 1) * per_page
+            
+            batches = list(feedlot_db.batches.find(query)
+                           .sort(sort_criteria)
+                           .skip(skip)
+                           .limit(per_page))
+            
+            # Add cattle count and normalize data for the current page
+            for batch in batches:
+                batch['cattle_count'] = Batch.get_cattle_count(feedlot_code, str(batch['_id']))
+                # Normalize: ensure event_date exists (for backward compatibility with induction_date)
+                if 'event_date' not in batch and 'induction_date' in batch:
+                    batch['event_date'] = batch['induction_date']
+                # Ensure event_type exists (default to 'induction' if not set)
+                if 'event_type' not in batch:
+                    batch['event_type'] = 'induction'
+            
+            return batches, total_count
 
