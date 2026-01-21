@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify, Response
+import math
 from bson import ObjectId
 from datetime import datetime
 from app.models.feedlot import Feedlot
@@ -311,16 +312,23 @@ def list_batches(feedlot_id):
     event_type_filter = request.args.get('event_type', '')
     sort_by = request.args.get('sort_by', 'event_date')
     sort_order = request.args.get('sort_order', 'desc')
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 20))
     
     # Get filtered batches
-    batches = Batch.find_by_feedlot_with_filters(
+    batches, total_count = Batch.find_by_feedlot_with_filters(
         feedlot_code,
         feedlot_id,
         search=search if search else None,
         event_type=event_type_filter if event_type_filter else None,
         sort_by=sort_by,
-        sort_order=sort_order
+        sort_order=sort_order,
+        page=page,
+        per_page=per_page
     )
+    
+    # Calculate total pages
+    total_pages = math.ceil(total_count / per_page)
     
     # Get unique event types for filter dropdown
     all_batches = Batch.find_by_feedlot(feedlot_code, feedlot_id)
@@ -333,7 +341,11 @@ def list_batches(feedlot_id):
                          current_search=search,
                          current_event_type=event_type_filter,
                          current_sort_by=sort_by,
-                         current_sort_order=sort_order)
+                         current_sort_order=sort_order,
+                         page=page,
+                         per_page=per_page,
+                         total_pages=total_pages,
+                         total_count=total_count)
 
 @feedlot_bp.route('/feedlot/<feedlot_id>/batches/create', methods=['GET', 'POST'])
 @login_required
